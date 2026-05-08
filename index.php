@@ -168,105 +168,224 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order']) && !empty($_
                     </div>
                 </div>
             </div>
-            <div class="carousel-item">
-                <img src="image/rambut.jpeg" class="d-block w-100" alt="">
-                <div class="carousel-caption">
-                    <h1>Tampil Lebih Percaya Diri</h1>
-                    <p>Kecantikan dimulai dari sini</p>
-                    <div class="hero-btn-group">
-                        <a href="booking.php" class="hero-btn-primary">
-                            <i class="fas fa-calendar-alt"></i> Reservasi Sekarang
-                        </a>
-                        <a href="#layanan" class="hero-btn-outline">
-                            Lihat Layanan <i class="fas fa-arrow-right"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-            <div class="carousel-item">
-                <img src="image/nailart.jpg" class="d-block w-100" alt="">
-                <div class="carousel-caption">
-                    <h1>Perawatan Profesional</h1>
-                    <p>Hair, Lash, Henna dan nail terbaik</p>
-                    <div class="hero-btn-group">
-                        <a href="booking.php" class="hero-btn-primary">
-                            <i class="fas fa-calendar-alt"></i> Reservasi Sekarang
-                        </a>
-                        <a href="#layanan" class="hero-btn-outline">
-                            Lihat Layanan <i class="fas fa-arrow-right"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- Dot Indicators -->
-        <div class="carousel-indicators hero-dots">
-            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active" aria-current="true"></button>
-            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1"></button>
-            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2"></button>
         </div>
     </div>
 </section>
 
 <!-- SERVICES GRID -->
-<section id="layanan" class="services-clean py-5">
+<section id="layanan" class="services-clean">
     <div class="container">
         <div class="text-center mb-5">
             <h2 class="services-title">Layanan Kami</h2>
             <div class="title-line"></div>
+            <p class="text-muted mt-2" style="font-size:14px;">Klik layanan untuk melihat contoh hasil</p>
         </div>
         <div class="row g-4">
             <div class="col-lg-3 col-md-6">
-                <div class="service-box">
-                    <img src="image/download (7).jpg" alt="">
-                    <div class="overlay">Haircut</div>
+                <div class="service-box" onclick="openServiceGallery('Haircut', [
+                    'image/download (7).jpg'
+                ])">
+                    <img src="image/download (7).jpg" alt="Haircut">
+                    <div class="overlay"><i class="fas fa-images me-1"></i>Haircut</div>
+                    <div class="service-click-hint"><i class="fas fa-eye"></i></div>
                 </div>
             </div>
             <div class="col-lg-3 col-md-6">
-                <div class="service-box">
-                    <img src="image/coloring.jpg" alt="">
-                    <div class="overlay">Coloring</div>
+                <div class="service-box" onclick="openServiceGallery('Coloring', [
+                    'image/coloring.jpg'
+                ])">
+                    <img src="image/coloring.jpg" alt="Coloring">
+                    <div class="overlay"><i class="fas fa-images me-1"></i>Coloring</div>
+                    <div class="service-click-hint"><i class="fas fa-eye"></i></div>
                 </div>
             </div>
             <div class="col-lg-3 col-md-6">
-                <div class="service-box">
-                    <img src="image/nailart.jpeg" alt="">
-                    <div class="overlay">Nailart</div>
+                <div class="service-box" onclick="openServiceGallery('Nailart', [
+                    'image/nailart.jpeg',
+                    'image/homenailart.jpeg'
+                ])">
+                    <img src="image/nailart.jpeg" alt="Nailart">
+                    <div class="overlay"><i class="fas fa-images me-1"></i>Nailart</div>
+                    <div class="service-click-hint"><i class="fas fa-eye"></i></div>
                 </div>
             </div>
             <div class="col-lg-3 col-md-6">
-                <div class="service-box">
-                    <img src="image/⠀ _рабочее пространство мастера реконструкции - это не всегда про эстетку волос , иногда это про пыль, размокшие пальцы, и волосы в тех местах, где ты их не ожидаешь увидеть 😅.jpg" alt="">
-                    <div class="overlay">Hair Treatments</div>
+                <div class="service-box" onclick="openServiceGallery('Hair Treatments', [
+                    'image/\u2800 _\u0440\u0430\u0431\u043e\u0447\u0435\u0435 \u043f\u0440\u043e\u0441\u0442\u0440\u0430\u043d\u0441\u0442\u0432\u043e \u043c\u0430\u0441\u0442\u0435\u0440\u0430 \u0440\u0435\u043a\u043e\u043d\u0441\u0442\u0440\u0443\u043a\u0446\u0438\u0438 - \u044d\u0442\u043e \u043d\u0435 \u0432\u0441\u0435\u0433\u0434\u0430 \u043f\u0440\u043e \u044d\u0441\u0442\u0435\u0442\u043a\u0443 \u0432\u043e\u043b\u043e\u0441 , \u0438\u043d\u043e\u0433\u0434\u0430 \u044d\u0442\u043e \u043f\u0440\u043e \u043f\u044b\u043b\u044c, \u0440\u0430\u0437\u043c\u043e\u043a\u0448\u0438\u0435 \u043f\u0430\u043b\u044c\u0446\u044b, \u0438 \u0432\u043e\u043b\u043e\u0441\u044b \u0432 \u0442\u0435\u0445 \u043c\u0435\u0441\u0442\u0430\u0445, \u0433\u0434\u0435 \u0442\u044b \u0438\u0445 \u043d\u0435 \u043e\u0436\u0438\u0434\u0430\u0435\u0448\u044c \u0443\u0432\u0438\u0434\u0435\u0442\u044c \ud83d\ude05.jpg'
+                ])">
+                    <img src="image/⠀ _рабочее пространство мастера реконструкции - это не всегда про эстетку волос , иногда это про пыль, размокшие пальцы, и волосы в тех местах, где ты их не ожидаешь увидеть .jpg" alt="Hair Treatments">
+                    <div class="overlay"><i class="fas fa-images me-1"></i>Hair Treatments</div>
+                    <div class="service-click-hint"><i class="fas fa-eye"></i></div>
                 </div>
             </div>
             <div class="col-lg-3 col-md-6">
-                <div class="service-box">
-                    <img src="image/download (8).jpg" alt="">
-                    <div class="overlay">Foot SPA</div>
+                <div class="service-box" onclick="openServiceGallery('Foot SPA', [
+                    'image/download (8).jpg'
+                ])">
+                    <img src="image/download (8).jpg" alt="Foot SPA">
+                    <div class="overlay"><i class="fas fa-images me-1"></i>Foot SPA</div>
+                    <div class="service-click-hint"><i class="fas fa-eye"></i></div>
                 </div>
             </div>
             <div class="col-lg-3 col-md-6">
-                <div class="service-box">
-                    <img src="image/henna.jpg" alt="">
-                    <div class="overlay">Henna Series</div>
+                <div class="service-box" onclick="openServiceGallery('Henna Series', [
+                    'image/henna.jpg'
+                ])">
+                    <img src="image/henna.jpg" alt="Henna Series">
+                    <div class="overlay"><i class="fas fa-images me-1"></i>Henna Series</div>
+                    <div class="service-click-hint"><i class="fas fa-eye"></i></div>
                 </div>
             </div>
             <div class="col-lg-3 col-md-6">
-                <div class="service-box">
-                    <img src="image/download (6).jpg" alt="">
-                    <div class="overlay">Press on nail</div>
+                <div class="service-box" onclick="openServiceGallery('Press on Nail', [
+                    'image/download (6).jpg'
+                ])">
+                    <img src="image/download (6).jpg" alt="Press on nail">
+                    <div class="overlay"><i class="fas fa-images me-1"></i>Press on nail</div>
+                    <div class="service-click-hint"><i class="fas fa-eye"></i></div>
                 </div>
             </div>
             <div class="col-lg-3 col-md-6">
-                <div class="service-box">
-                    <img src="image/eyelash.jpeg" alt="">
-                    <div class="overlay">Eye lash</div>
+                <div class="service-box" onclick="openServiceGallery('Eye Lash', [
+                    'image/eyelash.jpeg'
+                ])">
+                    <img src="image/eyelash.jpeg" alt="Eye lash">
+                    <div class="overlay"><i class="fas fa-images me-1"></i>Eye lash</div>
+                    <div class="service-click-hint"><i class="fas fa-eye"></i></div>
                 </div>
             </div>
         </div>
     </div>
 </section>
+
+<!-- ══ SERVICE GALLERY MODAL ══ -->
+<div id="serviceGalleryModal" aria-hidden="true">
+    <div class="sgm-backdrop" onclick="closeServiceGallery()"></div>
+    <div class="sgm-dialog" role="dialog" aria-modal="true">
+        <!-- Header -->
+        <div class="sgm-header">
+            <div class="sgm-title-wrap">
+                <i class="fas fa-images sgm-title-icon"></i>
+                <span id="sgmTitle">Layanan</span>
+            </div>
+            <button class="sgm-close" onclick="closeServiceGallery()" aria-label="Tutup">&times;</button>
+        </div>
+
+        <!-- Main image viewer -->
+        <div class="sgm-main">
+            <button class="sgm-arrow sgm-arrow-left" id="sgmPrev" onclick="sgmNav(-1)" aria-label="Sebelumnya">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="sgm-img-wrap">
+                <img id="sgmMainImg" src="" alt="" class="sgm-main-img">
+                <div class="sgm-counter" id="sgmCounter">1 / 1</div>
+            </div>
+            <button class="sgm-arrow sgm-arrow-right" id="sgmNext" onclick="sgmNav(1)" aria-label="Berikutnya">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+
+        <!-- Thumbnail strip -->
+        <div class="sgm-thumbs" id="sgmThumbs"></div>
+
+        <!-- CTA -->
+        <div class="sgm-footer">
+            <a href="booking.php" class="sgm-book-btn">
+                <i class="fas fa-calendar-alt me-2"></i>Reservasi Layanan Ini
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    var modal    = document.getElementById('serviceGalleryModal');
+    var mainImg  = document.getElementById('sgmMainImg');
+    var titleEl  = document.getElementById('sgmTitle');
+    var counter  = document.getElementById('sgmCounter');
+    var thumbWrap= document.getElementById('sgmThumbs');
+    var prevBtn  = document.getElementById('sgmPrev');
+    var nextBtn  = document.getElementById('sgmNext');
+
+    var _photos  = [];
+    var _cur     = 0;
+
+    window.openServiceGallery = function(name, photos) {
+        _photos = photos;
+        _cur    = 0;
+        titleEl.textContent = name;
+
+        // Build thumbnails
+        thumbWrap.innerHTML = '';
+        photos.forEach(function(src, i) {
+            var t = document.createElement('img');
+            t.src = src;
+            t.alt = name + ' ' + (i + 1);
+            t.className = 'sgm-thumb' + (i === 0 ? ' active' : '');
+            t.onclick = function() { sgmGoTo(i); };
+            thumbWrap.appendChild(t);
+        });
+
+        updateView();
+        modal.classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+
+        // hide arrows if only 1 photo
+        prevBtn.style.display = photos.length > 1 ? '' : 'none';
+        nextBtn.style.display = photos.length > 1 ? '' : 'none';
+        thumbWrap.style.display = photos.length > 1 ? '' : 'none';
+    };
+
+    window.closeServiceGallery = function() {
+        modal.classList.remove('is-open');
+        document.body.style.overflow = '';
+    };
+
+    window.sgmNav = function(dir) {
+        sgmGoTo((_cur + dir + _photos.length) % _photos.length);
+    };
+
+    function sgmGoTo(idx) {
+        _cur = idx;
+        updateView();
+    }
+
+    function updateView() {
+        // fade transition
+        mainImg.style.opacity = '0';
+        setTimeout(function() {
+            mainImg.src = _photos[_cur];
+            mainImg.style.opacity = '1';
+        }, 120);
+
+        counter.textContent = (_cur + 1) + ' / ' + _photos.length;
+
+        // update thumbs
+        var thumbs = thumbWrap.querySelectorAll('.sgm-thumb');
+        thumbs.forEach(function(t, i) {
+            t.classList.toggle('active', i === _cur);
+        });
+    }
+
+    // Keyboard nav
+    document.addEventListener('keydown', function(e) {
+        if (!modal.classList.contains('is-open')) return;
+        if (e.key === 'Escape')      closeServiceGallery();
+        if (e.key === 'ArrowLeft')   sgmNav(-1);
+        if (e.key === 'ArrowRight')  sgmNav(1);
+    });
+
+    // Swipe support (mobile)
+    var touchX = null;
+    modal.addEventListener('touchstart', function(e) { touchX = e.touches[0].clientX; }, {passive:true});
+    modal.addEventListener('touchend', function(e) {
+        if (touchX === null) return;
+        var dx = e.changedTouches[0].clientX - touchX;
+        if (Math.abs(dx) > 50) sgmNav(dx < 0 ? 1 : -1);
+        touchX = null;
+    }, {passive:true});
+})();
+</script>
 
 <!-- DAFTAR HARGA -->
 <section id="harga" class="price-list-section py-5">
@@ -277,51 +396,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order']) && !empty($_
             <p class="text-muted mt-2">Harga transparan, kualitas terjamin</p>
         </div>
 
+        <div class="price-cards-grid">
         <?php
         $priceList = [
             'Rambut' => [
                 ['name'=>'Creambath',                        'price'=>'Rp 75.000'],
                 ['name'=>'Hair Mask',                        'price'=>'Rp 45.000 - 90.000'],
                 ['name'=>'Hair Spa',                         'price'=>'Rp 100.000'],
-                ['name'=>'Cuci Rambut',                      'price'=>'Rp 25.000'],
-                ['name'=>'Cuci + Catok',                     'price'=>'Rp 40.000'],
-                ['name'=>'Cuci + Blow',                      'price'=>'Rp 48.000'],
+                ['name'=>'Cuci,Catok,Blow',                     'price'=>'Rp 25.000 - 50.000'],
                 ['name'=>'Bleaching S',                      'price'=>'Rp 40.000'],
                 ['name'=>'Coloring Full',                    'price'=>'Rp 120.000 - 300.000'],
-                ['name'=>'Bleaching Peek A Boo',             'price'=>'Rp 200.000 - 350.000'],
-                ['name'=>'Bleaching Highlight',              'price'=>'Rp 250.000 - 700.000'],
+                ['name'=>'Bleaching',             'price'=>'Rp 200.000 - 1.200.000'],
                 ['name'=>'Balayage',                         'price'=>'Rp 250.000 - 700.000'],
-                ['name'=>'Bleaching Full',                   'price'=>'Rp 250.000 - 1.200.000'],
                 ['name'=>'Down Peim Poni',                   'price'=>'Rp 100.000 - 300.000'],
                 ['name'=>'Keriting Klasik',                  'price'=>'Rp 300.000 - 700.000'],
                 ['name'=>'Keriting Digital',                 'price'=>'Rp 450.000 - 1.700.000'],
                 ['name'=>'Keratin Treatment',                'price'=>'Rp 200.000'],
-                ['name'=>'Smoothing Collagen - Lamei',       'price'=>'Rp 280.000'],
-                ['name'=>'Smoothing Collagen - L\'Oreal',    'price'=>'Rp 300.000'],
-                ['name'=>'Smoothing Sutra - Inaura',         'price'=>'Rp 150.000'],
-                ['name'=>'Smoothing Sutra - Matrix',         'price'=>'Rp 175.000'],
-                ['name'=>'Smoothing Sutra - Go Street',      'price'=>'Rp 200.000'],
-                ['name'=>'Smoothing Sutra - Silky',          'price'=>'Rp 250.000'],
-                ['name'=>'Smoothing Keratin - SDB',          'price'=>'Rp 350.000'],
-                ['name'=>'Smoothing Keratin - Eljo',         'price'=>'Rp 380.000'],
-                ['name'=>'Smoothing Keratin - Gylo',         'price'=>'Rp 400.000'],
-                ['name'=>'Smoothing Expres',                 'price'=>'Rp 150.000'],
-                ['name'=>'Smoothing Keratin Expres',         'price'=>'Rp 300.000'],
-                ['name'=>'Smoothing Crystal',                'price'=>'Rp 300.000'],
-            ],
-            'Treatment Spa' => [
-                ['name'=>'Bundling Manicure & Pedicure',     'price'=>'Rp 100.000'],
-                ['name'=>'Manicure / Pedicure',              'price'=>'Rp 60.000'],
-                ['name'=>'Hand Spa',                         'price'=>'Rp 80.000'],
-                ['name'=>'Foot Spa',                         'price'=>'Rp 100.000'],
-                ['name'=>'Callus Treatment',                 'price'=>'Rp 70.000 - 150.000'],
-            ],
-            'Henna Series' => [
-                ['name'=>'Brow Henna',                       'price'=>'Rp 25.000'],
-                ['name'=>'Nail Henna Tangan',                'price'=>'Rp 25.000'],
-                ['name'=>'Nail Henna Kaki',                  'price'=>'Rp 30.000'],
-                ['name'=>'Bundling Meni-Henna',              'price'=>'Rp 75.000'],
-                ['name'=>'Henna Fun',                        'price'=>'Rp 25.000 - 100.000'],
+                ['name'=>'Smoothing',       'price'=>'Rp 200.000 - 400.000'],
             ],
             'Nail Art & Services' => [
                 ['name'=>'Press On Nail Basic',              'price'=>'Rp 50.000'],
@@ -337,35 +428,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order']) && !empty($_
                 ['name'=>'Remove Extension',                 'price'=>'Rp 65.000'],
                 ['name'=>'Bundling Nail Art + Extension',    'price'=>'Rp 150.000'],
             ],
+            'Henna Series' => [
+                ['name'=>'Brow Henna',                       'price'=>'Rp 25.000'],
+                ['name'=>'Nail Henna Tangan',                'price'=>'Rp 25.000'],
+                ['name'=>'Nail Henna Kaki',                  'price'=>'Rp 30.000'],
+                ['name'=>'Bundling Meni-Henna',              'price'=>'Rp 75.000'],
+                ['name'=>'Henna Fun',                        'price'=>'Rp 25.000 - 100.000'],
+            ],
+            'Treatment Spa' => [
+                ['name'=>'Bundling Manicure & Pedicure',     'price'=>'Rp 100.000'],
+                ['name'=>'Manicure / Pedicure',              'price'=>'Rp 60.000'],
+                ['name'=>'Hand Spa',                         'price'=>'Rp 80.000'],
+                ['name'=>'Foot Spa',                         'price'=>'Rp 100.000'],
+                ['name'=>'Callus Treatment',                 'price'=>'Rp 70.000 - 150.000'],
+            ],
             'Brow & Lash' => [
                 ['name'=>'Brow Bomb',      'price'=>'Rp 100.000'],
                 ['name'=>'Lashlift',       'price'=>'Rp 70.000'],
                 ['name'=>'Lashlift Tint',  'price'=>'Rp 90.000'],
             ],
         ];
-        $icons = [
-            'Rambut'              => 'fas fa-cut',
-            'Treatment Spa'       => 'fas fa-spa',
-            'Henna Series'        => 'fas fa-leaf',
-            'Nail Art & Services' => 'fas fa-hand-sparkles',
-            'Brow & Lash'         => 'fas fa-eye',
-        ];
         $delay = 0;
         foreach ($priceList as $cat => $items):
-            $catId = 'price-' . preg_replace('/[^a-z0-9]/', '-', strtolower($cat));
         ?>
-        <div class="price-accordion mb-3" data-aos="fade-up" data-aos-delay="<?= $delay * 80 ?>">
-            <button class="price-acc-btn" onclick="togglePrice('<?= $catId ?>', this)" aria-expanded="false">
-                <span class="price-acc-left">
-                    <span class="price-acc-icon-wrap"><i class="<?= $icons[$cat] ?>"></i></span>
-                    <span class="price-acc-label"><?= $cat ?></span>
-                    <span class="price-acc-count"><?= count($items) ?> layanan</span>
-                </span>
-                <span class="price-acc-toggle">
-                    <i class="fas fa-chevron-down"></i>
-                </span>
-            </button>
-            <div class="price-acc-body" id="<?= $catId ?>" style="display:none;">
+        <div class="price-card" data-aos="fade-up" data-aos-delay="<?= $delay * 80 ?>">
+            <div class="price-card-header">
+                <span class="price-card-label"><?= $cat ?></span>
+                <span class="price-acc-count"><?= count($items) ?> layanan</span>
+            </div>
+            <div class="price-acc-body">
                 <table class="price-table">
                     <thead>
                         <tr>
@@ -385,81 +476,73 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order']) && !empty($_
             </div>
         </div>
         <?php $delay++; endforeach; ?>
+        </div><!-- /.price-cards-grid -->
 
         <div class="text-center mt-4" data-aos="fade-up">
             <p class="text-muted small mb-3">* Harga dapat berubah sewaktu-waktu. Hubungi kami untuk info terkini.</p>
-            <a href="booking.php" class="btn btn-cream">
-                <i class="fas fa-calendar-check me-2"></i>Booking Sekarang
-            </a>
         </div>
     </div>
 </section>
 
 <style>
-.price-list-section { background: #fdfaf7; }
-.price-accordion {
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow: 0 2px 12px rgba(139,111,94,0.08);
-    border: 1px solid #f0e8df;
+/* ══ DAFTAR HARGA — MODERN CARD ══ */
+.price-list-section { background: linear-gradient(180deg, #fdfaf7 0%, #f5ede4 100%); }
+
+.price-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
 }
-.price-acc-btn {
-    width: 100%;
+
+.price-card {
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(139,111,94,0.12);
+    border: 1px solid rgba(214,193,163,0.3);
+    background: #fff;
+    transition: transform 0.32s cubic-bezier(0.4,0,0.2,1),
+                box-shadow 0.32s cubic-bezier(0.4,0,0.2,1);
+}
+.price-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 16px 48px rgba(139,111,94,0.22);
+}
+
+.price-card-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: #fff;
-    border: none;
-    padding: 14px 20px;
-    cursor: pointer;
-    transition: background 0.2s;
-    font-family: 'Poppins', sans-serif;
-    text-align: left;
-}
-.price-acc-btn:hover { background: #fdf8f4; }
-.price-acc-btn[aria-expanded="true"] { background: #fdf5ef; }
-.price-acc-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-.price-acc-icon-wrap {
-    width: 36px; height: 36px;
-    border-radius: 10px;
     background: linear-gradient(135deg, #8B6F5E, #D6C1A3);
-    display: flex; align-items: center; justify-content: center;
+    padding: 16px 20px;
+}
+
+.price-card-label {
+    font-weight: 700;
+    font-size: 15px;
     color: #fff;
-    font-size: 14px;
-    flex-shrink: 0;
+    font-family: 'Poppins', sans-serif;
+    letter-spacing: 0.2px;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.15);
 }
-.price-acc-label {
-    font-weight: 600;
-    font-size: 14px;
-    color: #3d2b1f;
-}
+
 .price-acc-count {
     font-size: 11px;
-    color: #aaa;
-    background: #f5ede6;
+    color: rgba(255,255,255,0.9);
+    background: rgba(255,255,255,0.2);
     border-radius: 20px;
-    padding: 2px 10px;
+    padding: 3px 12px;
     font-weight: 500;
+    font-family: 'Poppins', sans-serif;
 }
-.price-acc-toggle {
-    color: #8B6F5E;
-    font-size: 13px;
-    transition: transform 0.3s;
-}
-.price-acc-btn[aria-expanded="true"] .price-acc-toggle {
-    transform: rotate(180deg);
-}
-.price-acc-body { border-top: 1px solid #f0e8df; }
+
+.price-acc-body { border-top: 1px solid rgba(139,111,94,0.12); }
+
 .price-table {
     width: 100%;
     border-collapse: collapse;
     background: #fff;
     font-family: 'Poppins', sans-serif;
-    font-size: 14px;
+    font-size: 13.5px;
 }
 .price-table thead tr { background: #faf5f0; border-bottom: 2px solid #f0e8df; }
 .price-table th {
@@ -486,13 +569,21 @@ function togglePrice(id, btn) {
 }
 </script>
 
-<!-- ══ OUR PRODUCTS ══ -->
+<!-- ══ PRESS ON NAIL COLLECTION ══ -->
 <section id="produk" class="section-product">
     <div class="container">
-        <div class="product-section-title">
-            <h2>Our <span>Products</span></h2>
+        <div class="product-section-title" data-aos="fade-up">
+            <h2>Press On Nail <span>Collection</span></h2>
             <div class="title-line"></div>
-            <p>Press On Nails premium untuk tampil cantik instan ✨</p>
+            <p>Press On Nails premium untuk tampil cantik instan <i class="fa-solid fa-sparkles" style="color:#D6C1A3;font-size:0.9em;"></i></p>
+        </div>
+
+        <!-- Filter buttons -->
+        <div class="filter-buttons" data-aos="fade-up" data-aos-delay="100">
+            <button class="active" data-filter="all">Semua</button>
+            <button data-filter="simple">Simple</button>
+            <button data-filter="glam">Glam</button>
+            <button data-filter="wedding">Wedding</button>
         </div>
 
         <?php
@@ -514,71 +605,184 @@ function togglePrice(id, btn) {
             ["name"=>"Elegant Nails",          "price"=>"Rp 25.000", "category"=>"wedding", "img"=>"image/WhatsApp Image 2026-05-06 at 11.20.31.jpeg"],
             ["name"=>"Elegant Nails",          "price"=>"Rp 25.000", "category"=>"wedding", "img"=>"image/WhatsApp Image 2026-05-06 at 11.17.28.jpeg"],
         ];
-        $prodCategories = [
-            'glam'    => ['label'=>'Glam',    'icon'=>'fas fa-gem'],
-            'simple'  => ['label'=>'Simple',  'icon'=>'fas fa-hand-dots'],
-            'wedding' => ['label'=>'Wedding', 'icon'=>'fas fa-ring'],
-        ];
-        $grouped = [];
-        foreach ($products as $p) { $grouped[$p['category']][] = $p; }
-        $pDelay = 0;
-        foreach ($prodCategories as $catKey => $catInfo):
-            if (empty($grouped[$catKey])) continue;
-            $catItems = $grouped[$catKey];
-            $catId = 'prod-' . $catKey;
         ?>
-        <div class="price-accordion mb-3" data-aos="fade-up" data-aos-delay="<?= $pDelay * 80 ?>">
-            <button class="price-acc-btn" onclick="togglePrice('<?= $catId ?>', this)" aria-expanded="false">
-                <span class="price-acc-left">
-                    <span class="price-acc-icon-wrap"><i class="<?= $catInfo['icon'] ?>"></i></span>
-                    <span class="price-acc-label"><?= $catInfo['label'] ?></span>
-                    <span class="price-acc-count"><?= count($catItems) ?> produk</span>
-                </span>
-                <span class="price-acc-toggle"><i class="fas fa-chevron-down"></i></span>
-            </button>
-            <div class="price-acc-body" id="<?= $catId ?>" style="display:none;">
-                <table class="price-table">
-                    <thead>
-                        <tr>
-                            <th style="width:52px;"></th>
-                            <th>Nama Produk</th>
-                            <th class="text-end">Harga</th>
-                            <th class="text-end" style="width:90px;">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($catItems as $p): ?>
-                        <tr class="prod-row" style="cursor:pointer;"
-                            onclick="showProductPreview('<?= addslashes($p['name']) ?>', '<?= addslashes($p['price']) ?>', '<?= addslashes($p['img']) ?>')"
-                            onmouseover="this.style.background='#fdf5ef'" onmouseout="this.style.background=''">
-                            <td>
-                                <img src="<?= $p['img'] ?>" alt="<?= $p['name'] ?>"
-                                    style="width:40px;height:40px;object-fit:cover;border-radius:8px;display:block;">
-                            </td>
-                            <td style="font-size:13px;"><?= $p['name'] ?></td>
-                            <td class="text-end price-cell"><?= $p['price'] ?></td>
-                            <td class="text-end">
-                                <span style="font-size:11px;color:#aaa;"><i class="fas fa-eye"></i> Lihat</span>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+
+        <div class="product-grid" data-aos="fade-up" data-aos-delay="150">
+        <?php foreach ($products as $i => $p): ?>
+            <div class="product-card" data-category="<?= $p['category'] ?>">
+                <div class="product-card-img-wrap">
+                    <img src="<?= $p['img'] ?>" alt="<?= $p['name'] ?>" class="product-img" loading="lazy">
+                    <div class="product-card-overlay">
+                        <button class="btn-preview" onclick="showProductPreview('<?= addslashes($p['name']) ?>', '<?= addslashes($p['price']) ?>', '<?= addslashes($p['img']) ?>')">
+                            <i class="fas fa-eye"></i> Lihat
+                        </button>
+                    </div>
+                    <span class="product-badge-cat"><?= ucfirst($p['category']) ?></span>
+                </div>
+                <div class="product-info">
+                    <div class="product-name"><?= $p['name'] ?></div>
+                    <div class="product-price"><?= $p['price'] ?></div>
+                    <button class="btn-beli" onclick="handleBeli('<?= addslashes($p['name']) ?>','<?= addslashes($p['price']) ?>','<?= addslashes($p['img']) ?>')">
+                        <i class="fas fa-shopping-bag me-1"></i> Beli Sekarang
+                    </button>
+                </div>
             </div>
+        <?php endforeach; ?>
         </div>
-        <?php $pDelay++; endforeach; ?>
     </div>
 </section>
 
 <style>
-.btn-beli-sm {
-    padding: 5px 12px;
-    background: linear-gradient(135deg, #8B6F5E, #D6C1A3);
-    color: #fff; border: none; border-radius: 8px;
-    font-size: 11px; font-weight: 600; font-family: 'Poppins', sans-serif;
-    cursor: pointer; transition: 0.2s; white-space: nowrap;
+/* ══ PRODUCT SECTION — MODERN CARDS ══ */
+.section-product { background: linear-gradient(180deg, #f5ede4 0%, #fdfaf7 100%); padding: 80px 0; }
+
+.product-section-title { text-align: center; margin-bottom: 32px; }
+.product-section-title h2 { font-weight: 700; font-size: 34px; font-family: 'Playfair Display', serif; color: #2d1f17; }
+.product-section-title span { color: #8B6F5E; }
+.product-section-title p { color: #888; margin-top: 10px; font-size: 15px; }
+
+.filter-buttons { text-align: center; margin-bottom: 40px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+.filter-buttons button {
+    border: 1.5px solid #e8ddd4;
+    background: #fff;
+    padding: 8px 22px;
+    border-radius: 50px;
+    font-weight: 500;
+    color: #8a7060;
+    cursor: pointer;
+    font-size: 14px;
+    font-family: 'Poppins', sans-serif;
+    transition: all 0.25s;
+    box-shadow: 0 2px 8px rgba(139,111,94,0.06);
 }
-.btn-beli-sm:hover { opacity: 0.85; }
+.filter-buttons button:hover { border-color: #8B6F5E; color: #8B6F5E; background: #fdf8f4; }
+.filter-buttons button.active {
+    background: linear-gradient(135deg, #8B6F5E, #D6C1A3);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 6px 20px rgba(139,111,94,0.30);
+}
+
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 24px;
+}
+
+.product-card {
+    background: #fff;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 4px 18px rgba(139,111,94,0.10);
+    border: 1px solid rgba(214,193,163,0.3);
+    transition: transform 0.32s cubic-bezier(0.4,0,0.2,1),
+                box-shadow 0.32s cubic-bezier(0.4,0,0.2,1);
+}
+.product-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 50px rgba(139,111,94,0.22);
+}
+
+.product-card-img-wrap {
+    position: relative;
+    overflow: hidden;
+}
+.product-img {
+    width: 100%; height: 240px; object-fit: cover;
+    display: block;
+    transition: transform 0.45s cubic-bezier(0.4,0,0.2,1);
+}
+.product-card:hover .product-img { transform: scale(1.07); }
+
+.product-card-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(45,31,23,0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+    backdrop-filter: blur(2px);
+}
+.product-card:hover .product-card-overlay { opacity: 1; }
+
+.btn-preview {
+    background: rgba(255,255,255,0.92);
+    color: #5A4A42;
+    border: none;
+    border-radius: 50px;
+    padding: 9px 22px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+    transform: translateY(8px);
+    transition: transform 0.3s, background 0.2s;
+}
+.product-card:hover .btn-preview { transform: translateY(0); }
+.btn-preview:hover { background: #fff; }
+
+.product-badge-cat {
+    position: absolute;
+    top: 12px; left: 12px;
+    background: rgba(255,255,255,0.88);
+    color: #5A4A42;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: 'Poppins', sans-serif;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 50px;
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(255,255,255,0.6);
+}
+
+.product-info { padding: 16px; }
+.product-name {
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    color: #2d1f17;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.product-price {
+    color: #8B6F5E;
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 10px;
+}
+.btn-beli {
+    width: 100%;
+    padding: 9px 0;
+    background: linear-gradient(135deg, #8B6F5E, #D6C1A3);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    cursor: pointer;
+    transition: all 0.25s;
+    box-shadow: 0 4px 14px rgba(139,111,94,0.25);
+    letter-spacing: 0.2px;
+}
+.btn-beli:hover {
+    box-shadow: 0 8px 24px rgba(139,111,94,0.40);
+    transform: translateY(-1px);
+}
+
+@media (max-width: 576px) {
+    .product-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .product-img { height: 180px; }
+    .price-cards-grid { grid-template-columns: 1fr; }
+}
 </style>
 
 <!-- ══ PRODUCT PREVIEW MODAL ══ -->
@@ -617,103 +821,229 @@ function closeProductPreview() {
 }
 </script>
 
-<!-- WHY CHOOSE US -->
-<!-- LOKASI & ULASAN -->
-<section class="location-reviews py-5">
+<!-- ══ SECTION LOKASI ══ -->
+<section id="lokasi" class="location-section">
     <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-8 text-center mb-5">
+        <div class="row justify-content-center mb-4">
+            <div class="col-lg-8 text-center">
                 <div class="section-label" data-aos="fade-up"><span>Temukan Kami</span></div>
-                <h2 class="section-title" data-aos="fade-up" data-aos-delay="200">Lokasi &amp; Ulasan</h2>
+                <h2 class="section-title" data-aos="fade-up" data-aos-delay="150">Lokasi <span style="color:var(--cream-accent);">Kami</span></h2>
+                <p class="text-muted" data-aos="fade-up" data-aos-delay="250" style="font-size:15px;">Kunjungi kami langsung untuk pengalaman kecantikan terbaik</p>
             </div>
         </div>
-        <div class="row g-4 align-items-stretch">
-            <!-- MAP -->
-            <div class="col-lg-6" data-aos="fade-right">
-                <div class="map-wrapper">
-                    <div class="map-info-bar">
-                        <div class="map-info-left">
-                            <div class="map-salon-name"><i class="fas fa-map-marker-alt"></i> NISWÀ BEAUTY</div>
-                            <div class="map-salon-addr">Jl. Watulumpang, Bangsri, Jepara</div>
+
+        <div data-aos="fade-up" data-aos-delay="300">
+            <div class="map-wrapper map-fullwidth" style="border-radius:20px;overflow:hidden;box-shadow:0 10px 40px rgba(139,111,94,0.18);border:1px solid #EDE5D8;">
+                <div class="map-info-bar" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:linear-gradient(135deg,#5A4A42,#8B6F5E);padding:18px 28px;">
+                    <div class="map-info-left">
+                        <div class="map-salon-name"><i class="fas fa-map-marker-alt"></i> NISWÀ BEAUTY</div>
+                        <div class="map-salon-addr">Jl. Watulumpang, Bangsri, Jepara</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+                        <div style="color:rgba(255,255,255,0.85);font-size:13px;font-family:'Poppins',sans-serif;">
+                            <i class="fas fa-clock me-1" style="color:#D6C1A3;"></i> Senin – Minggu, 08.00 – 20.00
                         </div>
                         <a href="https://maps.app.goo.gl/czQHcN15FMvfFZy76" target="_blank" class="map-open-btn">
-                            Buka Maps <i class="fas fa-external-link-alt"></i>
+                            <i class="fas fa-directions"></i> Petunjuk Arah
                         </a>
                     </div>
-                    <iframe
-                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3959.0!2d110.7708502!3d-6.5253308!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e7123c39ad21875%3A0xd77e4fd098899e2c!2sNISWA%20BEAUTY%20Nail%20%26%20Foot%20Spa!5e0!3m2!1sid!2sid!4v1715000000000!5m2!1sid!2sid"
-                        width="100%" height="100%" style="border:0;border-radius:0 0 20px 20px;flex:1;min-height:400px;" allowfullscreen="" loading="lazy"
-                        referrerpolicy="no-referrer-when-downgrade">
-                    </iframe>
                 </div>
-            </div>
-
-            <!-- REVIEWS -->
-            <div class="col-lg-6" data-aos="fade-left">
-                <div class="reviews-wrapper">
-                    <!-- Rating Summary -->
-                    <div class="review-summary">
-                        <div class="review-score">5.0</div>
-                        <div class="review-summary-right">
-                            <div class="review-stars-big">
-                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
-                            </div>
-                            <div class="review-count">Berdasarkan ulasan Google Maps</div>
-                            <a href="https://maps.app.goo.gl/czQHcN15FMvfFZy76" target="_blank" class="review-write-btn">
-                                <i class="fab fa-google"></i> Tulis Ulasan
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Review Cards -->
-                    <div class="review-list">
-                        <div class="review-item">
-                            <div class="review-top">
-                                <div class="reviewer-avatar" style="background:linear-gradient(135deg,#f9a8d4,#f472b6);">N</div>
-                                <div class="reviewer-info">
-                                    <div class="reviewer-name">Ninda Ayu</div>
-                                    <div class="reviewer-stars">
-                                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
-                                    </div>
-                                </div>
-                                <div class="review-date">1 bulan lalu</div>
-                            </div>
-                            <p class="review-text">"Nail art-nya bagus banget, hasilnya rapi dan tahan lama! Mbak-mbaknya ramah dan sabar. Foot spa-nya juga bikin kaki lega banget. Pasti balik lagi! 💅"</p>
-                        </div>
-
-                        <div class="review-item">
-                            <div class="review-top">
-                                <div class="reviewer-avatar" style="background:linear-gradient(135deg,#6ee7b7,#34d399);">R</div>
-                                <div class="reviewer-info">
-                                    <div class="reviewer-name">Rizka Amalia</div>
-                                    <div class="reviewer-stars">
-                                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
-                                    </div>
-                                </div>
-                                <div class="review-date">2 bulan lalu</div>
-                            </div>
-                            <p class="review-text">"Lashlift-nya keren banget, mata jadi keliatan lebih segar dan melek. Tempatnya bersih dan nyaman, harga juga worth it. Recommended banget buat yang di Jepara! ✨"</p>
-                        </div>
-
-                        <div class="review-item">
-                            <div class="review-top">
-                                <div class="reviewer-avatar" style="background:linear-gradient(135deg,#fde68a,#f59e0b);">S</div>
-                                <div class="reviewer-info">
-                                    <div class="reviewer-name">Siti Maryam</div>
-                                    <div class="reviewer-stars">
-                                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
-                                    </div>
-                                </div>
-                                <div class="review-date">3 bulan lalu</div>
-                            </div>
-                            <p class="review-text">"Callus treatment-nya top banget, kaki jadi mulus dan lembut. Pelayanan cepat dan tidak mengecewakan. Sudah langganan di sini dari lama dan selalu puas! 🌸"</p>
-                        </div>
-                    </div>
-                </div>
+                <iframe
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3959.0!2d110.7708502!3d-6.5253308!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e7123c39ad21875%3A0xd77e4fd098899e2c!2sNISWA%20BEAUTY%20Nail%20%26%20Foot%20Spa!5e0!3m2!1sid!2sid!4v1715000000000!5m2!1sid!2sid"
+                    width="100%" height="420" style="border:0;display:block;" allowfullscreen="" loading="lazy"
+                    referrerpolicy="no-referrer-when-downgrade">
+                </iframe>
             </div>
         </div>
     </div>
 </section>
+
+
+<!-- ══ SECTION TESTIMONI PELANGGAN ══ -->
+<section id="testimoni" class="testimoni-section py-5">
+    <div class="container">
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-8 text-center">
+                <div class="section-label" data-aos="fade-up"><span>Kata Mereka</span></div>
+                <h2 class="section-title" data-aos="fade-up" data-aos-delay="150">Testimoni <span style="color:var(--cream-accent);">Pelanggan</span></h2>
+                <p class="text-muted" data-aos="fade-up" data-aos-delay="250" style="font-size:15px;">Kepercayaan pelanggan adalah kebanggaan kami</p>
+
+                <!-- Rating Summary -->
+                <div class="testimoni-rating-badge" data-aos="fade-up" data-aos-delay="350">
+                    <div class="testimoni-score">5.0</div>
+                    <div class="testimoni-stars">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                    </div>
+                    <div class="testimoni-rating-label">Berdasarkan ulasan Google Maps</div>
+                    <a href="https://maps.app.goo.gl/czQHcN15FMvfFZy76" target="_blank" class="review-write-btn ms-3">
+                        <i class="fab fa-google"></i> Tulis Ulasan
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carousel Testimoni -->
+        <div class="testimoni-carousel-wrapper" data-aos="fade-up" data-aos-delay="200">
+            <div class="testimoni-track" id="testimoniTrack">
+
+                <!-- Card 1 -->
+                <div class="testimoni-card">
+                    <div class="testimoni-quote-icon"><i class="fas fa-quote-left"></i></div>
+                    <p class="testimoni-text">"Nail art-nya bagus banget, hasilnya rapi dan tahan lama! Mbak-mbaknya ramah dan sabar. Foot spa-nya juga bikin kaki lega banget. Pasti balik lagi! <i class="fa-solid fa-hand-sparkles" style="color:#8B6F5E;font-size:0.9em;"></i>"</p>
+                    <div class="testimoni-footer">
+                        <div class="testimoni-avatar" style="background:linear-gradient(135deg,#f9a8d4,#f472b6);">N</div>
+                        <div class="testimoni-user-info">
+                            <div class="testimoni-name">Ninda Ayu</div>
+                            <div class="testimoni-stars-sm">
+                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                        <div class="testimoni-service-tag">Nail Art & Foot Spa</div>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="testimoni-card">
+                    <div class="testimoni-quote-icon"><i class="fas fa-quote-left"></i></div>
+                    <p class="testimoni-text">"Lashlift-nya keren banget, mata jadi keliatan lebih segar dan melek. Tempatnya bersih dan nyaman, harga juga worth it. Recommended banget buat yang di Jepara! <i class="fa-solid fa-sparkles" style="color:#D6C1A3;font-size:0.9em;"></i>"</p>
+                    <div class="testimoni-footer">
+                        <div class="testimoni-avatar" style="background:linear-gradient(135deg,#6ee7b7,#34d399);">R</div>
+                        <div class="testimoni-user-info">
+                            <div class="testimoni-name">Rizka Amalia</div>
+                            <div class="testimoni-stars-sm">
+                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                        <div class="testimoni-service-tag">Lashlift</div>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="testimoni-card">
+                    <div class="testimoni-quote-icon"><i class="fas fa-quote-left"></i></div>
+                    <p class="testimoni-text">"Callus treatment-nya top banget, kaki jadi mulus dan lembut. Pelayanan cepat dan tidak mengecewakan. Sudah langganan di sini dari lama dan selalu puas! <i class="fa-solid fa-fan" style="color:#f9a8d4;font-size:0.9em;"></i>"</p>
+                    <div class="testimoni-footer">
+                        <div class="testimoni-avatar" style="background:linear-gradient(135deg,#fde68a,#f59e0b);">S</div>
+                        <div class="testimoni-user-info">
+                            <div class="testimoni-name">Siti Maryam</div>
+                            <div class="testimoni-stars-sm">
+                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                        <div class="testimoni-service-tag">Callus Treatment</div>
+                    </div>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="testimoni-card">
+                    <div class="testimoni-quote-icon"><i class="fas fa-quote-left"></i></div>
+                    <p class="testimoni-text">"Smoothing-nya hasilnya halus banget dan tahan lama! Stafnya profesional dan ramah. Tempatnya cozy, betah deh berlama-lama di sini. Recommended! <i class="fa-solid fa-star" style="color:#f59e0b;font-size:0.9em;"></i>"</p>
+                    <div class="testimoni-footer">
+                        <div class="testimoni-avatar" style="background:linear-gradient(135deg,#a78bfa,#7c3aed);">D</div>
+                        <div class="testimoni-user-info">
+                            <div class="testimoni-name">Dian Pertiwi</div>
+                            <div class="testimoni-stars-sm">
+                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                        <div class="testimoni-service-tag">Smoothing</div>
+                    </div>
+                </div>
+
+                <!-- Card 5 -->
+                <div class="testimoni-card">
+                    <div class="testimoni-quote-icon"><i class="fas fa-quote-left"></i></div>
+                    <p class="testimoni-text">"Henna series-nya cantik banget, detail dan presisi! Mbak-mbaknya sabar banget ngerjainnya. Harganya juga sangat terjangkau untuk kualitas segini. Bakal balik lagi! <i class="fa-solid fa-leaf" style="color:#16a34a;font-size:0.9em;"></i>"</p>
+                    <div class="testimoni-footer">
+                        <div class="testimoni-avatar" style="background:linear-gradient(135deg,#86efac,#16a34a);">F</div>
+                        <div class="testimoni-user-info">
+                            <div class="testimoni-name">Fatimah Zahra</div>
+                            <div class="testimoni-stars-sm">
+                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                            </div>
+                        </div>
+                        <div class="testimoni-service-tag">Henna Series</div>
+                    </div>
+                </div>
+
+            </div><!-- end .testimoni-track -->
+
+            <!-- Nav Buttons -->
+            <button class="testimoni-nav testimoni-prev" id="testimoniPrev" aria-label="Sebelumnya">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <button class="testimoni-nav testimoni-next" id="testimoniNext" aria-label="Berikutnya">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+
+        <!-- Dots -->
+        <div class="testimoni-dots" id="testimoniDots"></div>
+    </div>
+</section>
+
+<script>
+(function() {
+    var track      = document.getElementById('testimoniTrack');
+    var prevBtn    = document.getElementById('testimoniPrev');
+    var nextBtn    = document.getElementById('testimoniNext');
+    var dotsWrap   = document.getElementById('testimoniDots');
+    if (!track) return;
+
+    var cards       = Array.from(track.querySelectorAll('.testimoni-card'));
+    var current     = 0;
+    var autoTimer   = null;
+    var perView     = getPerView();
+
+    function getPerView() {
+        return window.innerWidth >= 992 ? 3 : window.innerWidth >= 600 ? 2 : 1;
+    }
+
+    var totalSlides = Math.max(1, cards.length - perView + 1);
+
+    // Build dots
+    dotsWrap.innerHTML = '';
+    for (var i = 0; i < totalSlides; i++) {
+        var dot = document.createElement('span');
+        dot.className = 'testimoni-dot' + (i === 0 ? ' active' : '');
+        dot.dataset.i = i;
+        dot.addEventListener('click', function() { goTo(+this.dataset.i); });
+        dotsWrap.appendChild(dot);
+    }
+
+    function goTo(idx) {
+        current = Math.max(0, Math.min(idx, totalSlides - 1));
+        var pct = current * (100 / perView);
+        track.style.transform = 'translateX(-' + pct + '%)';
+        dotsWrap.querySelectorAll('.testimoni-dot').forEach(function(d, i) {
+            d.classList.toggle('active', i === current);
+        });
+        cards.forEach(function(c, i) {
+            c.classList.toggle('is-active', i >= current && i < current + perView);
+        });
+    }
+
+    function startAuto() {
+        autoTimer = setInterval(function() {
+            goTo(current + 1 < totalSlides ? current + 1 : 0);
+        }, 4500);
+    }
+    function stopAuto() { clearInterval(autoTimer); }
+
+    prevBtn.addEventListener('click', function() { stopAuto(); goTo(current - 1 >= 0 ? current - 1 : totalSlides - 1); startAuto(); });
+    nextBtn.addEventListener('click', function() { stopAuto(); goTo(current + 1 < totalSlides ? current + 1 : 0); startAuto(); });
+
+    window.addEventListener('resize', function() {
+        perView     = getPerView();
+        totalSlides = Math.max(1, cards.length - perView + 1);
+        current     = 0;
+        goTo(0);
+    });
+
+    goTo(0);
+    startAuto();
+})();
+</script>
 
 
 <?php include 'footer.php'; ?>
@@ -839,11 +1169,21 @@ document.querySelectorAll(".filter-buttons button").forEach(btn => {
         btn.classList.add("active");
         const filter = btn.dataset.filter;
         document.querySelectorAll(".product-card").forEach(card => {
-            card.style.display = (filter === "all" || card.dataset.category === filter) ? "block" : "none";
+            const show = filter === "all" || card.dataset.category === filter;
+            card.style.display = show ? "" : "none";
+            if (show) {
+                card.style.animation = "cardFadeIn 0.3s ease forwards";
+            }
         });
     });
 });
 </script>
+<style>
+@keyframes cardFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+</style>
 
 <!-- Order modal -->
 <script>

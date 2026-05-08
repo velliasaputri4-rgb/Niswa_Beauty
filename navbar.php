@@ -23,7 +23,7 @@ $current = basename($_SERVER['PHP_SELF']);
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="login.php">
-                        <i class="fas fa-user me-1"></i> Admin
+                        <i class="fas fa-user me-1"></i>
                     </a>
                 </li>
                 <li class="nav-item ms-lg-3">

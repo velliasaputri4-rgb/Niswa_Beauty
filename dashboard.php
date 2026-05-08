@@ -374,7 +374,6 @@ if (isset($_GET['delete_order']) && is_numeric($_GET['delete_order'])) {
         <li><a href="dashboard.php"><i class="fas fa-th-large"></i> Dashboard</a></li>
         <li><a href="#orders" onclick="closeDrawer();setTimeout(()=>document.getElementById('orders').scrollIntoView({behavior:'smooth'}),300);return false;"><i class="fas fa-shopping-bag"></i> Data Pembelian</a></li>
         <li><a href="booking.php" target="_blank"><i class="fas fa-calendar-plus"></i> Form Booking</a></li>
-        <li><a href="index.php" target="_blank"><i class="fas fa-globe"></i> Lihat Website</a></li>
     </ul>
     <div class="sidebar-section">Akun</div>
     <ul class="sidebar-nav">
@@ -404,7 +403,6 @@ if (isset($_GET['delete_order']) && is_numeric($_GET['delete_order'])) {
         <li><a href="dashboard.php" class="active"><i class="fas fa-th-large"></i> Dashboard</a></li>
         <li><a href="#orders" onclick="document.getElementById('orders').scrollIntoView({behavior:'smooth'});return false;"><i class="fas fa-shopping-bag"></i> Data Pembelian</a></li>
         <li><a href="booking.php" target="_blank"><i class="fas fa-calendar-plus"></i> Form Booking</a></li>
-        <li><a href="index.php" target="_blank"><i class="fas fa-globe"></i> Lihat Website</a></li>
     </ul>
     <div class="sidebar-section">Akun</div>
     <ul class="sidebar-nav">
@@ -416,7 +414,13 @@ if (isset($_GET['delete_order']) && is_numeric($_GET['delete_order'])) {
             </a>
         </li>
     </ul>
-    <div class="sidebar-user">
+    
+        <div class="sidebar-section">CMS</div>
+        <ul class="sidebar-nav">
+            <li><a href="cms.php" style="color:var(--gold);"><i class="fas fa-pencil-alt"></i> Panel CMS</a></li>
+            <li><a href="index.php" target="_blank"><i class="fas fa-external-link-alt"></i> Lihat Website</a></li>
+        </ul>
+        <div class="sidebar-user">
         <div class="av"><?= strtoupper(substr($_SESSION['user'], 0, 1)) ?></div>
         <div>
             <div class="name"><?= htmlspecialchars($_SESSION['user']) ?></div>
@@ -711,7 +715,7 @@ if (searchOrders) {
         document.querySelectorAll('#ordersTable tbody tr').forEach(tr => {
             tr.style.display = tr.innerText.toLowerCase().includes(q) ? '' : 'none';
         });
-    });
+    })
 }
 </script>
 </body>
