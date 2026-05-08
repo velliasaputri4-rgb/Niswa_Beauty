@@ -1046,6 +1046,347 @@ function closeProductPreview() {
 </script>
 
 
+<!-- ══════════════════════════════════════════════════
+     SECTION: PROFIL TOKO  (id="about" — masuk ke About)
+     Posisi: setelah Testimoni, sebelum Footer
+     Alur: Hero → Layanan → Harga → Produk → Lokasi → Testimoni → Profil Toko → Footer
+══════════════════════════════════════════════════ -->
+<section id="about" class="profil-toko-section">
+    <div class="container">
+
+        <!-- ── Section Header ── -->
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-7 text-center">
+                <div class="section-label" data-aos="fade-up"><span>Kenali Kami</span></div>
+                <h2 class="section-title" data-aos="fade-up" data-aos-delay="100">
+                    Profil <span style="color:var(--cream-accent);">Toko</span>
+                </h2>
+                <p class="text-muted" data-aos="fade-up" data-aos-delay="200" style="font-size:15px;">
+                    Kisah di balik setiap sentuhan kecantikan yang kami hadirkan untuk Anda
+                </p>
+            </div>
+        </div>
+
+        <!-- ── Biografi Pemilik ── -->
+        <div class="row justify-content-center mb-5 pb-4 profil-divider">
+            <div class="col-lg-8" data-aos="fade-up" data-aos-delay="100">
+                <div class="profil-badge">
+                    <i class="fas fa-crown me-2"></i>Pemilik
+                </div>
+                <h3 class="profil-name mt-2">Niswa</h3>
+                <p class="profil-tagline">"Kecantikan adalah kepercayaan diri yang paling murni."</p>
+                <p class="profil-bio">
+                    Pendiri Niswa Beauty memulai perjalanan usahanya dari jasa henna keliling dengan nama Niswa Henna. Dengan penuh semangat dan ketekunan, layanan dilakukan dari rumah ke rumah untuk memenuhi kebutuhan pelanggan di sekitar Jepara.
+
+Pada tahun 2018, dunia kecantikan khususnya nail art dan fake nails mulai berkembang pesat. Melihat peluang tersebut, pendiri mulai mempelajari dan mengembangkan layanan nail art menggunakan perlengkapan sederhana seperti nail polish. Berawal dari daerah Lebak Pakis Aji, hasil karya yang teliti dan pelayanan yang baik membuat nama Niswa mulai dikenal masyarakat.
+
+Perjalanan usaha semakin berkembang ketika mendapat dukungan dan inspirasi dari salah satu teman di Dubai dalam pengembangan dunia kecantikan. Memasuki tahun 2019, usaha mulai berjalan lebih lancar setelah mendapatkan supplier lokal dan pelanggan dari luar daerah seperti Kudus dan Tanjung, Semarang.
+                </p>
+                <p class="profil-bio">
+                    Tahun 2020–2021 menjadi masa penuh perjuangan sekaligus perkembangan. Pendiri mulai dikenal oleh beberapa publik figur lokal di Jepara yang menggunakan jasa nail art Niswa. Bahkan pada masa awal, beberapa layanan diberikan secara gratis sebagai bentuk belajar dan membangun relasi. Dukungan teman-teman menjadi salah satu alasan usaha ini terus bertahan dan berkembang.
+
+Pada tahun 2022, perjalanan usaha sempat mengalami ujian ketika pendiri mengalami keguguran sehingga mulai membatasi pekerjaan dengan lokasi yang terlalu jauh. Namun semangat untuk terus berkembang tidak berhenti. Di masa tersebut, usaha seserahan berkembang pesat dan menjadi salah satu layanan yang diminati pelanggan.
+
+Saat merintis sendiri, jam kerja dimulai dari pukul 10 pagi hingga 9 malam dengan jumlah pelanggan yang bisa mencapai lebih dari 7 orang per hari. Hingga kini, pendiri Niswa Beauty terus belajar dan berkembang, terutama dalam bidang media sosial, pelayanan, dan branding, dengan tetap mempertahankan sikap rendah hati dalam membangun usaha sendiri.
+                </p>
+            </div>
+        </div>
+
+        <!-- ── Biografi Toko ── -->
+        <div class="row align-items-center g-5 mb-5 pb-4 profil-divider flex-lg-row-reverse">
+            <div class="col-lg-5" data-aos="fade-left" data-aos-delay="100">
+                <div class="profil-img-frame profil-img-frame--alt">
+                    <img src="image/WhatsApp Image 2026-05-08 at 10.02.50.jpeg" alt="Foto Toko Niswà Beauty"
+                         style="width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:24px;display:block;">
+                    <div class="profil-img-deco profil-img-deco--alt"></div>
+                </div>
+            </div>
+            <div class="col-lg-7" data-aos="fade-right" data-aos-delay="200">
+                <div class="profil-badge profil-badge--toko">
+                    <i class="fas fa-store me-2"></i>Tentang Toko
+                </div>
+                <h3 class="profil-name">NISWÀ BEAUTY</h3>
+                <p class="profil-tagline">"Premium Beauty Experience di Jantung Jepara"</p>
+                <p class="profil-bio">
+                    Niswa Beauty merupakan usaha di bidang kecantikan yang berawal dari layanan henna sederhana bernama Niswa Henna. Seiring berkembangnya tren kecantikan pada tahun 2018, usaha ini mulai merambah ke layanan nail art dan fake nails untuk memenuhi kebutuhan pelanggan, khususnya calon pengantin.
+
+Dengan kualitas pelayanan dan hasil karya yang terus berkembang, Niswa mulai dikenal oleh masyarakat sekitar hingga mendapatkan pelanggan dari luar daerah pada tahun 2019. Perkembangan usaha semakin baik setelah memiliki supplier lokal dan jaringan pelanggan yang lebih luas.
+
+Pada tahun 2020, Niswa Beauty membuka studio kecil pertama di rumah daerah Tengguli. Tidak hanya melayani nail art, usaha ini juga menyediakan layanan wedding, gift, dan seserahan. Seiring waktu, layanan nail art menjadi semakin diminati dan dikenal oleh berbagai kalangan di Jepara.
+                </p>
+                <p class="profil-bio">
+                    Tanggal 15 Juli 2023 menjadi tonggak penting dengan resmi berdirinya Niswa Beauty bersama dua orang tim pertama. Sejak saat itu, usaha berkembang lebih profesional dengan pelayanan yang semakin lengkap dan terstruktur. Beberapa kerja sama dari luar kota hingga tawaran bergabung dengan brand kecantikan besar pernah datang, namun Niswa Beauty memilih untuk tetap berkembang secara mandiri.
+                <div class="profil-values-row">
+                    <div class="profil-value-item">
+                        <i class="fas fa-heart"></i>
+                        <span>Pelayanan Tulus</span>
+                    </div>
+                    <div class="profil-value-item">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Produk Aman & Halal</span>
+                    </div>
+                    <div class="profil-value-item">
+                        <i class="fas fa-star"></i>
+                        <span>Kualitas Premium</span>
+                    </div>
+                    <div class="profil-value-item">
+                        <i class="fas fa-smile"></i>
+                        <span>Kepuasan Pelanggan</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Sejarah Teknologi ── -->
+        <div data-aos="fade-up" data-aos-delay="100">
+            <div class="text-center mb-5">
+                <div class="profil-badge profil-badge--tech mx-auto">
+                    <i class="fas fa-history me-2"></i>Sejarah Teknologi
+                </div>
+                <h3 class="profil-name mt-3">Perjalanan Teknologi Toko</h3>
+                <p class="text-muted" style="font-size:15px;max-width:520px;margin:0 auto;">
+                    Dari alat sederhana hingga sistem digital modern — begini kami terus berkembang untuk melayani Anda lebih baik
+                </p>
+            </div>
+
+            <div class="tech-prose-wrap" data-aos="fade-up" data-aos-delay="150">
+                <p class="tech-prose-text">
+                    Niswà Beauty juga terus mengikuti perkembangan zaman. Berawal dari promosi sederhana melalui
+                    <span class="tech-prose-highlight"><i class="fab fa-whatsapp me-1"></i>Story WhatsApp</span>,
+                    kini hadir lebih luas lewat
+                    <span class="tech-prose-highlight"><i class="fab fa-instagram me-1"></i>Instagram</span>
+                    dan
+                    <span class="tech-prose-highlight"><i class="fab fa-tiktok me-1"></i>TikTok</span>
+                    — termasuk penggunaan sistem pembayaran digital
+                    <span class="tech-prose-highlight"><i class="fas fa-qrcode me-1"></i>QRIS</span>
+                    sejak awal tahun 2025. Hingga saat ini, Niswà Beauty terus berkembang untuk memberikan pengalaman kecantikan terbaik bagi setiap pelanggan.
+                </p>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- ══ PROFIL TOKO STYLES ══ -->
+<style>
+/* ─── Section Wrapper ─── */
+.profil-toko-section {
+    background: linear-gradient(180deg, #fdfaf7 0%, #f5ede4 50%, #fdfaf7 100%);
+    padding: 90px 0;
+    position: relative;
+    overflow: hidden;
+}
+.profil-toko-section::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -80px;
+    width: 360px; height: 360px;
+    background: radial-gradient(circle, rgba(214,193,163,0.18) 0%, transparent 70%);
+    pointer-events: none;
+}
+.profil-divider {
+    border-bottom: 1px solid rgba(214,193,163,0.35);
+    padding-bottom: 48px;
+    margin-bottom: 48px !important;
+}
+
+/* ─── Badge ─── */
+.profil-badge {
+    display: inline-flex;
+    align-items: center;
+    background: linear-gradient(135deg, #8B6F5E, #D6C1A3);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: 'Poppins', sans-serif;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 6px 18px;
+    border-radius: 50px;
+    margin-bottom: 16px;
+}
+.profil-badge--toko  { background: linear-gradient(135deg, #5A4A42, #8B6F5E); }
+.profil-badge--tech  { background: linear-gradient(135deg, #2d1f17, #5A4A42); }
+
+/* ─── Image Frame ─── */
+.profil-img-frame {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    max-width: 400px;
+}
+.profil-img-placeholder {
+    width: 100%;
+    aspect-ratio: 4/5;
+    border-radius: 24px;
+    background: linear-gradient(135deg, #f5ede4, #ede0d4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #CBB89D;
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    border: 2px dashed #D6C1A3;
+}
+.profil-img-placeholder i { font-size: 64px; margin-bottom: 12px; }
+.profil-img-placeholder--alt { background: linear-gradient(135deg, #ede0d4, #e5d5c5); }
+.profil-img-deco {
+    position: absolute;
+    bottom: -16px; right: -16px;
+    width: 80%; height: 80%;
+    border: 2px solid rgba(203,184,157,0.40);
+    border-radius: 24px;
+    z-index: -1;
+}
+.profil-img-deco--alt { bottom: -16px; left: -16px; right: auto; }
+
+/* ─── Text ─── */
+.profil-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: #2d1f17;
+    margin-bottom: 8px;
+}
+.profil-tagline {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    color: #8B6F5E;
+    font-size: 16px;
+    margin-bottom: 18px;
+    border-left: 3px solid #D6C1A3;
+    padding-left: 14px;
+}
+.profil-bio {
+    color: #555;
+    font-size: 15px;
+    line-height: 1.8;
+    font-family: 'Poppins', sans-serif;
+    margin-bottom: 14px;
+}
+
+/* ─── Stats ─── */
+.profil-stats-row {
+    display: flex;
+    gap: 32px;
+    margin-top: 28px;
+    flex-wrap: wrap;
+}
+.profil-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+.profil-stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: #8B6F5E;
+    line-height: 1;
+}
+.profil-stat-label {
+    font-family: 'Poppins', sans-serif;
+    font-size: 11px;
+    color: #888;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ─── Values ─── */
+.profil-values-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 28px;
+}
+.profil-value-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+    border: 1px solid rgba(214,193,163,0.4);
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: #5A4A42;
+    cursor: default;
+    transition: transform 0.28s cubic-bezier(0.4,0,0.2,1),
+                box-shadow 0.28s cubic-bezier(0.4,0,0.2,1),
+                background 0.28s, color 0.28s, border-color 0.28s;
+}
+.profil-value-item:hover {
+    background: linear-gradient(135deg, #8B6F5E, #D6C1A3);
+    border-color: transparent;
+    color: #fff;
+    transform: translateY(-4px) scale(1.03);
+    box-shadow: 0 10px 28px rgba(139,111,94,0.30);
+}
+.profil-value-item i {
+    color: #8B6F5E;
+    font-size: 16px;
+    width: 20px;
+    text-align: center;
+    transition: color 0.28s, transform 0.28s;
+}
+.profil-value-item:hover i {
+    color: #fff;
+    transform: scale(1.2) rotate(-8deg);
+}
+
+/* ─── Tech Prose ─── */
+.tech-prose-wrap {
+    max-width: 680px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 20px;
+    padding: 36px 40px;
+    border: 1px solid rgba(214,193,163,0.35);
+    box-shadow: 0 4px 24px rgba(139,111,94,0.09);
+}
+.tech-prose-text {
+    font-family: 'Poppins', sans-serif;
+    font-size: 15.5px;
+    color: #555;
+    line-height: 2;
+    margin: 0;
+}
+.tech-prose-highlight {
+    display: inline-flex;
+    align-items: center;
+    background: linear-gradient(135deg, rgba(139,111,94,0.10), rgba(214,193,163,0.18));
+    color: #8B6F5E;
+    font-weight: 600;
+    border: 1px solid rgba(139,111,94,0.22);
+    border-radius: 50px;
+    padding: 2px 12px;
+    font-size: 14px;
+    white-space: nowrap;
+}
+@media (max-width: 576px) {
+    .tech-prose-wrap { padding: 24px 20px; }
+    .tech-prose-text { font-size: 14px; }
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 768px) {
+    .profil-name { font-size: 26px; }
+    .profil-stats-row { gap: 20px; }
+    .profil-stat-num { font-size: 26px; }
+    .profil-values-row { grid-template-columns: 1fr; }
+    .tech-timeline { padding-left: 20px; }
+    .tech-timeline::before { left: 11px; }
+    .tech-timeline-dot { width: 32px; height: 32px; margin-left: -43px; font-size: 13px; }
+    .tech-timeline-content { padding: 18px 18px; }
+    .tech-timeline-title { font-size: 16px; }
+    .profil-img-frame { max-width: 100%; }
+}
+</style>
+
 <?php include 'footer.php'; ?>
 
 <button id="backToTop"><i class="fas fa-chevron-up"></i></button>

@@ -135,8 +135,6 @@ $pageTitle = "Booking Appointment — NISWÀ BEAUTY";
         var navbar = document.querySelector('nav, .navbar, header, #navbar, [class*="navbar"]');
         var navHeight = navbar ? navbar.offsetHeight : 80;
         bar.style.top = navHeight + 'px';
-        var hero = document.querySelector('.premium-booking-hero');
-        if (hero) hero.style.marginTop = (navHeight + bar.offsetHeight) + 'px';
     }
     window.addEventListener('load', setBarPosition);
     window.addEventListener('resize', setBarPosition);
@@ -158,18 +156,8 @@ $pageTitle = "Booking Appointment — NISWÀ BEAUTY";
 </script>
 <?php endif; ?>
 
-<!-- Hero -->
-<section class="premium-booking-hero" style="margin-top:40px;">
-    <div class="hero-overlay"></div>
-    <div class="container position-relative">
-        <div class="section-label mt-4 mb-3"><span>Reservation Excellence</span></div>
-        <h1 class="display-2 mb-4">Booking<br><span class="gradient-text">Appointment</span></h1>
-        <p class="lead text-white-90 max-w-lg">Pesan jadwal perawatan Anda dengan mudah dan cepat bersama tim profesional NISWÀ BEAUTY.</p>
-    </div>
-</section>
-
 <!-- Booking Form -->
-<section class="premium-booking-section py-5">
+<section class="premium-booking-section py-5" style="margin-top:100px;">
     <div class="container">
 
         <div class="row justify-content-center g-5">

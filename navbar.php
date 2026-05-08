@@ -15,11 +15,14 @@ $current = basename($_SERVER['PHP_SELF']);
                 <li class="nav-item">
                     <a class="nav-link <?= $current=='index.php' ? 'active' : '' ?>" href="index.php">Home</a>
                 </li>
+                 <li class="nav-item">
+                    <a class="nav-link" href="<?= $current=='index.php' ? '#layanan' : 'index.php#layanan' ?>" id="servicesLink">Services</a>
+                </li>
                 <li class="nav-item">
                     <a class="nav-link" href="<?= $current=='index.php' ? '#produk' : 'index.php#produk' ?>" id="productLink">Product</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="<?= $current=='index.php' ? '#layanan' : 'index.php#layanan' ?>" id="servicesLink">Services</a>
+                    <a class="nav-link" href="<?= $current=='index.php' ? '#about' : 'index.php#about' ?>" id="aboutLink">About</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="login.php">
@@ -60,5 +63,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     scrollToSection('produk',  document.getElementById('productLink'));
     scrollToSection('layanan', document.getElementById('servicesLink'));
+    scrollToSection('about',   document.getElementById('aboutLink'));
 });
 </script>

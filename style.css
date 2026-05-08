@@ -2001,46 +2001,8 @@ section#layanan { padding-top: 0 !important; margin-top: 0 !important; }
    PRECISION BOOKING REFINEMENT
    ============================================ */
 
-.premium-booking-hero {
-    min-height: 60vh;
-    background: linear-gradient(rgba(180,148,110,0.1), rgba(212,168,83,0.05)), url('https://images.unsplash.com/photo-1519066871952-aca678c8e998?w=1920&fit=crop');
-    background-size: cover;
-    background-position: center;
-    display: flex;
-    align-items: center;
-    position: relative;
-}
 
-.premium-booking-hero .container {
-    max-width: 1200px;
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
-}
 
-.premium-booking-hero .breadcrumb {
-    font-size: 14px;
-    font-weight: 500;
-}
-
-.premium-booking-hero .section-label {
-    font-size: 13px;
-    letter-spacing: 2.5px;
-    margin-bottom: 16px;
-}
-
-.premium-booking-hero h1 {
-    font-size: clamp(38px, 8vw, 68px);
-    line-height: 1.1;
-    margin-bottom: 20px;
-    text-shadow: 0 4px 24px rgba(0,0,0,0.3);
-}
-
-.premium-booking-hero .lead {
-    font-size: clamp(16px, 2.8vw, 20px);
-    line-height: 1.6;
-    max-width: 550px;
-    font-weight: 300;
-}
 
 /* Booking Section Precision */
 .premium-booking-section {
@@ -2569,20 +2531,8 @@ section#layanan { padding-top: 0 !important; margin-top: 0 !important; }
 /* AOS custom overrides */
 [data-aos] { will-change: transform, opacity; }
 
-.premium-booking-hero .hero-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(0,0,0,0.5), rgba(180,148,110,0.2));
-}
 
-.premium-booking-hero .gradient-text {
-    background: linear-gradient(135deg, white, var(--gold));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
 
-.premium-booking-hero .text-white-90 { color: rgba(255,255,255,0.9) !important; }
-.max-w-lg { max-width: 40rem; }
 
 .premium-booking-section { background: #ffffff; }
 

@@ -11,10 +11,9 @@
                     <div class="footer-brand">NISWÀ BEAUTY</div>
                     <p class="footer-desc">Kecantikan bertemu kemewahan, dengan sentuhan profesional.</p>
                     <div class="footer-socials">
-                        <a href="#" class="social-btn"><i class="fab fa-instagram"></i></a>
-                        <a href="#" class="social-btn"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#" class="social-btn"><i class="fab fa-tiktok"></i></a>
-                        <a href="#" class="social-btn"><i class="fab fa-whatsapp"></i></a>
+                        <a href="https://www.instagram.com/niswanail?igsh=MXJtYW1kenhuN3VpNA==" target="_blank" rel="noopener" class="social-btn"><i class="fab fa-instagram"></i></a>
+                        <a href="https://www.tiktok.com/@niswabeauty?_r=1&_t=ZS-96BG9fNdy7Q" target="_blank" rel="noopener" class="social-btn"><i class="fab fa-tiktok"></i></a>
+                        <a href="https://wa.me/0882006903068" target="_blank" rel="noopener" class="social-btn"><i class="fab fa-whatsapp"></i></a>
                     </div>
                 </div>
 

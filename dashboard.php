@@ -225,6 +225,7 @@ if (isset($_GET['delete_order']) && is_numeric($_GET['delete_order'])) {
 
             /* Search box full width */
             .table-top { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .search-wrap { width: 100%; }
             .search-box { width: 100%; }
 
             /* Hide regular table, show card view */
@@ -298,9 +299,16 @@ if (isset($_GET['delete_order']) && is_numeric($_GET['delete_order'])) {
             display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
         }
         .table-top h5 { font-size: 15px; font-weight: 700; color: var(--text-dark); margin: 0; }
+        .search-wrap {
+            position: relative; display: flex; align-items: center;
+        }
+        .search-icon {
+            position: absolute; left: 13px;
+            color: var(--gold-dark); font-size: 13px; pointer-events: none;
+        }
         .search-box {
             border: 1.5px solid #e8e0d8; border-radius: 30px;
-            padding: 8px 16px; font-size: 13px; outline: none;
+            padding: 8px 16px 8px 34px; font-size: 13px; outline: none;
             font-family: 'Poppins', sans-serif; width: 220px;
         }
         .search-box:focus { border-color: var(--gold); }
@@ -468,7 +476,10 @@ if (isset($_GET['delete_order']) && is_numeric($_GET['delete_order'])) {
     <div class="table-wrap">
         <div class="table-top">
             <h5><i class="fas fa-list me-2" style="color:var(--gold);"></i>Data Semua Booking</h5>
-            <input type="text" class="search-box" id="searchInput" placeholder="🔍 Cari nama, layanan...">
+            <div class="search-wrap">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" class="search-box" id="searchInput" placeholder="Cari nama, layanan...">
+            </div>
         </div>
 
         <?php if ($result && mysqli_num_rows($result) > 0): ?>
@@ -549,7 +560,10 @@ if (isset($_GET['delete_order']) && is_numeric($_GET['delete_order'])) {
     <div class="table-wrap" id="orders" style="margin-top:36px;">
         <div class="table-top">
             <h5><i class="fas fa-shopping-bag me-2" style="color:var(--gold);"></i>Data Pembelian Produk</h5>
-            <input type="text" class="search-box" id="searchOrders" placeholder="🔍 Cari nama, produk...">
+            <div class="search-wrap">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" class="search-box" id="searchOrders" placeholder="Cari nama, produk...">
+            </div>
         </div>
 
         <?php if ($ordersResult && mysqli_num_rows($ordersResult) > 0): ?>
