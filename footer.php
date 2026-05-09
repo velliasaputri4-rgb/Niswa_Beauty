@@ -33,8 +33,8 @@
                     <h6 class="footer-title">Contact Us</h6>
                     <ul class="footer-contact" style="text-align:left;">
                         <li><i class="fas fa-map-marker-alt"></i><span>Bangsri, Jepara, Jawa Tengah</span></li>
-                        <li><i class="fas fa-phone-alt"></i><span>+62 897 1440 805</span></li>
-                        <li><i class="fas fa-envelope"></i><span>velliaragil4@gmail.com</span></li>
+                        <li><i class="fas fa-phone-alt"></i><span>+62 882-0069-03068</span></li>
+                        <li><i class="fas fa-envelope"></i><span>niswabeauty15@gmail.com</span></li>
                         <li><i class="fas fa-clock"></i><span>Senin – Sabtu: 09:00 – 20:00</span></li>
                     </ul>
                 </div>
