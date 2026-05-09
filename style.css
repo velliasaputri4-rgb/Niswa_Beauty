@@ -4349,7 +4349,7 @@ section p {
    TESTIMONI PELANGGAN — modern carousel
    ================================================ */
 .testimoni-section {
-    background: linear-gradient(160deg, #fdfaf7 0%, #F2E4D4 50%, #fdfaf7 100%);
+    background: #fdfaf7;
     padding: 80px 0 70px;
     position: relative;
     overflow: hidden;

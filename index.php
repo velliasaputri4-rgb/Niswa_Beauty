@@ -183,44 +183,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order']) && !empty($_
         <div class="row g-4">
             <div class="col-lg-3 col-md-6">
                 <div class="service-box" onclick="openServiceGallery('Haircut', [
-                    'image/download (7).jpg'
+                    'image/download (9).jpg',
+                    'image/I LOVE HAIRSTYLE __.jpg',
+                    'image/Long layers cutting_ (1).jpg',
+                    'image/download (10).jpg'
                 ])">
-                    <img src="image/download (7).jpg" alt="Haircut">
+                    <img src="image/download (9).jpg" alt="Haircut">
                     <div class="overlay"><i class="fas fa-images me-1"></i>Haircut</div>
                     <div class="service-click-hint"><i class="fas fa-eye"></i></div>
                 </div>
             </div>
             <div class="col-lg-3 col-md-6">
                 <div class="service-box" onclick="openServiceGallery('Coloring', [
-                    'image/coloring.jpg'
+                    'image/WhatsApp Image 2026-05-08 at 11.00.07.jpeg',
+                    'image/WhatsApp Image 2026-05-08 at 11.00.07 (1).jpeg',
+                    'image/WhatsApp Image 2026-05-08 at 11.00.08.jpeg',
+                    'image/WhatsApp Image 2026-05-08 at 11.00.11.jpeg',
+                    'image/WhatsApp Image 2026-05-08 at 11.00.11 (1).jpeg'
                 ])">
-                    <img src="image/coloring.jpg" alt="Coloring">
+                    <img src="image/WhatsApp Image 2026-05-08 at 11.00.07.jpeg" alt="Coloring">
                     <div class="overlay"><i class="fas fa-images me-1"></i>Coloring</div>
                     <div class="service-click-hint"><i class="fas fa-eye"></i></div>
                 </div>
             </div>
             <div class="col-lg-3 col-md-6">
                 <div class="service-box" onclick="openServiceGallery('Nailart', [
-                    'image/nailart.jpeg',
-                    'image/homenailart.jpeg'
+                    'image/you bring the designs, and ill deliver! 🎀  ❗️How to book_ Structured Gel Mani with Makenzie + Advanced Art @pinkieorlando or through the link in my bio! ❗️   @luminary_nail_systems Multiflex Builder Base (1).jpg',
+                    'image/Fall nails brown nails inspo.jpg',
+                    'image/download (11).jpg',
+                    'image/download (12).jpg',
+                    'image/download (13).jpg',
+                    'image/download (14).jpg'
                 ])">
-                    <img src="image/nailart.jpeg" alt="Nailart">
+                    <img src="image/Fall nails brown nails inspo.jpg" alt="Nailart">
                     <div class="overlay"><i class="fas fa-images me-1"></i>Nailart</div>
                     <div class="service-click-hint"><i class="fas fa-eye"></i></div>
                 </div>
             </div>
             <div class="col-lg-3 col-md-6">
-                <div class="service-box" onclick="openServiceGallery('Hair Treatments', [
-                    'image/\u2800 _\u0440\u0430\u0431\u043e\u0447\u0435\u0435 \u043f\u0440\u043e\u0441\u0442\u0440\u0430\u043d\u0441\u0442\u0432\u043e \u043c\u0430\u0441\u0442\u0435\u0440\u0430 \u0440\u0435\u043a\u043e\u043d\u0441\u0442\u0440\u0443\u043a\u0446\u0438\u0438 - \u044d\u0442\u043e \u043d\u0435 \u0432\u0441\u0435\u0433\u0434\u0430 \u043f\u0440\u043e \u044d\u0441\u0442\u0435\u0442\u043a\u0443 \u0432\u043e\u043b\u043e\u0441 , \u0438\u043d\u043e\u0433\u0434\u0430 \u044d\u0442\u043e \u043f\u0440\u043e \u043f\u044b\u043b\u044c, \u0440\u0430\u0437\u043c\u043e\u043a\u0448\u0438\u0435 \u043f\u0430\u043b\u044c\u0446\u044b, \u0438 \u0432\u043e\u043b\u043e\u0441\u044b \u0432 \u0442\u0435\u0445 \u043c\u0435\u0441\u0442\u0430\u0445, \u0433\u0434\u0435 \u0442\u044b \u0438\u0445 \u043d\u0435 \u043e\u0436\u0438\u0434\u0430\u0435\u0448\u044c \u0443\u0432\u0438\u0434\u0435\u0442\u044c \ud83d\ude05.jpg'
+                <div class="service-box" onclick="openServiceGallery('Hair Treatment', [
+                    'image/WhatsApp Image 2026-05-08 at 22.08.31.jpeg',
+                    'image/Keratin Hair Transformation 💫 Before & After.jpg'
                 ])">
-                    <img src="image/⠀ _рабочее пространство мастера реконструкции - это не всегда про эстетку волос , иногда это про пыль, размокшие пальцы, и волосы в тех местах, где ты их не ожидаешь увидеть .jpg" alt="Hair Treatments">
-                    <div class="overlay"><i class="fas fa-images me-1"></i>Hair Treatments</div>
+                    <img src="image/WhatsApp Image 2026-05-08 at 22.08.31.jpeg" alt="Hair Treatment">
+                    <div class="overlay"><i class="fas fa-images me-1"></i>Hair Treatment</div>
                     <div class="service-click-hint"><i class="fas fa-eye"></i></div>
                 </div>
             </div>
+           
             <div class="col-lg-3 col-md-6">
                 <div class="service-box" onclick="openServiceGallery('Foot SPA', [
-                    'image/download (8).jpg'
+                    'image/download (8).jpg',
+                    'image/footspa.jpeg',
+                    'image/WhatsApp Image 2026-05-06 at 10.04.34.jpeg'
                 ])">
                     <img src="image/download (8).jpg" alt="Foot SPA">
                     <div class="overlay"><i class="fas fa-images me-1"></i>Foot SPA</div>
@@ -229,16 +244,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order']) && !empty($_
             </div>
             <div class="col-lg-3 col-md-6">
                 <div class="service-box" onclick="openServiceGallery('Henna Series', [
-                    'image/henna.jpg'
+                    'image/WhatsApp Image 2026-05-08 at 11.03.43.jpeg',
+                    'image/WhatsApp Image 2026-05-08 at 11.05.55.jpeg',
+                    'image/WhatsApp Image 2026-05-08 at 22.06.29.jpeg',
+                    'image/WhatsApp Image 2026-05-08 at 22.06.29 (1).jpeg',
+                    'image/WhatsApp Image 2026-05-08 at 22.06.29 (2).jpeg'
                 ])">
-                    <img src="image/henna.jpg" alt="Henna Series">
+                    <img src="image/WhatsApp Image 2026-05-08 at 11.03.43.jpeg" alt="Henna Series">
                     <div class="overlay"><i class="fas fa-images me-1"></i>Henna Series</div>
                     <div class="service-click-hint"><i class="fas fa-eye"></i></div>
                 </div>
             </div>
             <div class="col-lg-3 col-md-6">
                 <div class="service-box" onclick="openServiceGallery('Press on Nail', [
-                    'image/download (6).jpg'
+                    'image/download (6).jpg',
+                    'image/download (15).jpg',
+                    'image/cat eye nails cherry 🍒 red nails (3).jpg',
+                    'image/download (18).jpg'
                 ])">
                     <img src="image/download (6).jpg" alt="Press on nail">
                     <div class="overlay"><i class="fas fa-images me-1"></i>Press on nail</div>
@@ -247,17 +269,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order']) && !empty($_
             </div>
             <div class="col-lg-3 col-md-6">
                 <div class="service-box" onclick="openServiceGallery('Eye Lash', [
-                    'image/eyelash.jpeg'
+                    'image/WhatsApp Image 2026-05-08 at 22.14.29.jpeg',
+                    'image/WhatsApp Image 2026-05-08 at 22.16.29.jpeg',
+                    'image/WhatsApp Image 2026-05-08 at 22.16.30.jpeg'
                 ])">
-                    <img src="image/eyelash.jpeg" alt="Eye lash">
-                    <div class="overlay"><i class="fas fa-images me-1"></i>Eye lash</div>
+                    <img src="image/WhatsApp Image 2026-05-08 at 22.14.29.jpeg" alt="Eye Lash">
+                    <div class="overlay"><i class="fas fa-images me-1"></i>Eye Lash</div>
                     <div class="service-click-hint"><i class="fas fa-eye"></i></div>
                 </div>
             </div>
         </div>
     </div>
 </section>
-
 <!-- ══ SERVICE GALLERY MODAL ══ -->
 <div id="serviceGalleryModal" aria-hidden="true">
     <div class="sgm-backdrop" onclick="closeServiceGallery()"></div>
@@ -634,7 +657,7 @@ function togglePrice(id, btn) {
 
 <style>
 /* ══ PRODUCT SECTION — MODERN CARDS ══ */
-.section-product { background: linear-gradient(180deg, #f5ede4 0%, #fdfaf7 100%); padding: 80px 0; }
+.section-product { background: linear-gradient(180deg, #f5ede4 0%, #fdfaf7 100%); padding: 50px 0; }
 
 .product-section-title { text-align: center; margin-bottom: 32px; }
 .product-section-title h2 { font-weight: 700; font-size: 34px; font-family: 'Playfair Display', serif; color: #2d1f17; }
@@ -1172,7 +1195,7 @@ Pada tahun 2020, Niswa Beauty membuka studio kecil pertama di rumah daerah Tengg
 /* ─── Section Wrapper ─── */
 .profil-toko-section {
     background: linear-gradient(180deg, #fdfaf7 0%, #f5ede4 50%, #fdfaf7 100%);
-    padding: 90px 0;
+    padding: 50px 0;
     position: relative;
     overflow: hidden;
 }
