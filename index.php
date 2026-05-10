@@ -2,15 +2,18 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 session_start();
-$pageTitle  = "NISWÀ BEAUTY — Premium Beauty Experience";
+
 $isLoggedIn = isset($_SESSION['user']) && (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin');
 $userName   = $_SESSION['user'] ?? '';
 
-// Koneksi (untuk order produk)
+/* ══════════════════════════════════════════════
+   DATABASE CONNECTION
+══════════════════════════════════════════════ */
 $conn = @mysqli_connect("localhost", "root", "", "salon_db");
 if ($conn) {
     mysqli_set_charset($conn, 'utf8mb4');
-    // Buat tabel orders jika belum ada
+
+    // Pastikan tabel orders ada
     mysqli_query($conn, "CREATE TABLE IF NOT EXISTS orders (
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT DEFAULT NULL,
@@ -24,21 +27,204 @@ if ($conn) {
         catatan TEXT,
         created_at DATETIME DEFAULT NOW()
     )");
-    // AUTO-FIX: tambah kolom yang mungkin belum ada
-    $fixCols = [
-        "user_id" => "ALTER TABLE orders ADD COLUMN user_id INT DEFAULT NULL",
-        "catatan"  => "ALTER TABLE orders ADD COLUMN catatan TEXT",
-        "total"    => "ALTER TABLE orders ADD COLUMN total VARCHAR(20)",
-    ];
-    foreach ($fixCols as $col => $sql) {
+    // AUTO-FIX kolom
+    foreach (["user_id"=>"ALTER TABLE orders ADD COLUMN user_id INT DEFAULT NULL",
+              "catatan" =>"ALTER TABLE orders ADD COLUMN catatan TEXT",
+              "total"   =>"ALTER TABLE orders ADD COLUMN total VARCHAR(20)"] as $col=>$sql) {
         $cek = mysqli_query($conn, "SHOW COLUMNS FROM orders LIKE '$col'");
-        if ($cek && mysqli_num_rows($cek) === 0) {
-            mysqli_query($conn, $sql);
-        }
+        if ($cek && mysqli_num_rows($cek) === 0) mysqli_query($conn, $sql);
     }
 }
 
-// Handle AJAX order
+/* ══════════════════════════════════════════════
+   HELPER FUNCTIONS
+══════════════════════════════════════════════ */
+function getContent($conn, $section, $key, $default = '') {
+    if (!$conn) return $default;
+    $s = mysqli_real_escape_string($conn, $section);
+    $k = mysqli_real_escape_string($conn, $key);
+    $r = mysqli_query($conn, "SELECT value FROM cms_content WHERE section='$s' AND `key`='$k' LIMIT 1");
+    if ($r && $row = mysqli_fetch_assoc($r)) return $row['value'];
+    return $default;
+}
+function getProfil($conn, $section, $key, $default = '') {
+    if (!$conn) return $default;
+    $s = mysqli_real_escape_string($conn, $section);
+    $k = mysqli_real_escape_string($conn, $key);
+    $r = mysqli_query($conn, "SELECT value FROM cms_profil WHERE section='$s' AND `key`='$k' LIMIT 1");
+    if ($r && $row = mysqli_fetch_assoc($r)) return $row['value'];
+    return $default;
+}
+function esc($v) { return htmlspecialchars($v, ENT_QUOTES, 'UTF-8'); }
+
+/* ══════════════════════════════════════════════
+   LOAD SEMUA DATA DARI DATABASE
+══════════════════════════════════════════════ */
+
+// ── Hero ──
+$hero = [
+    'title'         => getContent($conn,'hero','title',         'Temukan Kecantikan Terbaikmu'),
+    'subtitle'      => getContent($conn,'hero','subtitle',      'Layanan premium untuk tampilan terbaik Anda'),
+    'btn_primary'   => getContent($conn,'hero','btn_primary',   'Reservasi Sekarang'),
+    'btn_secondary' => getContent($conn,'hero','btn_secondary', 'Lihat Layanan'),
+    'img1'          => getContent($conn,'hero','img1',          'image/homenailart.jpeg'),
+    'img2'          => getContent($conn,'hero','img2',          ''),
+    'img3'          => getContent($conn,'hero','img3',          ''),
+];
+
+// ── Kontak ──
+$kontak = [
+    'salon_name' => getContent($conn,'kontak','salon_name','NISWÀ BEAUTY'),
+    'address'    => getContent($conn,'kontak','address',   'Jl. Watulumpang, Bangsri, Jepara'),
+    'hours'      => getContent($conn,'kontak','hours',     'Senin – Minggu, 08.00 – 20.00'),
+    'whatsapp'   => getContent($conn,'kontak','whatsapp',  '62812345678'),
+    'maps_embed' => getContent($conn,'kontak','maps_embed','https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3959.0!2d110.7708502!3d-6.5253308!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e7123c39ad21875%3A0xd77e4fd098899e2c!2sNISWA%20BEAUTY%20Nail%20%26%20Foot%20Spa!5e0!3m2!1sid!2sid!4v1715000000000!5m2!1sid!2sid'),
+    'maps_link'  => getContent($conn,'kontak','maps_link', 'https://maps.app.goo.gl/czQHcN15FMvfFZy76'),
+];
+
+// ── Profil ──
+$profil = [
+    'owner_name'    => getProfil($conn,'profil','owner_name',    'Niswa'),
+    'owner_tagline' => getProfil($conn,'profil','owner_tagline', '"Kecantikan adalah kepercayaan diri yang paling murni."'),
+    'owner_bio1'    => getProfil($conn,'profil','owner_bio1',
+        'Pendiri Niswa Beauty memulai perjalanan usahanya dari jasa henna keliling dengan nama Niswa Henna. Dengan penuh semangat dan ketekunan, layanan dilakukan dari rumah ke rumah untuk memenuhi kebutuhan pelanggan di sekitar Jepara.' . "\n\n" .
+        'Pada tahun 2018, dunia kecantikan khususnya nail art dan fake nails mulai berkembang pesat. Melihat peluang tersebut, pendiri mulai mempelajari dan mengembangkan layanan nail art menggunakan perlengkapan sederhana seperti nail polish. Berawal dari daerah Lebak Pakis Aji, hasil karya yang teliti dan pelayanan yang baik membuat nama Niswa mulai dikenal masyarakat.' . "\n\n" .
+        'Perjalanan usaha semakin berkembang ketika mendapat dukungan dan inspirasi dari salah satu teman di Dubai dalam pengembangan dunia kecantikan. Memasuki tahun 2019, usaha mulai berjalan lebih lancar setelah mendapatkan supplier lokal dan pelanggan dari luar daerah seperti Kudus dan Tanjung, Semarang.'
+    ),
+    'owner_bio2'    => getProfil($conn,'profil','owner_bio2',
+        'Tahun 2020–2021 menjadi masa penuh perjuangan sekaligus perkembangan. Pendiri mulai dikenal oleh beberapa publik figur lokal di Jepara yang menggunakan jasa nail art Niswa. Bahkan pada masa awal, beberapa layanan diberikan secara gratis sebagai bentuk belajar dan membangun relasi. Dukungan teman-teman menjadi salah satu alasan usaha ini terus bertahan dan berkembang.' . "\n\n" .
+        'Pada tahun 2022, perjalanan usaha sempat mengalami ujian ketika pendiri mengalami keguguran sehingga mulai membatasi pekerjaan dengan lokasi yang terlalu jauh. Namun semangat untuk terus berkembang tidak berhenti. Di masa tersebut, usaha seserahan berkembang pesat dan menjadi salah satu layanan yang diminati pelanggan.' . "\n\n" .
+        'Saat merintis sendiri, jam kerja dimulai dari pukul 10 pagi hingga 9 malam dengan jumlah pelanggan yang bisa mencapai lebih dari 7 orang per hari. Hingga kini, pendiri Niswa Beauty terus belajar dan berkembang, terutama dalam bidang media sosial, pelayanan, dan branding, dengan tetap mempertahankan sikap rendah hati dalam membangun usaha sendiri.'
+    ),
+    'store_name'    => getProfil($conn,'profil','store_name',    'NISWÀ BEAUTY'),
+    'store_tagline' => getProfil($conn,'profil','store_tagline', '"Premium Beauty Experience di Jantung Jepara"'),
+    'store_bio1'    => getProfil($conn,'profil','store_bio1',
+        'Niswa Beauty merupakan usaha di bidang kecantikan yang berawal dari layanan henna sederhana bernama Niswa Henna. Seiring berkembangnya tren kecantikan pada tahun 2018, usaha ini mulai merambah ke layanan nail art dan fake nails untuk memenuhi kebutuhan pelanggan, khususnya calon pengantin.' . "\n\n" .
+        'Dengan kualitas pelayanan dan hasil karya yang terus berkembang, Niswa mulai dikenal oleh masyarakat sekitar hingga mendapatkan pelanggan dari luar daerah pada tahun 2019. Perkembangan usaha semakin baik setelah memiliki supplier lokal dan jaringan pelanggan yang lebih luas.' . "\n\n" .
+        'Pada tahun 2020, Niswa Beauty membuka studio kecil pertama di rumah daerah Tengguli. Tidak hanya melayani nail art, usaha ini juga menyediakan layanan wedding, gift, dan seserahan. Seiring waktu, layanan nail art menjadi semakin diminati dan dikenal oleh berbagai kalangan di Jepara.'
+    ),
+    'store_bio2'    => getProfil($conn,'profil','store_bio2',
+        'Tanggal 15 Juli 2023 menjadi tonggak penting dengan resmi berdirinya Niswa Beauty bersama dua orang tim pertama. Sejak saat itu, usaha berkembang lebih profesional dengan pelayanan yang semakin lengkap dan terstruktur. Beberapa kerja sama dari luar kota hingga tawaran bergabung dengan brand kecantikan besar pernah datang, namun Niswa Beauty memilih untuk tetap berkembang secara mandiri.'
+    ),
+    'store_image'   => getProfil($conn,'profil','store_image',   'image/WhatsApp Image 2026-05-08 at 10.02.50.jpeg'),
+    'tech_text'     => getProfil($conn,'profil','tech_text',
+        'Niswà Beauty juga terus mengikuti perkembangan zaman. Berawal dari promosi sederhana melalui Story WhatsApp, kini hadir lebih luas lewat Instagram dan TikTok — termasuk penggunaan sistem pembayaran digital QRIS sejak awal tahun 2025. Hingga saat ini, Niswà Beauty terus berkembang untuk memberikan pengalaman kecantikan terbaik bagi setiap pelanggan.'
+    ),
+];
+
+// ── Services ──
+$servicesRows  = $conn ? mysqli_fetch_all(mysqli_query($conn, "SELECT * FROM cms_services ORDER BY sort_order, id"), MYSQLI_ASSOC) : [];
+// Fallback jika tabel kosong
+$defaultServices = [
+    ['id'=>0,'name'=>'Haircut',       'image'=>'image/download (9).jpg',                          'gallery'=>'image/download (9).jpg,image/I LOVE HAIRSTYLE __.jpg,image/Long layers cutting_ (1).jpg'],
+    ['id'=>0,'name'=>'Coloring',      'image'=>'image/WhatsApp Image 2026-05-08 at 11.00.07.jpeg','gallery'=>'image/WhatsApp Image 2026-05-08 at 11.00.07.jpeg,image/WhatsApp Image 2026-05-08 at 11.00.07 (1).jpeg,image/WhatsApp Image 2026-05-08 at 11.00.08.jpeg'],
+    ['id'=>0,'name'=>'Nailart',       'image'=>'image/Fall nails brown nails inspo.jpg',          'gallery'=>'image/Fall nails brown nails inspo.jpg,image/download (11).jpg,image/download (12).jpg'],
+    ['id'=>0,'name'=>'Hair Treatment','image'=>'image/WhatsApp Image 2026-05-08 at 22.08.31.jpeg','gallery'=>'image/WhatsApp Image 2026-05-08 at 22.08.31.jpeg,image/Keratin Hair Transformation 💫 Before & After.jpg'],
+    ['id'=>0,'name'=>'Foot SPA',      'image'=>'image/download (8).jpg',                          'gallery'=>'image/download (8).jpg,image/footspa.jpeg'],
+    ['id'=>0,'name'=>'Henna Series',  'image'=>'image/WhatsApp Image 2026-05-08 at 11.03.43.jpeg','gallery'=>'image/WhatsApp Image 2026-05-08 at 11.03.43.jpeg,image/WhatsApp Image 2026-05-08 at 11.05.55.jpeg'],
+    ['id'=>0,'name'=>'Press on Nail', 'image'=>'image/download (6).jpg',                          'gallery'=>'image/download (6).jpg,image/download (15).jpg'],
+    ['id'=>0,'name'=>'Eye Lash',      'image'=>'image/WhatsApp Image 2026-05-08 at 22.14.29.jpeg','gallery'=>'image/WhatsApp Image 2026-05-08 at 22.14.29.jpeg,image/WhatsApp Image 2026-05-08 at 22.16.29.jpeg'],
+];
+$services = !empty($servicesRows) ? $servicesRows : $defaultServices;
+
+// ── Harga ──
+$pricesRows = $conn ? mysqli_fetch_all(mysqli_query($conn, "SELECT * FROM cms_prices ORDER BY category, sort_order, id"), MYSQLI_ASSOC) : [];
+// Kelompokkan per kategori
+$priceList = [];
+if (!empty($pricesRows)) {
+    foreach ($pricesRows as $pr) {
+        $priceList[$pr['category']][] = ['name'=>$pr['name'], 'price'=>$pr['price']];
+    }
+} else {
+    // Fallback hardcoded
+    $priceList = [
+        'Henna Series' => [
+            ['name'=>'Brow Henna','price'=>'Rp 25.000'],
+            ['name'=>'Nail Henna Tangan','price'=>'Rp 25.000'],
+            ['name'=>'Nail Henna Kaki','price'=>'Rp 30.000'],
+            ['name'=>'Bundling Meni-Henna','price'=>'Rp 75.000'],
+            ['name'=>'Henna Fun','price'=>'Rp 25.000 - 100.000'],
+        ],
+        'Treatment Spa' => [
+            ['name'=>'Bundling Manicure & Pedicure','price'=>'Rp 100.000'],
+            ['name'=>'Manicure / Pedicure','price'=>'Rp 60.000'],
+            ['name'=>'Hand Spa','price'=>'Rp 80.000'],
+            ['name'=>'Foot Spa','price'=>'Rp 100.000'],
+            ['name'=>'Callus Treatment','price'=>'Rp 70.000 - 150.000'],
+        ],
+        'Brow & Lash' => [
+            ['name'=>'Brow Bomb','price'=>'Rp 100.000'],
+            ['name'=>'Lashlift','price'=>'Rp 70.000'],
+            ['name'=>'Lashlift Tint','price'=>'Rp 90.000'],
+        ],
+        'Rambut' => [
+            ['name'=>'Creambath','price'=>'Rp 75.000'],
+            ['name'=>'Hair Mask','price'=>'Rp 45.000 - 90.000'],
+            ['name'=>'Hair Spa','price'=>'Rp 100.000'],
+            ['name'=>'Cuci,Catok,Blow','price'=>'Rp 25.000 - 50.000'],
+            ['name'=>'Bleaching S','price'=>'Rp 40.000'],
+            ['name'=>'Coloring Full','price'=>'Rp 120.000 - 300.000'],
+            ['name'=>'Bleaching','price'=>'Rp 200.000 - 1.200.000'],
+            ['name'=>'Balayage','price'=>'Rp 250.000 - 700.000'],
+            ['name'=>'Down Peim Poni','price'=>'Rp 100.000 - 300.000'],
+            ['name'=>'Keriting Klasik','price'=>'Rp 300.000 - 700.000'],
+            ['name'=>'Keriting Digital','price'=>'Rp 450.000 - 1.700.000'],
+            ['name'=>'Keratin Treatment','price'=>'Rp 200.000'],
+            ['name'=>'Smoothing','price'=>'Rp 200.000 - 400.000'],
+        ],
+        'Nail Art & Services' => [
+            ['name'=>'Press On Nail Basic','price'=>'Rp 50.000'],
+            ['name'=>'Press On Nail Motif','price'=>'Rp 75.000'],
+            ['name'=>'Kids Basic Gel','price'=>'Rp 40.000'],
+            ['name'=>'Kids Gel + 4 Sticker','price'=>'Rp 50.000'],
+            ['name'=>'Kids Gel + Full Sticker','price'=>'Rp 55.000'],
+            ['name'=>'Gel Basic Tangan / Kaki','price'=>'Rp 85.000'],
+            ['name'=>'Extension','price'=>'Rp 50.000'],
+            ['name'=>'Gel French / Cat Eyes','price'=>'Rp 105.000'],
+            ['name'=>'Remove Gel','price'=>'Rp 50.000'],
+            ['name'=>'Gel Ombre / Blush On','price'=>'Rp 135.000'],
+            ['name'=>'Remove Extension','price'=>'Rp 65.000'],
+            ['name'=>'Bundling Nail Art + Extension','price'=>'Rp 150.000'],
+        ],
+    ];
+}
+
+// ── Produk ──
+$productsRows = $conn ? mysqli_fetch_all(mysqli_query($conn, "SELECT * FROM cms_products ORDER BY sort_order, id"), MYSQLI_ASSOC) : [];
+$defaultProducts = [
+    ["name"=>"Cat Eye Nails",         "price"=>"Rp 22.000", "category"=>"simple",  "image"=>"image/nail1,22k.jpeg"],
+    ["name"=>"Cat Eye Nails Pink",    "price"=>"Rp 17.000", "category"=>"simple",  "image"=>"image/WhatsApp Image 2026-05-07 at 10.10.41.jpeg"],
+    ["name"=>"Cat Eye Coquette Nails","price"=>"Rp 22.000", "category"=>"glam",    "image"=>"image/cateyeqouket.jpeg"],
+    ["name"=>"Butterfly Nails",       "price"=>"Rp 25.000", "category"=>"wedding", "image"=>"image/WhatsApp Image 2026-05-06 at 11.22.27.jpeg"],
+    ["name"=>"Cat Eye Nails",         "price"=>"Rp 20.000", "category"=>"simple",  "image"=>"image/WhatsApp Image 2026-05-06 at 11.05.13.jpeg"],
+    ["name"=>"Cat Eye Coquette Nails","price"=>"Rp 22.000", "category"=>"glam",    "image"=>"image/WhatsApp Image 2026-05-06 at 10.21.26.jpeg"],
+    ["name"=>"Elegant Nails",         "price"=>"Rp 22.000", "category"=>"glam",    "image"=>"image/WhatsApp Image 2026-05-06 at 10.21.24.jpeg"],
+    ["name"=>"Cat Eye Nails",         "price"=>"Rp 20.000", "category"=>"simple",  "image"=>"image/WhatsApp Image 2026-05-06 at 11.05.12.jpeg"],
+    ["name"=>"Cat Eye Red Nails",     "price"=>"Rp 20.000", "category"=>"simple",  "image"=>"image/WhatsApp Image 2026-05-06 at 11.05.12 (1).jpeg"],
+    ["name"=>"Simple Nails",          "price"=>"Rp 17.000", "category"=>"simple",  "image"=>"image/WhatsApp Image 2026-05-07 at 10.09.45.jpeg"],
+    ["name"=>"Cat Eye Pink Nails",    "price"=>"Rp 20.000", "category"=>"simple",  "image"=>"image/WhatsApp Image 2026-05-06 at 11.05.11.jpeg"],
+    ["name"=>"Sun Flower",            "price"=>"Rp 17.000", "category"=>"glam",    "image"=>"image/WhatsApp Image 2026-05-07 at 10.05.32.jpeg"],
+    ["name"=>"Bling bling Nails",     "price"=>"Rp 17.000", "category"=>"glam",    "image"=>"image/WhatsApp Image 2026-05-07 at 10.10.14.jpeg"],
+    ["name"=>"Elegant Nails",         "price"=>"Rp 17.000", "category"=>"simple",  "image"=>"image/WhatsApp Image 2026-05-07 at 10.06.14.jpeg"],
+    ["name"=>"Elegant Nails",         "price"=>"Rp 25.000", "category"=>"wedding", "image"=>"image/WhatsApp Image 2026-05-06 at 11.20.31.jpeg"],
+    ["name"=>"Elegant Nails",         "price"=>"Rp 25.000", "category"=>"wedding", "image"=>"image/WhatsApp Image 2026-05-06 at 11.17.28.jpeg"],
+];
+$products = !empty($productsRows) ? $productsRows : $defaultProducts;
+
+// ── Testimoni ──
+$testiRows = $conn ? mysqli_fetch_all(mysqli_query($conn, "SELECT * FROM cms_testimonials ORDER BY sort_order, id"), MYSQLI_ASSOC) : [];
+$defaultTestis = [
+    ['name'=>'Ninda Ayu',    'service_tag'=>'Nail Art & Foot Spa',  'text'=>'Nail art-nya bagus banget, hasilnya rapi dan tahan lama! Mbak-mbaknya ramah dan sabar. Foot spa-nya juga bikin kaki lega banget. Pasti balik lagi! 🌟',    'avatar_color'=>'linear-gradient(135deg,#f9a8d4,#f472b6)'],
+    ['name'=>'Rizka Amalia', 'service_tag'=>'Lashlift',             'text'=>'Lashlift-nya keren banget, mata jadi keliatan lebih segar dan melek. Tempatnya bersih dan nyaman, harga juga worth it. Recommended banget!',              'avatar_color'=>'linear-gradient(135deg,#6ee7b7,#34d399)'],
+    ['name'=>'Siti Maryam',  'service_tag'=>'Callus Treatment',     'text'=>'Callus treatment-nya top banget, kaki jadi mulus dan lembut. Pelayanan cepat dan tidak mengecewakan. Sudah langganan di sini dari lama dan selalu puas!',   'avatar_color'=>'linear-gradient(135deg,#fde68a,#f59e0b)'],
+    ['name'=>'Dian Pertiwi', 'service_tag'=>'Smoothing',            'text'=>'Smoothing-nya hasilnya halus banget dan tahan lama! Stafnya profesional dan ramah. Tempatnya cozy, betah deh berlama-lama di sini. Recommended!',           'avatar_color'=>'linear-gradient(135deg,#a78bfa,#7c3aed)'],
+    ['name'=>'Fatimah Zahra','service_tag'=>'Henna Series',         'text'=>'Henna series-nya cantik banget, detail dan presisi! Mbak-mbaknya sabar banget ngerjainnya. Harganya juga sangat terjangkau untuk kualitas segini.',          'avatar_color'=>'linear-gradient(135deg,#86efac,#16a34a)'],
+];
+$testimonials = !empty($testiRows) ? $testiRows : $defaultTestis;
+
+/* ══════════════════════════════════════════════
+   HANDLE AJAX ORDER
+══════════════════════════════════════════════ */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order']) && !empty($_SERVER['HTTP_X_REQUESTED_WITH'])) {
     header('Content-Type: application/json');
     $nama          = trim($_POST['nama']          ?? '');
@@ -48,7 +234,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order']) && !empty($_
     $product_price = trim($_POST['product_price'] ?? '');
     $qty           = max(1, (int)($_POST['qty']   ?? 1));
     $catatan       = trim($_POST['catatan']       ?? '');
-    $user_id       = $_SESSION['user_id'] ?? null;
+    $user_id       = $_SESSION['user_id']         ?? null;
 
     $harga_num = (int) preg_replace('/[^0-9]/', '', $product_price);
     $total     = 'Rp ' . number_format($harga_num * $qty, 0, ',', '.');
@@ -59,26 +245,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order']) && !empty($_
     if (empty($alamat))   $errors[] = 'Alamat wajib diisi.';
 
     if (!empty($errors)) {
-        echo json_encode(['success' => false, 'message' => implode('<br>', $errors)]);
+        echo json_encode(['success'=>false,'message'=>implode('<br>', $errors)]);
     } elseif (!$conn) {
-        echo json_encode(['success' => false, 'message' => 'Koneksi database gagal.']);
+        echo json_encode(['success'=>false,'message'=>'Koneksi database gagal.']);
     } else {
         $stmt = mysqli_prepare($conn,
-            "INSERT INTO orders (user_id, nama, whatsapp, alamat, product_name, product_price, qty, total, catatan)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            "INSERT INTO orders (user_id,nama,whatsapp,alamat,product_name,product_price,qty,total,catatan)
+             VALUES (?,?,?,?,?,?,?,?,?)"
         );
         mysqli_stmt_bind_param($stmt, "isssssiss",
-            $user_id, $nama, $whatsapp, $alamat, $product_name, $product_price, $qty, $total, $catatan
+            $user_id,$nama,$whatsapp,$alamat,$product_name,$product_price,$qty,$total,$catatan
         );
         if (mysqli_stmt_execute($stmt)) {
-            echo json_encode(['success' => true]);
+            echo json_encode(['success'=>true]);
         } else {
-            echo json_encode(['success' => false, 'message' => 'Gagal menyimpan: ' . mysqli_stmt_error($stmt)]);
+            echo json_encode(['success'=>false,'message'=>'Gagal menyimpan: '.mysqli_stmt_error($stmt)]);
         }
         mysqli_stmt_close($stmt);
     }
     exit;
 }
+
+/* ── Ambil kategori unik produk untuk filter tombol ── */
+$categories = [];
+foreach ($products as $p) {
+    $cat = $p['category'] ?? '';
+    if ($cat && !in_array($cat, $categories)) $categories[] = $cat;
+}
+
+$pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -105,9 +300,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order']) && !empty($_
             background: #b8a082; color: #fff;
             transform: translateY(-2px); box-shadow: 0 8px 25px rgba(203,184,157,0.5);
         }
-
-        /* ── Product Section ── */
-        .section-product { background: #fdfaf7; padding: 80px 0; }
+        /* Product Section */
+        .section-product { background: #fdfaf7; padding: 45px 0; }
         .product-section-title { text-align: center; margin-bottom: 40px; }
         .product-section-title h2 { font-weight: 600; font-size: 32px; font-family: 'Playfair Display', serif; }
         .product-section-title span { color: #8B6F5E; }
@@ -142,37 +336,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order']) && !empty($_
 
 <!-- Loading Screen -->
 <div id="loadingScreen">
-    <div class="loading-logo">NISWÀ BEAUTY</div>
+    <div class="loading-logo"><?= esc($kontak['salon_name']) ?></div>
     <div class="loading-bar-wrap"><div class="loading-bar"></div></div>
     <div class="loading-text">Loading Beauty...</div>
 </div>
 
 <?php include 'navbar.php'; ?>
 
-<!-- HERO -->
+<!-- ══ HERO ══ -->
 <section class="hero-slider">
     <div id="heroCarousel" class="carousel slide carousel-fade">
         <div class="carousel-inner">
-            <div class="carousel-item active">
-                <img src="image/homenailart.jpeg" class="d-block w-100" alt="">
+            <?php
+            // Kumpulkan slide yang ada
+            $slides = array_filter([$hero['img1'], $hero['img2'], $hero['img3']]);
+            if (empty($slides)) $slides = ['image/homenailart.jpeg'];
+            $firstSlide = true;
+            foreach ($slides as $slideImg):
+            ?>
+            <div class="carousel-item <?= $firstSlide ? 'active' : '' ?>">
+                <img src="<?= esc($slideImg) ?>" class="d-block w-100" alt="<?= esc($kontak['salon_name']) ?>">
+                <?php if ($firstSlide): ?>
                 <div class="carousel-caption">
-                    <h1>Temukan Kecantikan Terbaikmu</h1>
-                    <p>Layanan premium untuk tampilan terbaik Anda</p>
+                    <h1><?= esc($hero['title']) ?></h1>
+                    <p><?= esc($hero['subtitle']) ?></p>
                     <div class="hero-btn-group">
                         <a href="booking.php" class="hero-btn-primary">
-                            <i class="fas fa-calendar-alt"></i> Reservasi Sekarang
+                            <i class="fas fa-calendar-alt"></i> <?= esc($hero['btn_primary']) ?>
                         </a>
                         <a href="#layanan" class="hero-btn-outline">
-                            Lihat Layanan <i class="fas fa-arrow-right"></i>
+                            <?= esc($hero['btn_secondary']) ?> <i class="fas fa-arrow-right"></i>
                         </a>
                     </div>
                 </div>
+                <?php endif; $firstSlide = false; ?>
             </div>
+            <?php endforeach; ?>
         </div>
     </div>
 </section>
 
-<!-- SERVICES GRID -->
+<!-- ══ SERVICES GRID ══ -->
 <section id="layanan" class="services-clean">
     <div class="container">
         <div class="text-center mb-5">
@@ -181,111 +385,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order']) && !empty($_
             <p class="text-muted mt-2" style="font-size:14px;">Klik layanan untuk melihat contoh hasil</p>
         </div>
         <div class="row g-4">
+            <?php foreach ($services as $idx => $svc):
+                // Kumpulkan gallery: split by comma, buang yg kosong
+                $gallery = array_values(array_filter(array_map('trim', explode(',', $svc['gallery'] ?? ''))));
+                // Kalau gallery kosong, pakai image utama
+                if (empty($gallery) && !empty($svc['image'])) $gallery = [$svc['image']];
+                // Simpan gallery ke JS variable lewat data-attribute (aman dari karakter spesial)
+                $galleryJsonAttr = htmlspecialchars(json_encode($gallery, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8');
+                $svcName = esc($svc['name']);
+                $svcNameJs = htmlspecialchars($svc['name'], ENT_QUOTES, 'UTF-8');
+            ?>
             <div class="col-lg-3 col-md-6">
-                <div class="service-box" onclick="openServiceGallery('Haircut', [
-                    'image/download (9).jpg',
-                    'image/I LOVE HAIRSTYLE __.jpg',
-                    'image/Long layers cutting_ (1).jpg',
-                    'image/download (10).jpg'
-                ])">
-                    <img src="image/download (9).jpg" alt="Haircut">
-                    <div class="overlay"><i class="fas fa-images me-1"></i>Haircut</div>
+                <div class="service-box"
+                     data-svc-name="<?= $svcNameJs ?>"
+                     data-svc-gallery="<?= $galleryJsonAttr ?>"
+                     onclick="openSvcFromEl(this)">
+                    <?php if (!empty($svc['image'])): ?>
+                    <img src="<?= esc($svc['image']) ?>" alt="<?= $svcName ?>">
+                    <?php endif; ?>
+                    <div class="overlay"><i class="fas fa-images me-1"></i><?= $svcName ?></div>
                     <div class="service-click-hint"><i class="fas fa-eye"></i></div>
                 </div>
             </div>
-            <div class="col-lg-3 col-md-6">
-                <div class="service-box" onclick="openServiceGallery('Coloring', [
-                    'image/WhatsApp Image 2026-05-08 at 11.00.07.jpeg',
-                    'image/WhatsApp Image 2026-05-08 at 11.00.07 (1).jpeg',
-                    'image/WhatsApp Image 2026-05-08 at 11.00.08.jpeg',
-                    'image/WhatsApp Image 2026-05-08 at 11.00.11.jpeg',
-                    'image/WhatsApp Image 2026-05-08 at 11.00.11 (1).jpeg'
-                ])">
-                    <img src="image/WhatsApp Image 2026-05-08 at 11.00.07.jpeg" alt="Coloring">
-                    <div class="overlay"><i class="fas fa-images me-1"></i>Coloring</div>
-                    <div class="service-click-hint"><i class="fas fa-eye"></i></div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6">
-                <div class="service-box" onclick="openServiceGallery('Nailart', [
-                    'image/you bring the designs, and ill deliver! 🎀  ❗️How to book_ Structured Gel Mani with Makenzie + Advanced Art @pinkieorlando or through the link in my bio! ❗️   @luminary_nail_systems Multiflex Builder Base (1).jpg',
-                    'image/Fall nails brown nails inspo.jpg',
-                    'image/download (11).jpg',
-                    'image/download (12).jpg',
-                    'image/download (13).jpg',
-                    'image/download (14).jpg'
-                ])">
-                    <img src="image/Fall nails brown nails inspo.jpg" alt="Nailart">
-                    <div class="overlay"><i class="fas fa-images me-1"></i>Nailart</div>
-                    <div class="service-click-hint"><i class="fas fa-eye"></i></div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6">
-                <div class="service-box" onclick="openServiceGallery('Hair Treatment', [
-                    'image/WhatsApp Image 2026-05-08 at 22.08.31.jpeg',
-                    'image/Keratin Hair Transformation 💫 Before & After.jpg'
-                ])">
-                    <img src="image/WhatsApp Image 2026-05-08 at 22.08.31.jpeg" alt="Hair Treatment">
-                    <div class="overlay"><i class="fas fa-images me-1"></i>Hair Treatment</div>
-                    <div class="service-click-hint"><i class="fas fa-eye"></i></div>
-                </div>
-            </div>
-           
-            <div class="col-lg-3 col-md-6">
-                <div class="service-box" onclick="openServiceGallery('Foot SPA', [
-                    'image/download (8).jpg',
-                    'image/footspa.jpeg',
-                    'image/WhatsApp Image 2026-05-06 at 10.04.34.jpeg'
-                ])">
-                    <img src="image/download (8).jpg" alt="Foot SPA">
-                    <div class="overlay"><i class="fas fa-images me-1"></i>Foot SPA</div>
-                    <div class="service-click-hint"><i class="fas fa-eye"></i></div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6">
-                <div class="service-box" onclick="openServiceGallery('Henna Series', [
-                    'image/WhatsApp Image 2026-05-08 at 11.03.43.jpeg',
-                    'image/WhatsApp Image 2026-05-08 at 11.05.55.jpeg',
-                    'image/WhatsApp Image 2026-05-08 at 22.06.29.jpeg',
-                    'image/WhatsApp Image 2026-05-08 at 22.06.29 (1).jpeg',
-                    'image/WhatsApp Image 2026-05-08 at 22.06.29 (2).jpeg'
-                ])">
-                    <img src="image/WhatsApp Image 2026-05-08 at 11.03.43.jpeg" alt="Henna Series">
-                    <div class="overlay"><i class="fas fa-images me-1"></i>Henna Series</div>
-                    <div class="service-click-hint"><i class="fas fa-eye"></i></div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6">
-                <div class="service-box" onclick="openServiceGallery('Press on Nail', [
-                    'image/download (6).jpg',
-                    'image/download (15).jpg',
-                    'image/cat eye nails cherry 🍒 red nails (3).jpg',
-                    'image/download (18).jpg'
-                ])">
-                    <img src="image/download (6).jpg" alt="Press on nail">
-                    <div class="overlay"><i class="fas fa-images me-1"></i>Press on nail</div>
-                    <div class="service-click-hint"><i class="fas fa-eye"></i></div>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6">
-                <div class="service-box" onclick="openServiceGallery('Eye Lash', [
-                    'image/WhatsApp Image 2026-05-08 at 22.14.29.jpeg',
-                    'image/WhatsApp Image 2026-05-08 at 22.16.29.jpeg',
-                    'image/WhatsApp Image 2026-05-08 at 22.16.30.jpeg'
-                ])">
-                    <img src="image/WhatsApp Image 2026-05-08 at 22.14.29.jpeg" alt="Eye Lash">
-                    <div class="overlay"><i class="fas fa-images me-1"></i>Eye Lash</div>
-                    <div class="service-click-hint"><i class="fas fa-eye"></i></div>
-                </div>
-            </div>
+            <?php endforeach; ?>
         </div>
     </div>
 </section>
+
 <!-- ══ SERVICE GALLERY MODAL ══ -->
 <div id="serviceGalleryModal" aria-hidden="true">
     <div class="sgm-backdrop" onclick="closeServiceGallery()"></div>
     <div class="sgm-dialog" role="dialog" aria-modal="true">
-        <!-- Header -->
         <div class="sgm-header">
             <div class="sgm-title-wrap">
                 <i class="fas fa-images sgm-title-icon"></i>
@@ -293,124 +423,71 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order']) && !empty($_
             </div>
             <button class="sgm-close" onclick="closeServiceGallery()" aria-label="Tutup">&times;</button>
         </div>
-
-        <!-- Main image viewer -->
         <div class="sgm-main">
-            <button class="sgm-arrow sgm-arrow-left" id="sgmPrev" onclick="sgmNav(-1)" aria-label="Sebelumnya">
-                <i class="fas fa-chevron-left"></i>
-            </button>
+            <button class="sgm-arrow sgm-arrow-left" id="sgmPrev" onclick="sgmNav(-1)" aria-label="Sebelumnya"><i class="fas fa-chevron-left"></i></button>
             <div class="sgm-img-wrap">
                 <img id="sgmMainImg" src="" alt="" class="sgm-main-img">
                 <div class="sgm-counter" id="sgmCounter">1 / 1</div>
             </div>
-            <button class="sgm-arrow sgm-arrow-right" id="sgmNext" onclick="sgmNav(1)" aria-label="Berikutnya">
-                <i class="fas fa-chevron-right"></i>
-            </button>
+            <button class="sgm-arrow sgm-arrow-right" id="sgmNext" onclick="sgmNav(1)" aria-label="Berikutnya"><i class="fas fa-chevron-right"></i></button>
         </div>
-
-        <!-- Thumbnail strip -->
         <div class="sgm-thumbs" id="sgmThumbs"></div>
-
-        <!-- CTA -->
         <div class="sgm-footer">
-            <a href="booking.php" class="sgm-book-btn">
-                <i class="fas fa-calendar-alt me-2"></i>Reservasi Layanan Ini
-            </a>
+            <a href="booking.php" class="sgm-book-btn"><i class="fas fa-calendar-alt me-2"></i>Reservasi Layanan Ini</a>
         </div>
     </div>
 </div>
-
 <script>
 (function () {
-    var modal    = document.getElementById('serviceGalleryModal');
-    var mainImg  = document.getElementById('sgmMainImg');
-    var titleEl  = document.getElementById('sgmTitle');
-    var counter  = document.getElementById('sgmCounter');
-    var thumbWrap= document.getElementById('sgmThumbs');
-    var prevBtn  = document.getElementById('sgmPrev');
-    var nextBtn  = document.getElementById('sgmNext');
-
-    var _photos  = [];
-    var _cur     = 0;
-
-    window.openServiceGallery = function(name, photos) {
-        _photos = photos;
-        _cur    = 0;
-        titleEl.textContent = name;
-
-        // Build thumbnails
-        thumbWrap.innerHTML = '';
-        photos.forEach(function(src, i) {
-            var t = document.createElement('img');
-            t.src = src;
-            t.alt = name + ' ' + (i + 1);
-            t.className = 'sgm-thumb' + (i === 0 ? ' active' : '');
-            t.onclick = function() { sgmGoTo(i); };
-            thumbWrap.appendChild(t);
+    var modal=document.getElementById('serviceGalleryModal'),mainImg=document.getElementById('sgmMainImg'),
+        titleEl=document.getElementById('sgmTitle'),counter=document.getElementById('sgmCounter'),
+        thumbWrap=document.getElementById('sgmThumbs'),prevBtn=document.getElementById('sgmPrev'),
+        nextBtn=document.getElementById('sgmNext'),_photos=[],_cur=0;
+    // Baca data dari element (aman dari karakter spesial di nama file)
+    window.openSvcFromEl=function(el){
+        var name   = el.getAttribute('data-svc-name') || '';
+        var photos = [];
+        try { photos = JSON.parse(el.getAttribute('data-svc-gallery') || '[]'); } catch(e){}
+        if (!photos.length) return;
+        openServiceGallery(name, photos);
+    };
+    window.openServiceGallery=function(name,photos){
+        _photos=photos;_cur=0;titleEl.textContent=name;
+        thumbWrap.innerHTML='';
+        photos.forEach(function(src,i){
+            var t=document.createElement('img');t.src=src;t.alt=name+' '+(i+1);
+            t.className='sgm-thumb'+(i===0?' active':'');
+            t.onclick=function(){sgmGoTo(i);};thumbWrap.appendChild(t);
         });
-
-        updateView();
-        modal.classList.add('is-open');
-        document.body.style.overflow = 'hidden';
-
-        // hide arrows if only 1 photo
-        prevBtn.style.display = photos.length > 1 ? '' : 'none';
-        nextBtn.style.display = photos.length > 1 ? '' : 'none';
-        thumbWrap.style.display = photos.length > 1 ? '' : 'none';
+        updateView();modal.classList.add('is-open');document.body.style.overflow='hidden';
+        prevBtn.style.display=photos.length>1?'':'none';
+        nextBtn.style.display=photos.length>1?'':'none';
+        thumbWrap.style.display=photos.length>1?'':'none';
     };
-
-    window.closeServiceGallery = function() {
-        modal.classList.remove('is-open');
-        document.body.style.overflow = '';
-    };
-
-    window.sgmNav = function(dir) {
-        sgmGoTo((_cur + dir + _photos.length) % _photos.length);
-    };
-
-    function sgmGoTo(idx) {
-        _cur = idx;
-        updateView();
+    window.closeServiceGallery=function(){modal.classList.remove('is-open');document.body.style.overflow='';};
+    window.sgmNav=function(dir){sgmGoTo((_cur+dir+_photos.length)%_photos.length);};
+    function sgmGoTo(idx){_cur=idx;updateView();}
+    function updateView(){
+        mainImg.style.opacity='0';
+        setTimeout(function(){mainImg.src=_photos[_cur];mainImg.style.opacity='1';},120);
+        counter.textContent=(_cur+1)+' / '+_photos.length;
+        thumbWrap.querySelectorAll('.sgm-thumb').forEach(function(t,i){t.classList.toggle('active',i===_cur);});
     }
-
-    function updateView() {
-        // fade transition
-        mainImg.style.opacity = '0';
-        setTimeout(function() {
-            mainImg.src = _photos[_cur];
-            mainImg.style.opacity = '1';
-        }, 120);
-
-        counter.textContent = (_cur + 1) + ' / ' + _photos.length;
-
-        // update thumbs
-        var thumbs = thumbWrap.querySelectorAll('.sgm-thumb');
-        thumbs.forEach(function(t, i) {
-            t.classList.toggle('active', i === _cur);
-        });
-    }
-
-    // Keyboard nav
-    document.addEventListener('keydown', function(e) {
-        if (!modal.classList.contains('is-open')) return;
-        if (e.key === 'Escape')      closeServiceGallery();
-        if (e.key === 'ArrowLeft')   sgmNav(-1);
-        if (e.key === 'ArrowRight')  sgmNav(1);
+    document.addEventListener('keydown',function(e){
+        if(!modal.classList.contains('is-open'))return;
+        if(e.key==='Escape')closeServiceGallery();
+        if(e.key==='ArrowLeft')sgmNav(-1);if(e.key==='ArrowRight')sgmNav(1);
     });
-
-    // Swipe support (mobile)
-    var touchX = null;
-    modal.addEventListener('touchstart', function(e) { touchX = e.touches[0].clientX; }, {passive:true});
-    modal.addEventListener('touchend', function(e) {
-        if (touchX === null) return;
-        var dx = e.changedTouches[0].clientX - touchX;
-        if (Math.abs(dx) > 50) sgmNav(dx < 0 ? 1 : -1);
-        touchX = null;
-    }, {passive:true});
+    var touchX=null;
+    modal.addEventListener('touchstart',function(e){touchX=e.touches[0].clientX;},{passive:true});
+    modal.addEventListener('touchend',function(e){
+        if(touchX===null)return;var dx=e.changedTouches[0].clientX-touchX;
+        if(Math.abs(dx)>50)sgmNav(dx<0?1:-1);touchX=null;
+    },{passive:true});
 })();
 </script>
 
-<!-- DAFTAR HARGA -->
+<!-- ══ DAFTAR HARGA ══ -->
 <section id="harga" class="price-list-section py-5">
     <div class="container">
         <div class="text-center mb-5" data-aos="fade-up">
@@ -420,78 +497,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order']) && !empty($_
         </div>
 
         <div class="price-cards-grid">
-        <?php
-        $priceList = [
-            'Rambut' => [
-                ['name'=>'Creambath',                        'price'=>'Rp 75.000'],
-                ['name'=>'Hair Mask',                        'price'=>'Rp 45.000 - 90.000'],
-                ['name'=>'Hair Spa',                         'price'=>'Rp 100.000'],
-                ['name'=>'Cuci,Catok,Blow',                     'price'=>'Rp 25.000 - 50.000'],
-                ['name'=>'Bleaching S',                      'price'=>'Rp 40.000'],
-                ['name'=>'Coloring Full',                    'price'=>'Rp 120.000 - 300.000'],
-                ['name'=>'Bleaching',             'price'=>'Rp 200.000 - 1.200.000'],
-                ['name'=>'Balayage',                         'price'=>'Rp 250.000 - 700.000'],
-                ['name'=>'Down Peim Poni',                   'price'=>'Rp 100.000 - 300.000'],
-                ['name'=>'Keriting Klasik',                  'price'=>'Rp 300.000 - 700.000'],
-                ['name'=>'Keriting Digital',                 'price'=>'Rp 450.000 - 1.700.000'],
-                ['name'=>'Keratin Treatment',                'price'=>'Rp 200.000'],
-                ['name'=>'Smoothing',       'price'=>'Rp 200.000 - 400.000'],
-            ],
-            'Nail Art & Services' => [
-                ['name'=>'Press On Nail Basic',              'price'=>'Rp 50.000'],
-                ['name'=>'Press On Nail Motif',              'price'=>'Rp 75.000'],
-                ['name'=>'Kids Basic Gel',                   'price'=>'Rp 40.000'],
-                ['name'=>'Kids Gel + 4 Sticker',             'price'=>'Rp 50.000'],
-                ['name'=>'Kids Gel + Full Sticker',          'price'=>'Rp 55.000'],
-                ['name'=>'Gel Basic Tangan / Kaki',          'price'=>'Rp 85.000'],
-                ['name'=>'Extension',                        'price'=>'Rp 50.000'],
-                ['name'=>'Gel French / Cat Eyes',            'price'=>'Rp 105.000'],
-                ['name'=>'Remove Gel',                       'price'=>'Rp 50.000'],
-                ['name'=>'Gel Ombre / Blush On',             'price'=>'Rp 135.000'],
-                ['name'=>'Remove Extension',                 'price'=>'Rp 65.000'],
-                ['name'=>'Bundling Nail Art + Extension',    'price'=>'Rp 150.000'],
-            ],
-            'Henna Series' => [
-                ['name'=>'Brow Henna',                       'price'=>'Rp 25.000'],
-                ['name'=>'Nail Henna Tangan',                'price'=>'Rp 25.000'],
-                ['name'=>'Nail Henna Kaki',                  'price'=>'Rp 30.000'],
-                ['name'=>'Bundling Meni-Henna',              'price'=>'Rp 75.000'],
-                ['name'=>'Henna Fun',                        'price'=>'Rp 25.000 - 100.000'],
-            ],
-            'Treatment Spa' => [
-                ['name'=>'Bundling Manicure & Pedicure',     'price'=>'Rp 100.000'],
-                ['name'=>'Manicure / Pedicure',              'price'=>'Rp 60.000'],
-                ['name'=>'Hand Spa',                         'price'=>'Rp 80.000'],
-                ['name'=>'Foot Spa',                         'price'=>'Rp 100.000'],
-                ['name'=>'Callus Treatment',                 'price'=>'Rp 70.000 - 150.000'],
-            ],
-            'Brow & Lash' => [
-                ['name'=>'Brow Bomb',      'price'=>'Rp 100.000'],
-                ['name'=>'Lashlift',       'price'=>'Rp 70.000'],
-                ['name'=>'Lashlift Tint',  'price'=>'Rp 90.000'],
-            ],
-        ];
-        $delay = 0;
-        foreach ($priceList as $cat => $items):
-        ?>
-        <div class="price-card" data-aos="fade-up" data-aos-delay="<?= $delay * 80 ?>">
+        <?php $delay=0; foreach ($priceList as $cat => $items): ?>
+        <div class="price-card" data-aos="fade-up" data-aos-delay="<?= $delay*80 ?>">
             <div class="price-card-header">
-                <span class="price-card-label"><?= $cat ?></span>
+                <span class="price-card-label"><?= esc($cat) ?></span>
                 <span class="price-acc-count"><?= count($items) ?> layanan</span>
             </div>
             <div class="price-acc-body">
                 <table class="price-table">
-                    <thead>
-                        <tr>
-                            <th>Layanan</th>
-                            <th class="text-end">Harga</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>Layanan</th><th class="text-end">Harga</th></tr></thead>
                     <tbody>
                         <?php foreach ($items as $row): ?>
                         <tr>
-                            <td><?= $row['name'] ?></td>
-                            <td class="text-end price-cell"><?= $row['price'] ?></td>
+                            <td><?= esc($row['name']) ?></td>
+                            <td class="text-end price-cell"><?= esc($row['price']) ?></td>
                         </tr>
                         <?php endforeach; ?>
                     </tbody>
@@ -499,7 +518,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order']) && !empty($_
             </div>
         </div>
         <?php $delay++; endforeach; ?>
-        </div><!-- /.price-cards-grid -->
+        </div>
 
         <div class="text-center mt-4" data-aos="fade-up">
             <p class="text-muted small mb-3">* Harga dapat berubah sewaktu-waktu. Hubungi kami untuk info terkini.</p>
@@ -508,91 +527,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order']) && !empty($_
 </section>
 
 <style>
-/* ══ DAFTAR HARGA — MODERN CARD ══ */
-.price-list-section { background: linear-gradient(180deg, #fdfaf7 0%, #f5ede4 100%); }
-
-.price-cards-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
-}
-
-.price-card {
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 4px 20px rgba(139,111,94,0.12);
-    border: 1px solid rgba(214,193,163,0.3);
-    background: #fff;
-    transition: transform 0.32s cubic-bezier(0.4,0,0.2,1),
-                box-shadow 0.32s cubic-bezier(0.4,0,0.2,1);
-}
-.price-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 16px 48px rgba(139,111,94,0.22);
-}
-
-.price-card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: linear-gradient(135deg, #8B6F5E, #D6C1A3);
-    padding: 16px 20px;
-}
-
-.price-card-label {
-    font-weight: 700;
-    font-size: 15px;
-    color: #fff;
-    font-family: 'Poppins', sans-serif;
-    letter-spacing: 0.2px;
-    text-shadow: 0 1px 4px rgba(0,0,0,0.15);
-}
-
-.price-acc-count {
-    font-size: 11px;
-    color: rgba(255,255,255,0.9);
-    background: rgba(255,255,255,0.2);
-    border-radius: 20px;
-    padding: 3px 12px;
-    font-weight: 500;
-    font-family: 'Poppins', sans-serif;
-}
-
-.price-acc-body { border-top: 1px solid rgba(139,111,94,0.12); }
-
-.price-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: #fff;
-    font-family: 'Poppins', sans-serif;
-    font-size: 13.5px;
-}
-.price-table thead tr { background: #faf5f0; border-bottom: 2px solid #f0e8df; }
-.price-table th {
-    padding: 10px 20px;
-    color: #8B6F5E;
-    font-weight: 600;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-.price-table tbody tr { border-bottom: 1px solid #f5ede6; transition: background 0.15s; }
-.price-table tbody tr:last-child { border-bottom: none; }
-.price-table tbody tr:hover { background: #fdf8f4; }
-.price-table td { padding: 11px 20px; color: #444; vertical-align: middle; }
-.price-cell { color: #8B6F5E; font-weight: 700; font-size: 13px; white-space: nowrap; }
+.price-list-section { background: linear-gradient(180deg,#fdfaf7 0%,#f5ede4 100%); padding: 45px 0; }
+.price-cards-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:20px; }
+.price-card { border-radius:20px; overflow:hidden; box-shadow:0 4px 20px rgba(139,111,94,0.12); border:1px solid rgba(214,193,163,0.3); background:#fff; transition:transform .32s cubic-bezier(0.4,0,0.2,1),box-shadow .32s cubic-bezier(0.4,0,0.2,1); }
+.price-card:hover { transform:translateY(-6px); box-shadow:0 16px 48px rgba(139,111,94,0.22); }
+.price-card-header { display:flex; align-items:center; justify-content:space-between; background:linear-gradient(135deg,#8B6F5E,#D6C1A3); padding:16px 20px; }
+.price-card-label { font-weight:700; font-size:15px; color:#fff; font-family:'Poppins',sans-serif; }
+.price-acc-count { font-size:11px; color:rgba(255,255,255,0.9); background:rgba(255,255,255,0.2); border-radius:20px; padding:3px 12px; font-weight:500; font-family:'Poppins',sans-serif; }
+.price-acc-body { border-top:1px solid rgba(139,111,94,0.12); }
+.price-table { width:100%; border-collapse:collapse; background:#fff; font-family:'Poppins',sans-serif; font-size:13.5px; }
+.price-table thead tr { background:#faf5f0; border-bottom:2px solid #f0e8df; }
+.price-table th { padding:10px 20px; color:#8B6F5E; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.5px; }
+.price-table tbody tr { border-bottom:1px solid #f5ede6; transition:background .15s; }
+.price-table tbody tr:last-child { border-bottom:none; }
+.price-table tbody tr:hover { background:#fdf8f4; }
+.price-table td { padding:11px 20px; color:#444; vertical-align:middle; }
+.price-cell { color:#8B6F5E; font-weight:700; font-size:13px; white-space:nowrap; }
+@media(max-width:576px){ .price-cards-grid { grid-template-columns:1fr; } }
 </style>
 
-<script>
-function togglePrice(id, btn) {
-    var body = document.getElementById(id);
-    var isOpen = btn.getAttribute('aria-expanded') === 'true';
-    body.style.display = isOpen ? 'none' : 'block';
-    btn.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
-}
-</script>
-
-<!-- ══ PRESS ON NAIL COLLECTION ══ -->
+<!-- ══ PRODUK COLLECTION ══ -->
 <section id="produk" class="section-product">
     <div class="container">
         <div class="product-section-title" data-aos="fade-up">
@@ -601,51 +555,35 @@ function togglePrice(id, btn) {
             <p>Press On Nails premium untuk tampil cantik instan <i class="fa-solid fa-sparkles" style="color:#D6C1A3;font-size:0.9em;"></i></p>
         </div>
 
-        <!-- Filter buttons -->
+        <!-- Filter Buttons (dinamis dari kategori produk) -->
         <div class="filter-buttons" data-aos="fade-up" data-aos-delay="100">
             <button class="active" data-filter="all">Semua</button>
-            <button data-filter="simple">Simple</button>
-            <button data-filter="glam">Glam</button>
-            <button data-filter="wedding">Wedding</button>
+            <?php foreach ($categories as $cat): ?>
+            <button data-filter="<?= esc($cat) ?>"><?= esc(ucfirst($cat)) ?></button>
+            <?php endforeach; ?>
         </div>
 
-        <?php
-        $products = [
-            ["name"=>"Cat Eye Nails",         "price"=>"Rp 22.000", "category"=>"simple",  "img"=>"image/nail1,22k.jpeg"],
-            ["name"=>"Cat Eye Nails Pink",     "price"=>"Rp 17.000", "category"=>"simple",  "img"=>"image/WhatsApp Image 2026-05-07 at 10.10.41.jpeg"],
-            ["name"=>"Cat Eye Coquette Nails", "price"=>"Rp 22.000", "category"=>"glam",    "img"=>"image/cateyeqouket.jpeg"],
-            ["name"=>"Butterfly Nails",        "price"=>"Rp 25.000", "category"=>"wedding", "img"=>"image/WhatsApp Image 2026-05-06 at 11.22.27.jpeg"],
-            ["name"=>"Cat Eye Nails",          "price"=>"Rp 20.000", "category"=>"simple",  "img"=>"image/WhatsApp Image 2026-05-06 at 11.05.13.jpeg"],
-            ["name"=>"Cat Eye Coquette Nails", "price"=>"Rp 22.000", "category"=>"glam",    "img"=>"image/WhatsApp Image 2026-05-06 at 10.21.26.jpeg"],
-            ["name"=>"Elegant Nails",          "price"=>"Rp 22.000", "category"=>"glam",    "img"=>"image/WhatsApp Image 2026-05-06 at 10.21.24.jpeg"],
-            ["name"=>"Cat Eye Nails",          "price"=>"Rp 20.000", "category"=>"simple",  "img"=>"image/WhatsApp Image 2026-05-06 at 11.05.12.jpeg"],
-            ["name"=>"Cat Eye Red Nails",      "price"=>"Rp 20.000", "category"=>"simple",  "img"=>"image/WhatsApp Image 2026-05-06 at 11.05.12 (1).jpeg"],
-            ["name"=>"Simple Nails",           "price"=>"Rp 17.000", "category"=>"simple",  "img"=>"image/WhatsApp Image 2026-05-07 at 10.09.45.jpeg"],
-            ["name"=>"Cat Eye Pink Nails",     "price"=>"Rp 20.000", "category"=>"simple",  "img"=>"image/WhatsApp Image 2026-05-06 at 11.05.11.jpeg"],
-            ["name"=>"Sun Flower",             "price"=>"Rp 17.000", "category"=>"glam",    "img"=>"image/WhatsApp Image 2026-05-07 at 10.05.32.jpeg"],
-            ["name"=>"Bling bling Nails",      "price"=>"Rp 17.000", "category"=>"glam",    "img"=>"image/WhatsApp Image 2026-05-07 at 10.10.14.jpeg"],
-            ["name"=>"Elegant Nails",          "price"=>"Rp 17.000", "category"=>"simple",  "img"=>"image/WhatsApp Image 2026-05-07 at 10.06.14.jpeg"],
-            ["name"=>"Elegant Nails",          "price"=>"Rp 25.000", "category"=>"wedding", "img"=>"image/WhatsApp Image 2026-05-06 at 11.20.31.jpeg"],
-            ["name"=>"Elegant Nails",          "price"=>"Rp 25.000", "category"=>"wedding", "img"=>"image/WhatsApp Image 2026-05-06 at 11.17.28.jpeg"],
-        ];
-        ?>
-
         <div class="product-grid" data-aos="fade-up" data-aos-delay="150">
-        <?php foreach ($products as $i => $p): ?>
-            <div class="product-card" data-category="<?= $p['category'] ?>">
+        <?php foreach ($products as $p):
+            $img = esc($p['image'] ?? $p['img'] ?? '');
+            $pName = esc($p['name']);
+            $pPrice = esc($p['price']);
+            $pCat = esc($p['category'] ?? 'simple');
+        ?>
+            <div class="product-card" data-category="<?= $pCat ?>">
                 <div class="product-card-img-wrap">
-                    <img src="<?= $p['img'] ?>" alt="<?= $p['name'] ?>" class="product-img" loading="lazy">
+                    <img src="<?= $img ?>" alt="<?= $pName ?>" class="product-img" loading="lazy">
                     <div class="product-card-overlay">
-                        <button class="btn-preview" onclick="showProductPreview('<?= addslashes($p['name']) ?>', '<?= addslashes($p['price']) ?>', '<?= addslashes($p['img']) ?>')">
+                        <button class="btn-preview" onclick="showProductPreview('<?= addslashes($p['name']) ?>','<?= addslashes($p['price']) ?>','<?= addslashes($p['image'] ?? $p['img'] ?? '') ?>')">
                             <i class="fas fa-eye"></i> Lihat
                         </button>
                     </div>
-                    <span class="product-badge-cat"><?= ucfirst($p['category']) ?></span>
+                    <span class="product-badge-cat"><?= esc(ucfirst($pCat)) ?></span>
                 </div>
                 <div class="product-info">
-                    <div class="product-name"><?= $p['name'] ?></div>
-                    <div class="product-price"><?= $p['price'] ?></div>
-                    <button class="btn-beli" onclick="handleBeli('<?= addslashes($p['name']) ?>','<?= addslashes($p['price']) ?>','<?= addslashes($p['img']) ?>')">
+                    <div class="product-name"><?= $pName ?></div>
+                    <div class="product-price"><?= $pPrice ?></div>
+                    <button class="btn-beli" onclick="handleBeli('<?= addslashes($p['name']) ?>','<?= addslashes($p['price']) ?>','<?= addslashes($p['image'] ?? $p['img'] ?? '') ?>')">
                         <i class="fas fa-shopping-bag me-1"></i> Beli Sekarang
                     </button>
                 </div>
@@ -656,193 +594,31 @@ function togglePrice(id, btn) {
 </section>
 
 <style>
-/* ══ PRODUCT SECTION — MODERN CARDS ══ */
-.section-product { background: linear-gradient(180deg, #f5ede4 0%, #fdfaf7 100%); padding: 50px 0; }
-
-.product-section-title { text-align: center; margin-bottom: 32px; }
-.product-section-title h2 { font-weight: 700; font-size: 34px; font-family: 'Playfair Display', serif; color: #2d1f17; }
-.product-section-title span { color: #8B6F5E; }
-.product-section-title p { color: #888; margin-top: 10px; font-size: 15px; }
-
-.filter-buttons { text-align: center; margin-bottom: 40px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
-.filter-buttons button {
-    border: 1.5px solid #e8ddd4;
-    background: #fff;
-    padding: 8px 22px;
-    border-radius: 50px;
-    font-weight: 500;
-    color: #8a7060;
-    cursor: pointer;
-    font-size: 14px;
-    font-family: 'Poppins', sans-serif;
-    transition: all 0.25s;
-    box-shadow: 0 2px 8px rgba(139,111,94,0.06);
-}
-.filter-buttons button:hover { border-color: #8B6F5E; color: #8B6F5E; background: #fdf8f4; }
-.filter-buttons button.active {
-    background: linear-gradient(135deg, #8B6F5E, #D6C1A3);
-    color: #fff;
-    border-color: transparent;
-    box-shadow: 0 6px 20px rgba(139,111,94,0.30);
-}
-
-.product-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 24px;
-}
-
-.product-card {
-    background: #fff;
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 4px 18px rgba(139,111,94,0.10);
-    border: 1px solid rgba(214,193,163,0.3);
-    transition: transform 0.32s cubic-bezier(0.4,0,0.2,1),
-                box-shadow 0.32s cubic-bezier(0.4,0,0.2,1);
-}
-.product-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 50px rgba(139,111,94,0.22);
-}
-
-.product-card-img-wrap {
-    position: relative;
-    overflow: hidden;
-}
-.product-img {
-    width: 100%; height: 240px; object-fit: cover;
-    display: block;
-    transition: transform 0.45s cubic-bezier(0.4,0,0.2,1);
-}
-.product-card:hover .product-img { transform: scale(1.07); }
-
-.product-card-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(45,31,23,0.35);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: opacity 0.3s;
-    backdrop-filter: blur(2px);
-}
-.product-card:hover .product-card-overlay { opacity: 1; }
-
-.btn-preview {
-    background: rgba(255,255,255,0.92);
-    color: #5A4A42;
-    border: none;
-    border-radius: 50px;
-    padding: 9px 22px;
-    font-size: 13px;
-    font-weight: 600;
-    font-family: 'Poppins', sans-serif;
-    cursor: pointer;
-    transition: all 0.2s;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.12);
-    transform: translateY(8px);
-    transition: transform 0.3s, background 0.2s;
-}
-.product-card:hover .btn-preview { transform: translateY(0); }
-.btn-preview:hover { background: #fff; }
-
-.product-badge-cat {
-    position: absolute;
-    top: 12px; left: 12px;
-    background: rgba(255,255,255,0.88);
-    color: #5A4A42;
-    font-size: 10px;
-    font-weight: 700;
-    font-family: 'Poppins', sans-serif;
-    letter-spacing: 0.8px;
-    text-transform: uppercase;
-    padding: 4px 12px;
-    border-radius: 50px;
-    backdrop-filter: blur(6px);
-    border: 1px solid rgba(255,255,255,0.6);
-}
-
-.product-info { padding: 16px; }
-.product-name {
-    font-weight: 600;
-    font-family: 'Poppins', sans-serif;
-    font-size: 14px;
-    color: #2d1f17;
-    margin-bottom: 4px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.product-price {
-    color: #8B6F5E;
-    font-weight: 700;
-    font-size: 15px;
-    margin-bottom: 10px;
-}
-.btn-beli {
-    width: 100%;
-    padding: 9px 0;
-    background: linear-gradient(135deg, #8B6F5E, #D6C1A3);
-    color: #fff;
-    border: none;
-    border-radius: 12px;
-    font-size: 13px;
-    font-weight: 600;
-    font-family: 'Poppins', sans-serif;
-    cursor: pointer;
-    transition: all 0.25s;
-    box-shadow: 0 4px 14px rgba(139,111,94,0.25);
-    letter-spacing: 0.2px;
-}
-.btn-beli:hover {
-    box-shadow: 0 8px 24px rgba(139,111,94,0.40);
-    transform: translateY(-1px);
-}
-
-@media (max-width: 576px) {
-    .product-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
-    .product-img { height: 180px; }
-    .price-cards-grid { grid-template-columns: 1fr; }
-}
+.section-product { background:linear-gradient(180deg,#f5ede4 0%,#fdfaf7 100%); padding:50px 0; }
+.product-section-title { text-align:center; margin-bottom:32px; }
+.product-section-title h2 { font-weight:700; font-size:34px; font-family:'Playfair Display',serif; color:#2d1f17; }
+.product-section-title span { color:#8B6F5E; }
+.product-section-title p { color:#888; margin-top:10px; font-size:15px; }
+.filter-buttons { text-align:center; margin-bottom:40px; display:flex; justify-content:center; gap:8px; flex-wrap:wrap; }
+.filter-buttons button { border:1.5px solid #e8ddd4; background:#fff; border-radius:50px; padding:8px 20px; font-weight:500; color:#666; cursor:pointer; font-size:14px; font-family:'Poppins',sans-serif; transition:.2s; }
+.filter-buttons button.active { background:linear-gradient(135deg,#8B6F5E,#D6C1A3); color:#fff; border-color:transparent; }
+.product-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:20px; }
+.product-card { background:#fff; border-radius:20px; overflow:hidden; transition:.3s; }
+.product-card:hover { transform:translateY(-8px); box-shadow:0 12px 40px rgba(139,111,94,0.15); }
+.product-card-img-wrap { position:relative; overflow:hidden; }
+.product-card-overlay { position:absolute; inset:0; background:rgba(0,0,0,0.35); display:flex; align-items:center; justify-content:center; opacity:0; transition:.3s; }
+.product-card:hover .product-card-overlay { opacity:1; }
+.btn-preview { background:rgba(255,255,255,0.92); color:#5A4A42; border:none; border-radius:50px; padding:9px 22px; font-size:13px; font-weight:600; font-family:'Poppins',sans-serif; cursor:pointer; transform:translateY(8px); transition:transform .3s,background .2s; box-shadow:0 4px 14px rgba(0,0,0,0.12); }
+.product-card:hover .btn-preview { transform:translateY(0); }
+.product-badge-cat { position:absolute; top:12px; left:12px; background:rgba(255,255,255,0.88); color:#5A4A42; font-size:10px; font-weight:700; font-family:'Poppins',sans-serif; letter-spacing:.8px; text-transform:uppercase; padding:4px 12px; border-radius:50px; backdrop-filter:blur(6px); border:1px solid rgba(255,255,255,0.6); }
+.product-img { width:100%; height:260px; object-fit:cover; }
+.product-info { padding:16px; }
+.product-name { font-weight:600; font-family:'Poppins',sans-serif; font-size:14px; color:#2d1f17; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.product-price { color:#8B6F5E; font-weight:700; font-size:15px; margin-bottom:10px; }
+.btn-beli { width:100%; padding:9px 0; background:linear-gradient(135deg,#8B6F5E,#D6C1A3); color:#fff; border:none; border-radius:12px; font-size:13px; font-weight:600; font-family:'Poppins',sans-serif; cursor:pointer; transition:all .25s; box-shadow:0 4px 14px rgba(139,111,94,0.25); }
+.btn-beli:hover { box-shadow:0 8px 24px rgba(139,111,94,0.40); transform:translateY(-1px); }
+@media(max-width:576px){ .product-grid { grid-template-columns:repeat(2,1fr); gap:14px; } .product-img { height:180px; } }
 </style>
-
-<!-- ══ PRODUCT PREVIEW MODAL ══ -->
-<div id="productPreviewModal" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.55);align-items:center;justify-content:center;" onclick="if(event.target===this)closeProductPreview()">
-    <div style="background:#fff;border-radius:24px;width:92%;max-width:380px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,0.25);animation:ppFadeIn .25s ease;">
-        <div style="position:relative;">
-            <img id="ppImg" src="" alt="" style="width:100%;height:280px;object-fit:cover;display:block;">
-            <button onclick="closeProductPreview()" style="position:absolute;top:12px;right:12px;background:rgba(0,0,0,0.45);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;line-height:1;">&times;</button>
-        </div>
-        <div style="padding:20px 22px 22px;">
-            <div id="ppName" style="font-family:'Poppins',sans-serif;font-weight:700;font-size:16px;color:#2d1f17;margin-bottom:4px;"></div>
-            <div id="ppPrice" style="font-family:'Poppins',sans-serif;font-weight:700;font-size:18px;color:#8B6F5E;margin-bottom:18px;"></div>
-            <button id="ppBeli"
-                style="width:100%;padding:12px;background:linear-gradient(135deg,#8B6F5E,#D6C1A3);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;font-family:'Poppins',sans-serif;cursor:pointer;">
-                <i class="fas fa-shopping-bag me-2"></i>Beli Sekarang
-            </button>
-        </div>
-    </div>
-</div>
-<style>
-@keyframes ppFadeIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
-</style>
-<script>
-function showProductPreview(name, price, img) {
-    document.getElementById('ppImg').src = img;
-    document.getElementById('ppName').textContent = name;
-    document.getElementById('ppPrice').textContent = price;
-    document.getElementById('ppBeli').onclick = function() {
-        closeProductPreview();
-        handleBeli(name, price, img);
-    };
-    document.getElementById('productPreviewModal').style.display = 'flex';
-}
-function closeProductPreview() {
-    document.getElementById('productPreviewModal').style.display = 'none';
-}
-</script>
 
 <!-- ══ SECTION LOKASI ══ -->
 <section id="lokasi" class="location-section">
@@ -854,25 +630,24 @@ function closeProductPreview() {
                 <p class="text-muted" data-aos="fade-up" data-aos-delay="250" style="font-size:15px;">Kunjungi kami langsung untuk pengalaman kecantikan terbaik</p>
             </div>
         </div>
-
         <div data-aos="fade-up" data-aos-delay="300">
             <div class="map-wrapper map-fullwidth" style="border-radius:20px;overflow:hidden;box-shadow:0 10px 40px rgba(139,111,94,0.18);border:1px solid #EDE5D8;">
                 <div class="map-info-bar" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:linear-gradient(135deg,#5A4A42,#8B6F5E);padding:18px 28px;">
                     <div class="map-info-left">
-                        <div class="map-salon-name"><i class="fas fa-map-marker-alt"></i> NISWÀ BEAUTY</div>
-                        <div class="map-salon-addr">Jl. Watulumpang, Bangsri, Jepara</div>
+                        <div class="map-salon-name"><i class="fas fa-map-marker-alt"></i> <?= esc($kontak['salon_name']) ?></div>
+                        <div class="map-salon-addr"><?= esc($kontak['address']) ?></div>
                     </div>
                     <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
                         <div style="color:rgba(255,255,255,0.85);font-size:13px;font-family:'Poppins',sans-serif;">
-                            <i class="fas fa-clock me-1" style="color:#D6C1A3;"></i> Senin – Minggu, 08.00 – 20.00
+                            <i class="fas fa-clock me-1" style="color:#D6C1A3;"></i> <?= esc($kontak['hours']) ?>
                         </div>
-                        <a href="https://maps.app.goo.gl/czQHcN15FMvfFZy76" target="_blank" class="map-open-btn">
+                        <a href="<?= esc($kontak['maps_link']) ?>" target="_blank" class="map-open-btn">
                             <i class="fas fa-directions"></i> Petunjuk Arah
                         </a>
                     </div>
                 </div>
                 <iframe
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3959.0!2d110.7708502!3d-6.5253308!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e7123c39ad21875%3A0xd77e4fd098899e2c!2sNISWA%20BEAUTY%20Nail%20%26%20Foot%20Spa!5e0!3m2!1sid!2sid!4v1715000000000!5m2!1sid!2sid"
+                    src="<?= esc($kontak['maps_embed']) ?>"
                     width="100%" height="420" style="border:0;display:block;" allowfullscreen="" loading="lazy"
                     referrerpolicy="no-referrer-when-downgrade">
                 </iframe>
@@ -881,8 +656,7 @@ function closeProductPreview() {
     </div>
 </section>
 
-
-<!-- ══ SECTION TESTIMONI PELANGGAN ══ -->
+<!-- ══ SECTION TESTIMONI ══ -->
 <section id="testimoni" class="testimoni-section py-5">
     <div class="container">
         <div class="row justify-content-center mb-5">
@@ -890,194 +664,55 @@ function closeProductPreview() {
                 <div class="section-label" data-aos="fade-up"><span>Kata Mereka</span></div>
                 <h2 class="section-title" data-aos="fade-up" data-aos-delay="150">Testimoni <span style="color:var(--cream-accent);">Pelanggan</span></h2>
                 <p class="text-muted" data-aos="fade-up" data-aos-delay="250" style="font-size:15px;">Kepercayaan pelanggan adalah kebanggaan kami</p>
-
-                <!-- Rating Summary -->
                 <div class="testimoni-rating-badge" data-aos="fade-up" data-aos-delay="350">
                     <div class="testimoni-score">5.0</div>
                     <div class="testimoni-stars">
                         <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
                     </div>
                     <div class="testimoni-rating-label">Berdasarkan ulasan Google Maps</div>
-                    <a href="https://maps.app.goo.gl/czQHcN15FMvfFZy76" target="_blank" class="review-write-btn ms-3">
+                    <a href="<?= esc($kontak['maps_link']) ?>" target="_blank" class="review-write-btn ms-3">
                         <i class="fab fa-google"></i> Tulis Ulasan
                     </a>
                 </div>
             </div>
         </div>
 
-        <!-- Carousel Testimoni -->
         <div class="testimoni-carousel-wrapper" data-aos="fade-up" data-aos-delay="200">
             <div class="testimoni-track" id="testimoniTrack">
-
-                <!-- Card 1 -->
+                <?php foreach ($testimonials as $t):
+                    $firstLetter = mb_strtoupper(mb_substr($t['name'], 0, 1, 'UTF-8'), 'UTF-8');
+                    $color = $t['avatar_color'] ?? 'linear-gradient(135deg,#f9a8d4,#f472b6)';
+                ?>
                 <div class="testimoni-card">
                     <div class="testimoni-quote-icon"><i class="fas fa-quote-left"></i></div>
-                    <p class="testimoni-text">"Nail art-nya bagus banget, hasilnya rapi dan tahan lama! Mbak-mbaknya ramah dan sabar. Foot spa-nya juga bikin kaki lega banget. Pasti balik lagi! <i class="fa-solid fa-hand-sparkles" style="color:#8B6F5E;font-size:0.9em;"></i>"</p>
+                    <p class="testimoni-text">"<?= esc($t['text']) ?>"</p>
                     <div class="testimoni-footer">
-                        <div class="testimoni-avatar" style="background:linear-gradient(135deg,#f9a8d4,#f472b6);">N</div>
+                        <div class="testimoni-avatar" style="background:<?= esc($color) ?>;"><?= $firstLetter ?></div>
                         <div class="testimoni-user-info">
-                            <div class="testimoni-name">Ninda Ayu</div>
+                            <div class="testimoni-name"><?= esc($t['name']) ?></div>
                             <div class="testimoni-stars-sm">
                                 <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
                             </div>
                         </div>
-                        <div class="testimoni-service-tag">Nail Art & Foot Spa</div>
+                        <div class="testimoni-service-tag"><?= esc($t['service_tag']) ?></div>
                     </div>
                 </div>
-
-                <!-- Card 2 -->
-                <div class="testimoni-card">
-                    <div class="testimoni-quote-icon"><i class="fas fa-quote-left"></i></div>
-                    <p class="testimoni-text">"Lashlift-nya keren banget, mata jadi keliatan lebih segar dan melek. Tempatnya bersih dan nyaman, harga juga worth it. Recommended banget buat yang di Jepara! <i class="fa-solid fa-sparkles" style="color:#D6C1A3;font-size:0.9em;"></i>"</p>
-                    <div class="testimoni-footer">
-                        <div class="testimoni-avatar" style="background:linear-gradient(135deg,#6ee7b7,#34d399);">R</div>
-                        <div class="testimoni-user-info">
-                            <div class="testimoni-name">Rizka Amalia</div>
-                            <div class="testimoni-stars-sm">
-                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
-                            </div>
-                        </div>
-                        <div class="testimoni-service-tag">Lashlift</div>
-                    </div>
-                </div>
-
-                <!-- Card 3 -->
-                <div class="testimoni-card">
-                    <div class="testimoni-quote-icon"><i class="fas fa-quote-left"></i></div>
-                    <p class="testimoni-text">"Callus treatment-nya top banget, kaki jadi mulus dan lembut. Pelayanan cepat dan tidak mengecewakan. Sudah langganan di sini dari lama dan selalu puas! <i class="fa-solid fa-fan" style="color:#f9a8d4;font-size:0.9em;"></i>"</p>
-                    <div class="testimoni-footer">
-                        <div class="testimoni-avatar" style="background:linear-gradient(135deg,#fde68a,#f59e0b);">S</div>
-                        <div class="testimoni-user-info">
-                            <div class="testimoni-name">Siti Maryam</div>
-                            <div class="testimoni-stars-sm">
-                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
-                            </div>
-                        </div>
-                        <div class="testimoni-service-tag">Callus Treatment</div>
-                    </div>
-                </div>
-
-                <!-- Card 4 -->
-                <div class="testimoni-card">
-                    <div class="testimoni-quote-icon"><i class="fas fa-quote-left"></i></div>
-                    <p class="testimoni-text">"Smoothing-nya hasilnya halus banget dan tahan lama! Stafnya profesional dan ramah. Tempatnya cozy, betah deh berlama-lama di sini. Recommended! <i class="fa-solid fa-star" style="color:#f59e0b;font-size:0.9em;"></i>"</p>
-                    <div class="testimoni-footer">
-                        <div class="testimoni-avatar" style="background:linear-gradient(135deg,#a78bfa,#7c3aed);">D</div>
-                        <div class="testimoni-user-info">
-                            <div class="testimoni-name">Dian Pertiwi</div>
-                            <div class="testimoni-stars-sm">
-                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
-                            </div>
-                        </div>
-                        <div class="testimoni-service-tag">Smoothing</div>
-                    </div>
-                </div>
-
-                <!-- Card 5 -->
-                <div class="testimoni-card">
-                    <div class="testimoni-quote-icon"><i class="fas fa-quote-left"></i></div>
-                    <p class="testimoni-text">"Henna series-nya cantik banget, detail dan presisi! Mbak-mbaknya sabar banget ngerjainnya. Harganya juga sangat terjangkau untuk kualitas segini. Bakal balik lagi! <i class="fa-solid fa-leaf" style="color:#16a34a;font-size:0.9em;"></i>"</p>
-                    <div class="testimoni-footer">
-                        <div class="testimoni-avatar" style="background:linear-gradient(135deg,#86efac,#16a34a);">F</div>
-                        <div class="testimoni-user-info">
-                            <div class="testimoni-name">Fatimah Zahra</div>
-                            <div class="testimoni-stars-sm">
-                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
-                            </div>
-                        </div>
-                        <div class="testimoni-service-tag">Henna Series</div>
-                    </div>
-                </div>
-
-            </div><!-- end .testimoni-track -->
-
-            <!-- Nav Buttons -->
-            <button class="testimoni-nav testimoni-prev" id="testimoniPrev" aria-label="Sebelumnya">
-                <i class="fas fa-chevron-left"></i>
-            </button>
-            <button class="testimoni-nav testimoni-next" id="testimoniNext" aria-label="Berikutnya">
-                <i class="fas fa-chevron-right"></i>
-            </button>
+                <?php endforeach; ?>
+            </div>
+            <button class="testimoni-nav testimoni-prev" id="testimoniPrev" aria-label="Sebelumnya"><i class="fas fa-chevron-left"></i></button>
+            <button class="testimoni-nav testimoni-next" id="testimoniNext" aria-label="Berikutnya"><i class="fas fa-chevron-right"></i></button>
         </div>
-
-        <!-- Dots -->
         <div class="testimoni-dots" id="testimoniDots"></div>
     </div>
 </section>
 
-<script>
-(function() {
-    var track      = document.getElementById('testimoniTrack');
-    var prevBtn    = document.getElementById('testimoniPrev');
-    var nextBtn    = document.getElementById('testimoniNext');
-    var dotsWrap   = document.getElementById('testimoniDots');
-    if (!track) return;
-
-    var cards       = Array.from(track.querySelectorAll('.testimoni-card'));
-    var current     = 0;
-    var autoTimer   = null;
-    var perView     = getPerView();
-
-    function getPerView() {
-        return window.innerWidth >= 992 ? 3 : window.innerWidth >= 600 ? 2 : 1;
-    }
-
-    var totalSlides = Math.max(1, cards.length - perView + 1);
-
-    // Build dots
-    dotsWrap.innerHTML = '';
-    for (var i = 0; i < totalSlides; i++) {
-        var dot = document.createElement('span');
-        dot.className = 'testimoni-dot' + (i === 0 ? ' active' : '');
-        dot.dataset.i = i;
-        dot.addEventListener('click', function() { goTo(+this.dataset.i); });
-        dotsWrap.appendChild(dot);
-    }
-
-    function goTo(idx) {
-        current = Math.max(0, Math.min(idx, totalSlides - 1));
-        var pct = current * (100 / perView);
-        track.style.transform = 'translateX(-' + pct + '%)';
-        dotsWrap.querySelectorAll('.testimoni-dot').forEach(function(d, i) {
-            d.classList.toggle('active', i === current);
-        });
-        cards.forEach(function(c, i) {
-            c.classList.toggle('is-active', i >= current && i < current + perView);
-        });
-    }
-
-    function startAuto() {
-        autoTimer = setInterval(function() {
-            goTo(current + 1 < totalSlides ? current + 1 : 0);
-        }, 4500);
-    }
-    function stopAuto() { clearInterval(autoTimer); }
-
-    prevBtn.addEventListener('click', function() { stopAuto(); goTo(current - 1 >= 0 ? current - 1 : totalSlides - 1); startAuto(); });
-    nextBtn.addEventListener('click', function() { stopAuto(); goTo(current + 1 < totalSlides ? current + 1 : 0); startAuto(); });
-
-    window.addEventListener('resize', function() {
-        perView     = getPerView();
-        totalSlides = Math.max(1, cards.length - perView + 1);
-        current     = 0;
-        goTo(0);
-    });
-
-    goTo(0);
-    startAuto();
-})();
-</script>
-
-
 <!-- ══════════════════════════════════════════════════
-     SECTION: PROFIL TOKO  (id="about" — masuk ke About)
-     Posisi: setelah Testimoni, sebelum Footer
-     Alur: Hero → Layanan → Harga → Produk → Lokasi → Testimoni → Profil Toko → Footer
+     SECTION: PROFIL TOKO
 ══════════════════════════════════════════════════ -->
 <section id="about" class="profil-toko-section">
     <div class="container">
 
-        <!-- ── Section Header ── -->
+        <!-- Section Header -->
         <div class="row justify-content-center mb-5">
             <div class="col-lg-7 text-center">
                 <div class="section-label" data-aos="fade-up"><span>Kenali Kami</span></div>
@@ -1090,36 +725,24 @@ function closeProductPreview() {
             </div>
         </div>
 
-        <!-- ── Biografi Pemilik ── -->
+        <!-- Biografi Pemilik -->
         <div class="row justify-content-center mb-5 pb-4 profil-divider">
             <div class="col-lg-8" data-aos="fade-up" data-aos-delay="100">
                 <div class="profil-badge">
                     <i class="fas fa-crown me-2"></i>Pemilik
                 </div>
-                <h3 class="profil-name mt-2">Niswa</h3>
-                <p class="profil-tagline">"Kecantikan adalah kepercayaan diri yang paling murni."</p>
-                <p class="profil-bio">
-                    Pendiri Niswa Beauty memulai perjalanan usahanya dari jasa henna keliling dengan nama Niswa Henna. Dengan penuh semangat dan ketekunan, layanan dilakukan dari rumah ke rumah untuk memenuhi kebutuhan pelanggan di sekitar Jepara.
-
-Pada tahun 2018, dunia kecantikan khususnya nail art dan fake nails mulai berkembang pesat. Melihat peluang tersebut, pendiri mulai mempelajari dan mengembangkan layanan nail art menggunakan perlengkapan sederhana seperti nail polish. Berawal dari daerah Lebak Pakis Aji, hasil karya yang teliti dan pelayanan yang baik membuat nama Niswa mulai dikenal masyarakat.
-
-Perjalanan usaha semakin berkembang ketika mendapat dukungan dan inspirasi dari salah satu teman di Dubai dalam pengembangan dunia kecantikan. Memasuki tahun 2019, usaha mulai berjalan lebih lancar setelah mendapatkan supplier lokal dan pelanggan dari luar daerah seperti Kudus dan Tanjung, Semarang.
-                </p>
-                <p class="profil-bio">
-                    Tahun 2020–2021 menjadi masa penuh perjuangan sekaligus perkembangan. Pendiri mulai dikenal oleh beberapa publik figur lokal di Jepara yang menggunakan jasa nail art Niswa. Bahkan pada masa awal, beberapa layanan diberikan secara gratis sebagai bentuk belajar dan membangun relasi. Dukungan teman-teman menjadi salah satu alasan usaha ini terus bertahan dan berkembang.
-
-Pada tahun 2022, perjalanan usaha sempat mengalami ujian ketika pendiri mengalami keguguran sehingga mulai membatasi pekerjaan dengan lokasi yang terlalu jauh. Namun semangat untuk terus berkembang tidak berhenti. Di masa tersebut, usaha seserahan berkembang pesat dan menjadi salah satu layanan yang diminati pelanggan.
-
-Saat merintis sendiri, jam kerja dimulai dari pukul 10 pagi hingga 9 malam dengan jumlah pelanggan yang bisa mencapai lebih dari 7 orang per hari. Hingga kini, pendiri Niswa Beauty terus belajar dan berkembang, terutama dalam bidang media sosial, pelayanan, dan branding, dengan tetap mempertahankan sikap rendah hati dalam membangun usaha sendiri.
-                </p>
+                <h3 class="profil-name mt-2"><?= esc($profil['owner_name']) ?></h3>
+                <p class="profil-tagline"><?= esc($profil['owner_tagline']) ?></p>
+                <p class="profil-bio"><?= nl2br(esc($profil['owner_bio1'])) ?></p>
+                <p class="profil-bio"><?= nl2br(esc($profil['owner_bio2'])) ?></p>
             </div>
         </div>
 
-        <!-- ── Biografi Toko ── -->
+        <!-- Biografi Toko -->
         <div class="row align-items-center g-5 mb-5 pb-4 profil-divider flex-lg-row-reverse">
             <div class="col-lg-5" data-aos="fade-left" data-aos-delay="100">
                 <div class="profil-img-frame profil-img-frame--alt">
-                    <img src="image/WhatsApp Image 2026-05-08 at 10.02.50.jpeg" alt="Foto Toko Niswà Beauty"
+                    <img src="<?= esc($profil['store_image']) ?>" alt="Foto Toko <?= esc($profil['store_name']) ?>"
                          style="width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:24px;display:block;">
                     <div class="profil-img-deco profil-img-deco--alt"></div>
                 </div>
@@ -1128,39 +751,20 @@ Saat merintis sendiri, jam kerja dimulai dari pukul 10 pagi hingga 9 malam denga
                 <div class="profil-badge profil-badge--toko">
                     <i class="fas fa-store me-2"></i>Tentang Toko
                 </div>
-                <h3 class="profil-name">NISWÀ BEAUTY</h3>
-                <p class="profil-tagline">"Premium Beauty Experience di Jantung Jepara"</p>
-                <p class="profil-bio">
-                    Niswa Beauty merupakan usaha di bidang kecantikan yang berawal dari layanan henna sederhana bernama Niswa Henna. Seiring berkembangnya tren kecantikan pada tahun 2018, usaha ini mulai merambah ke layanan nail art dan fake nails untuk memenuhi kebutuhan pelanggan, khususnya calon pengantin.
-
-Dengan kualitas pelayanan dan hasil karya yang terus berkembang, Niswa mulai dikenal oleh masyarakat sekitar hingga mendapatkan pelanggan dari luar daerah pada tahun 2019. Perkembangan usaha semakin baik setelah memiliki supplier lokal dan jaringan pelanggan yang lebih luas.
-
-Pada tahun 2020, Niswa Beauty membuka studio kecil pertama di rumah daerah Tengguli. Tidak hanya melayani nail art, usaha ini juga menyediakan layanan wedding, gift, dan seserahan. Seiring waktu, layanan nail art menjadi semakin diminati dan dikenal oleh berbagai kalangan di Jepara.
-                </p>
-                <p class="profil-bio">
-                    Tanggal 15 Juli 2023 menjadi tonggak penting dengan resmi berdirinya Niswa Beauty bersama dua orang tim pertama. Sejak saat itu, usaha berkembang lebih profesional dengan pelayanan yang semakin lengkap dan terstruktur. Beberapa kerja sama dari luar kota hingga tawaran bergabung dengan brand kecantikan besar pernah datang, namun Niswa Beauty memilih untuk tetap berkembang secara mandiri.
+                <h3 class="profil-name"><?= esc($profil['store_name']) ?></h3>
+                <p class="profil-tagline"><?= esc($profil['store_tagline']) ?></p>
+                <p class="profil-bio"><?= nl2br(esc($profil['store_bio1'])) ?></p>
+                <p class="profil-bio"><?= nl2br(esc($profil['store_bio2'])) ?></p>
                 <div class="profil-values-row">
-                    <div class="profil-value-item">
-                        <i class="fas fa-heart"></i>
-                        <span>Pelayanan Tulus</span>
-                    </div>
-                    <div class="profil-value-item">
-                        <i class="fas fa-shield-alt"></i>
-                        <span>Produk Aman & Halal</span>
-                    </div>
-                    <div class="profil-value-item">
-                        <i class="fas fa-star"></i>
-                        <span>Kualitas Premium</span>
-                    </div>
-                    <div class="profil-value-item">
-                        <i class="fas fa-smile"></i>
-                        <span>Kepuasan Pelanggan</span>
-                    </div>
+                    <div class="profil-value-item"><i class="fas fa-heart"></i><span>Pelayanan Tulus</span></div>
+                    <div class="profil-value-item"><i class="fas fa-shield-alt"></i><span>Produk Aman & Halal</span></div>
+                    <div class="profil-value-item"><i class="fas fa-star"></i><span>Kualitas Premium</span></div>
+                    <div class="profil-value-item"><i class="fas fa-smile"></i><span>Kepuasan Pelanggan</span></div>
                 </div>
             </div>
         </div>
 
-        <!-- ── Sejarah Teknologi ── -->
+        <!-- Sejarah Teknologi -->
         <div data-aos="fade-up" data-aos-delay="100">
             <div class="text-center mb-5">
                 <div class="profil-badge profil-badge--tech mx-auto">
@@ -1171,18 +775,9 @@ Pada tahun 2020, Niswa Beauty membuka studio kecil pertama di rumah daerah Tengg
                     Dari alat sederhana hingga sistem digital modern — begini kami terus berkembang untuk melayani Anda lebih baik
                 </p>
             </div>
-
             <div class="tech-prose-wrap" data-aos="fade-up" data-aos-delay="150">
                 <p class="tech-prose-text">
-                    Niswà Beauty juga terus mengikuti perkembangan zaman. Berawal dari promosi sederhana melalui
-                    <span class="tech-prose-highlight"><i class="fab fa-whatsapp me-1"></i>Story WhatsApp</span>,
-                    kini hadir lebih luas lewat
-                    <span class="tech-prose-highlight"><i class="fab fa-instagram me-1"></i>Instagram</span>
-                    dan
-                    <span class="tech-prose-highlight"><i class="fab fa-tiktok me-1"></i>TikTok</span>
-                    — termasuk penggunaan sistem pembayaran digital
-                    <span class="tech-prose-highlight"><i class="fas fa-qrcode me-1"></i>QRIS</span>
-                    sejak awal tahun 2025. Hingga saat ini, Niswà Beauty terus berkembang untuk memberikan pengalaman kecantikan terbaik bagi setiap pelanggan.
+                    <?= nl2br(esc($profil['tech_text'])) ?>
                 </p>
             </div>
         </div>
@@ -1190,246 +785,108 @@ Pada tahun 2020, Niswa Beauty membuka studio kecil pertama di rumah daerah Tengg
     </div>
 </section>
 
-<!-- ══ PROFIL TOKO STYLES ══ -->
+<!-- PROFIL TOKO STYLES -->
 <style>
-/* ─── Section Wrapper ─── */
 .profil-toko-section {
     background: linear-gradient(180deg, #fdfaf7 0%, #f5ede4 50%, #fdfaf7 100%);
-    padding: 50px 0;
-    position: relative;
-    overflow: hidden;
+    padding: 50px 0; position: relative; overflow: hidden;
 }
 .profil-toko-section::before {
-    content: '';
-    position: absolute;
-    top: -60px; right: -80px;
+    content: ''; position: absolute; top: -60px; right: -80px;
     width: 360px; height: 360px;
     background: radial-gradient(circle, rgba(214,193,163,0.18) 0%, transparent 70%);
     pointer-events: none;
 }
-.profil-divider {
-    border-bottom: 1px solid rgba(214,193,163,0.35);
-    padding-bottom: 48px;
-    margin-bottom: 48px !important;
-}
-
-/* ─── Badge ─── */
+.profil-divider { border-bottom: 1px solid rgba(214,193,163,0.35); padding-bottom: 48px; margin-bottom: 48px !important; }
 .profil-badge {
-    display: inline-flex;
-    align-items: center;
+    display: inline-flex; align-items: center;
     background: linear-gradient(135deg, #8B6F5E, #D6C1A3);
-    color: #fff;
-    font-size: 12px;
-    font-weight: 700;
-    font-family: 'Poppins', sans-serif;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    padding: 6px 18px;
-    border-radius: 50px;
-    margin-bottom: 16px;
+    color: #fff; font-size: 12px; font-weight: 700; font-family: 'Poppins', sans-serif;
+    letter-spacing: 1px; text-transform: uppercase; padding: 6px 18px; border-radius: 50px; margin-bottom: 16px;
 }
-.profil-badge--toko  { background: linear-gradient(135deg, #5A4A42, #8B6F5E); }
+.profil-badge--toko { background: linear-gradient(135deg, #5A4A42, #8B6F5E); }
 .profil-badge--tech  { background: linear-gradient(135deg, #2d1f17, #5A4A42); }
-
-/* ─── Image Frame ─── */
-.profil-img-frame {
-    position: relative;
-    display: inline-block;
-    width: 100%;
-    max-width: 400px;
-}
-.profil-img-placeholder {
-    width: 100%;
-    aspect-ratio: 4/5;
-    border-radius: 24px;
-    background: linear-gradient(135deg, #f5ede4, #ede0d4);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: #CBB89D;
-    font-family: 'Poppins', sans-serif;
-    font-size: 13px;
-    border: 2px dashed #D6C1A3;
-}
-.profil-img-placeholder i { font-size: 64px; margin-bottom: 12px; }
-.profil-img-placeholder--alt { background: linear-gradient(135deg, #ede0d4, #e5d5c5); }
+.profil-img-frame { position: relative; }
 .profil-img-deco {
-    position: absolute;
-    bottom: -16px; right: -16px;
-    width: 80%; height: 80%;
-    border: 2px solid rgba(203,184,157,0.40);
-    border-radius: 24px;
-    z-index: -1;
+    position: absolute; bottom: -16px; right: -16px;
+    width: 80%; height: 80%; border: 2px solid rgba(203,184,157,0.40);
+    border-radius: 24px; z-index: -1;
 }
 .profil-img-deco--alt { bottom: -16px; left: -16px; right: auto; }
-
-/* ─── Text ─── */
-.profil-name {
-    font-family: 'Playfair Display', serif;
-    font-size: 32px;
-    font-weight: 700;
-    color: #2d1f17;
-    margin-bottom: 8px;
-}
-.profil-tagline {
-    font-family: 'Playfair Display', serif;
-    font-style: italic;
-    color: #8B6F5E;
-    font-size: 16px;
-    margin-bottom: 18px;
-    border-left: 3px solid #D6C1A3;
-    padding-left: 14px;
-}
-.profil-bio {
-    color: #555;
-    font-size: 15px;
-    line-height: 1.8;
-    font-family: 'Poppins', sans-serif;
-    margin-bottom: 14px;
-}
-
-/* ─── Stats ─── */
-.profil-stats-row {
-    display: flex;
-    gap: 32px;
-    margin-top: 28px;
-    flex-wrap: wrap;
-}
-.profil-stat {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-}
-.profil-stat-num {
-    font-family: 'Playfair Display', serif;
-    font-size: 32px;
-    font-weight: 700;
-    color: #8B6F5E;
-    line-height: 1;
-}
-.profil-stat-label {
-    font-family: 'Poppins', sans-serif;
-    font-size: 11px;
-    color: #888;
-    margin-top: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-/* ─── Values ─── */
-.profil-values-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-top: 28px;
-}
+.profil-name { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 700; color: #2d1f17; margin-bottom: 8px; }
+.profil-tagline { font-family: 'Playfair Display', serif; font-style: italic; color: #8B6F5E; font-size: 16px; margin-bottom: 18px; border-left: 3px solid #D6C1A3; padding-left: 14px; }
+.profil-bio { color: #555; font-size: 15px; line-height: 1.8; font-family: 'Poppins', sans-serif; margin-bottom: 14px; }
+.profil-values-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 28px; }
 .profil-value-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: #fff;
-    border: 1px solid rgba(214,193,163,0.4);
-    border-radius: 12px;
-    padding: 12px 16px;
-    font-family: 'Poppins', sans-serif;
-    font-size: 13px;
-    font-weight: 500;
-    color: #5A4A42;
-    cursor: default;
-    transition: transform 0.28s cubic-bezier(0.4,0,0.2,1),
-                box-shadow 0.28s cubic-bezier(0.4,0,0.2,1),
-                background 0.28s, color 0.28s, border-color 0.28s;
+    display: flex; align-items: center; gap: 10px;
+    background: #fff; border: 1px solid rgba(214,193,163,0.4); border-radius: 12px;
+    padding: 12px 16px; font-family: 'Poppins', sans-serif; font-size: 13px;
+    font-weight: 500; color: #5A4A42; cursor: default;
+    transition: transform .28s, box-shadow .28s, background .28s, color .28s, border-color .28s;
 }
 .profil-value-item:hover {
-    background: linear-gradient(135deg, #8B6F5E, #D6C1A3);
-    border-color: transparent;
-    color: #fff;
-    transform: translateY(-4px) scale(1.03);
-    box-shadow: 0 10px 28px rgba(139,111,94,0.30);
+    background: linear-gradient(135deg, #8B6F5E, #D6C1A3); border-color: transparent; color: #fff;
+    transform: translateY(-4px) scale(1.03); box-shadow: 0 10px 28px rgba(139,111,94,0.30);
 }
-.profil-value-item i {
-    color: #8B6F5E;
-    font-size: 16px;
-    width: 20px;
-    text-align: center;
-    transition: color 0.28s, transform 0.28s;
-}
-.profil-value-item:hover i {
-    color: #fff;
-    transform: scale(1.2) rotate(-8deg);
-}
-
-/* ─── Tech Prose ─── */
+.profil-value-item i { color: #8B6F5E; font-size: 16px; width: 20px; text-align: center; transition: color .28s, transform .28s; }
+.profil-value-item:hover i { color: #fff; transform: scale(1.2) rotate(-8deg); }
 .tech-prose-wrap {
-    max-width: 680px;
-    margin: 0 auto;
-    background: #fff;
-    border-radius: 20px;
-    padding: 36px 40px;
-    border: 1px solid rgba(214,193,163,0.35);
+    max-width: 680px; margin: 0 auto; background: #fff; border-radius: 20px;
+    padding: 36px 40px; border: 1px solid rgba(214,193,163,0.35);
     box-shadow: 0 4px 24px rgba(139,111,94,0.09);
 }
-.tech-prose-text {
-    font-family: 'Poppins', sans-serif;
-    font-size: 15.5px;
-    color: #555;
-    line-height: 2;
-    margin: 0;
-}
+.tech-prose-text { font-family: 'Poppins', sans-serif; font-size: 15.5px; color: #555; line-height: 2; margin: 0; }
 .tech-prose-highlight {
-    display: inline-flex;
-    align-items: center;
+    display: inline-flex; align-items: center;
     background: linear-gradient(135deg, rgba(139,111,94,0.10), rgba(214,193,163,0.18));
-    color: #8B6F5E;
-    font-weight: 600;
-    border: 1px solid rgba(139,111,94,0.22);
-    border-radius: 50px;
-    padding: 2px 12px;
-    font-size: 14px;
-    white-space: nowrap;
+    color: #8B6F5E; font-weight: 600; border: 1px solid rgba(139,111,94,0.22);
+    border-radius: 50px; padding: 2px 12px; font-size: 14px; white-space: nowrap;
 }
-@media (max-width: 576px) {
-    .tech-prose-wrap { padding: 24px 20px; }
-    .tech-prose-text { font-size: 14px; }
-}
-
-/* ─── Responsive ─── */
 @media (max-width: 768px) {
     .profil-name { font-size: 26px; }
-    .profil-stats-row { gap: 20px; }
-    .profil-stat-num { font-size: 26px; }
     .profil-values-row { grid-template-columns: 1fr; }
-    .tech-timeline { padding-left: 20px; }
-    .tech-timeline::before { left: 11px; }
-    .tech-timeline-dot { width: 32px; height: 32px; margin-left: -43px; font-size: 13px; }
-    .tech-timeline-content { padding: 18px 18px; }
-    .tech-timeline-title { font-size: 16px; }
-    .profil-img-frame { max-width: 100%; }
+    .tech-prose-wrap { padding: 24px 20px; }
+    .tech-prose-text { font-size: 14px; }
 }
 </style>
 
 <?php include 'footer.php'; ?>
-
 <button id="backToTop"><i class="fas fa-chevron-up"></i></button>
 
-<!-- ══ ORDER MODAL ══ -->
-<div id="orderModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;">
-    <div style="background:#fff;border-radius:20px;width:90%;max-width:480px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.2);max-height:90vh;overflow-y:auto;">
-        <div style="background:linear-gradient(135deg,#8B6F5E,#D6C1A3);padding:20px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;">
-            <div>
-                <h5 style="color:#fff;margin:0;font-weight:700;">Form Pembelian</h5>
-                <small style="color:rgba(255,255,255,0.8);" id="modalProductName"></small>
-            </div>
-            <button onclick="closeOrder()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;">&times;</button>
+<!-- ══ PRODUCT PREVIEW MODAL ══ -->
+<div id="productPreviewModal" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.55);align-items:center;justify-content:center;" onclick="if(event.target===this)closeProductPreview()">
+    <div style="background:#fff;border-radius:24px;width:92%;max-width:380px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,0.25);animation:ppFadeIn .25s ease;">
+        <div style="position:relative;">
+            <img id="ppImg" src="" alt="" style="width:100%;height:280px;object-fit:cover;display:block;">
+            <button onclick="closeProductPreview()" style="position:absolute;top:12px;right:12px;background:rgba(0,0,0,0.45);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;line-height:1;">&times;</button>
         </div>
-        <div style="padding:24px;">
-            <div style="display:flex;align-items:center;gap:12px;background:#faf7f2;border-radius:12px;padding:12px;margin-bottom:20px;">
-                <img id="modalProductImg" src="" style="width:60px;height:60px;object-fit:cover;border-radius:10px;">
+        <div style="padding:20px 22px 22px;">
+            <div id="ppName" style="font-family:'Poppins',sans-serif;font-weight:700;font-size:16px;color:#2d1f17;margin-bottom:4px;"></div>
+            <div id="ppPrice" style="font-family:'Poppins',sans-serif;font-weight:700;font-size:18px;color:#8B6F5E;margin-bottom:18px;"></div>
+            <button id="ppBeli" style="width:100%;padding:12px;background:linear-gradient(135deg,#8B6F5E,#D6C1A3);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;font-family:'Poppins',sans-serif;cursor:pointer;">
+                <i class="fas fa-shopping-bag me-2"></i>Beli Sekarang
+            </button>
+        </div>
+    </div>
+</div>
+<style>@keyframes ppFadeIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}</style>
+
+<!-- ══ ORDER MODAL ══ -->
+<div id="orderModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#fff;border-radius:24px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,0.25);">
+        <div style="padding:20px 24px 0;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #f0e8df;padding-bottom:16px;margin-bottom:20px;">
+            <div>
+                <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#8B6F5E;font-weight:600;margin-bottom:4px;">Pemesanan</div>
+                <h5 id="modalProductName" style="font-weight:700;font-size:16px;color:#2d1f17;margin:0;font-family:'Poppins',sans-serif;"></h5>
+            </div>
+            <button onclick="closeOrder()" style="background:none;border:none;font-size:22px;color:#999;cursor:pointer;line-height:1;">&times;</button>
+        </div>
+        <div style="padding:0 24px 24px;">
+            <div style="display:flex;align-items:center;gap:14px;background:#faf5f0;border-radius:14px;padding:14px;margin-bottom:18px;">
+                <img id="modalProductImg" src="" alt="" style="width:60px;height:60px;object-fit:cover;border-radius:10px;">
                 <div>
-                    <div style="font-weight:600;font-size:14px;" id="modalProductNameInner"></div>
-                    <div style="color:#8B6F5E;font-weight:700;" id="modalProductPrice"></div>
+                    <div id="modalProductNameInner" style="font-weight:600;font-size:14px;color:#2d1f17;font-family:'Poppins',sans-serif;"></div>
+                    <div id="modalProductPrice" style="color:#8B6F5E;font-weight:700;font-size:15px;font-family:'Poppins',sans-serif;"></div>
                 </div>
             </div>
             <form method="POST" id="orderForm">
@@ -1437,16 +894,18 @@ Pada tahun 2020, Niswa Beauty membuka studio kecil pertama di rumah daerah Tengg
                 <input type="hidden" name="product_name" id="inputProductName">
                 <input type="hidden" name="product_price" id="inputProductPrice">
                 <div id="orderError" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:10px 14px;font-size:13px;color:#dc2626;margin-bottom:14px;"></div>
+                <?php
+                $fields = [
+                    ['label'=>'Nama Lengkap','name'=>'nama','type'=>'text','req'=>true,'placeholder'=>'Nama Anda'],
+                    ['label'=>'Nomor WhatsApp','name'=>'whatsapp','type'=>'tel','req'=>true,'placeholder'=>'08xxxxxxxxxx'],
+                ];
+                foreach ($fields as $f): ?>
                 <div style="margin-bottom:14px;">
-                    <label style="font-size:13px;font-weight:500;margin-bottom:6px;display:block;">Nama Lengkap</label>
-                    <input type="text" name="nama" required placeholder="Nama Anda"
+                    <label style="font-size:13px;font-weight:500;margin-bottom:6px;display:block;"><?= $f['label'] ?></label>
+                    <input type="<?= $f['type'] ?>" name="<?= $f['name'] ?>" <?= $f['req']?'required':'' ?> placeholder="<?= $f['placeholder'] ?>"
                         style="width:100%;padding:10px 14px;border:1.5px solid #e8e0d8;border-radius:10px;font-size:13px;font-family:Poppins,sans-serif;outline:none;">
                 </div>
-                <div style="margin-bottom:14px;">
-                    <label style="font-size:13px;font-weight:500;margin-bottom:6px;display:block;">Nomor WhatsApp</label>
-                    <input type="tel" name="whatsapp" required placeholder="08xxxxxxxxxx"
-                        style="width:100%;padding:10px 14px;border:1.5px solid #e8e0d8;border-radius:10px;font-size:13px;font-family:Poppins,sans-serif;outline:none;">
-                </div>
+                <?php endforeach; ?>
                 <div style="margin-bottom:14px;">
                     <label style="font-size:13px;font-weight:500;margin-bottom:6px;display:block;">Alamat Pengiriman</label>
                     <textarea name="alamat" required placeholder="Alamat lengkap..." rows="2"
@@ -1471,6 +930,7 @@ Pada tahun 2020, Niswa Beauty membuka studio kecil pertama di rumah daerah Tengg
     </div>
 </div>
 
+<!-- ══ SUCCESS ORDER ══ -->
 <div id="successOrder" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;">
     <div style="background:#fff;border-radius:20px;width:90%;max-width:360px;padding:32px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
         <i class="fas fa-check-circle" style="font-size:56px;color:#10b981;margin-bottom:16px;display:block;"></i>
@@ -1483,119 +943,119 @@ Pada tahun 2020, Niswa Beauty membuka studio kecil pertama di rumah daerah Tengg
     </div>
 </div>
 
-
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js?v=5.0"></script>
 <script>AOS.init();</script>
 <script src="script.js"></script>
 
-<!-- Hero Carousel: inisialisasi manual agar auto-slide tidak mati -->
+<!-- Hero Carousel -->
 <script>
-(function () {
-    function startCarousel() {
-        var el = document.getElementById('heroCarousel');
-        if (!el) return;
-
-        var old = bootstrap.Carousel.getInstance(el);
-        if (old) old.dispose();
-
-        var carousel = new bootstrap.Carousel(el, {
-            interval: 3000,
-            ride: 'carousel',
-            wrap: true,
-            pause: false
-        });
+(function(){
+    function startCarousel(){
+        var el=document.getElementById('heroCarousel');if(!el)return;
+        var old=bootstrap.Carousel.getInstance(el);if(old)old.dispose();
+        var carousel=new bootstrap.Carousel(el,{interval:3000,ride:'carousel',wrap:true,pause:false});
         carousel.cycle();
-
-        document.addEventListener('visibilitychange', function () {
-            if (!document.hidden) carousel.cycle();
-        });
-        window.addEventListener('focus', function () {
-            carousel.cycle();
-        });
+        document.addEventListener('visibilitychange',function(){if(!document.hidden)carousel.cycle();});
+        window.addEventListener('focus',function(){carousel.cycle();});
     }
-
-    if (document.readyState === 'complete') {
-        startCarousel();
-    } else {
-        window.addEventListener('load', startCarousel);
-    }
+    if(document.readyState==='complete'){startCarousel();}else{window.addEventListener('load',startCarousel);}
 })();
 </script>
 
-<!-- Product filter -->
+<!-- Product Filter -->
 <script>
-document.querySelectorAll(".filter-buttons button").forEach(btn => {
-    btn.addEventListener("click", () => {
-        document.querySelectorAll(".filter-buttons button").forEach(b => b.classList.remove("active"));
+document.querySelectorAll(".filter-buttons button").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+        document.querySelectorAll(".filter-buttons button").forEach(b=>b.classList.remove("active"));
         btn.classList.add("active");
-        const filter = btn.dataset.filter;
-        document.querySelectorAll(".product-card").forEach(card => {
-            const show = filter === "all" || card.dataset.category === filter;
-            card.style.display = show ? "" : "none";
-            if (show) {
-                card.style.animation = "cardFadeIn 0.3s ease forwards";
-            }
+        const filter=btn.dataset.filter;
+        document.querySelectorAll(".product-card").forEach(card=>{
+            const show=filter==="all"||card.dataset.category===filter;
+            card.style.display=show?"":"none";
+            if(show)card.style.animation="cardFadeIn 0.3s ease forwards";
         });
     });
 });
 </script>
 <style>
-@keyframes cardFadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
+@keyframes cardFadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
 </style>
 
-<!-- Order modal -->
+<!-- Order Modal Script -->
 <script>
-function handleBeli(name, price, img) {
-    document.getElementById('modalProductName').textContent      = name;
-    document.getElementById('modalProductNameInner').textContent = name;
-    document.getElementById('modalProductPrice').textContent     = price;
-    document.getElementById('modalProductImg').src               = img;
+function handleBeli(name,price,img){
+    document.getElementById('modalProductName').textContent=name;
+    document.getElementById('modalProductNameInner').textContent=name;
+    document.getElementById('modalProductPrice').textContent=price;
+    document.getElementById('modalProductImg').src=img;
     document.getElementById('orderForm').reset();
-    document.getElementById('inputProductName').value  = name;
-    document.getElementById('inputProductPrice').value = price;
-    document.getElementById('orderError').style.display = 'none';
-    document.getElementById('orderModal').style.display = 'flex';
+    document.getElementById('inputProductName').value=name;
+    document.getElementById('inputProductPrice').value=price;
+    document.getElementById('orderError').style.display='none';
+    document.getElementById('orderModal').style.display='flex';
 }
-function closeOrder() {
-    document.getElementById('orderModal').style.display = 'none';
-}
-document.getElementById('orderModal').addEventListener('click', function(e) {
-    if (e.target === this) closeOrder();
-});
+function closeOrder(){document.getElementById('orderModal').style.display='none';}
+document.getElementById('orderModal').addEventListener('click',function(e){if(e.target===this)closeOrder();});
 
-// AJAX submit — tanpa reload halaman
-document.getElementById('orderForm').addEventListener('submit', function(e) {
+document.getElementById('orderForm').addEventListener('submit',function(e){
     e.preventDefault();
-    var errBox = document.getElementById('orderError');
-    errBox.style.display = 'none';
-
-    fetch(window.location.href, {
-        method: 'POST',
-        headers: { 'X-Requested-With': 'XMLHttpRequest' },
-        body: new FormData(this)
+    var errBox=document.getElementById('orderError');errBox.style.display='none';
+    fetch(window.location.href,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'},body:new FormData(this)})
+    .then(res=>res.json())
+    .then(data=>{
+        if(data.success){closeOrder();document.getElementById('successOrder').style.display='flex';this.reset();}
+        else{errBox.innerHTML=data.message;errBox.style.display='block';}
     })
-    .then(function(res) { return res.json(); })
-    .then(function(data) {
-        if (data.success) {
-            closeOrder();
-            document.getElementById('successOrder').style.display = 'flex';
-            document.getElementById('orderForm').reset();
-        } else {
-            errBox.innerHTML = data.message;
-            errBox.style.display = 'block';
-        }
-    })
-    .catch(function() {
-        errBox.innerHTML = 'Terjadi kesalahan. Silakan coba lagi.';
-        errBox.style.display = 'block';
-    });
+    .catch(()=>{errBox.innerHTML='Terjadi kesalahan. Silakan coba lagi.';errBox.style.display='block';});
 });
+
+function showProductPreview(name,price,img){
+    document.getElementById('ppImg').src=img;
+    document.getElementById('ppName').textContent=name;
+    document.getElementById('ppPrice').textContent=price;
+    document.getElementById('ppBeli').onclick=function(){closeProductPreview();handleBeli(name,price,img);};
+    document.getElementById('productPreviewModal').style.display='flex';
+}
+function closeProductPreview(){document.getElementById('productPreviewModal').style.display='none';}
+</script>
+
+<!-- Testimoni Carousel -->
+<script>
+(function(){
+    var track=document.getElementById('testimoniTrack');
+    var prevBtn=document.getElementById('testimoniPrev');
+    var nextBtn=document.getElementById('testimoniNext');
+    var dotsWrap=document.getElementById('testimoniDots');
+    if(!track)return;
+    var cards=Array.from(track.querySelectorAll('.testimoni-card'));
+    var current=0;var autoTimer=null;
+    function getPerView(){return window.innerWidth>=992?3:window.innerWidth>=600?2:1;}
+    var perView=getPerView();
+    var totalSlides=Math.max(1,cards.length-perView+1);
+    dotsWrap.innerHTML='';
+    for(var i=0;i<totalSlides;i++){
+        var dot=document.createElement('span');
+        dot.className='testimoni-dot'+(i===0?' active':'');
+        dot.dataset.i=i;
+        dot.addEventListener('click',function(){goTo(+this.dataset.i);});
+        dotsWrap.appendChild(dot);
+    }
+    function goTo(idx){
+        current=Math.max(0,Math.min(idx,totalSlides-1));
+        var pct=current*(100/perView);
+        track.style.transform='translateX(-'+pct+'%)';
+        dotsWrap.querySelectorAll('.testimoni-dot').forEach(function(d,i){d.classList.toggle('active',i===current);});
+        cards.forEach(function(c,i){c.classList.toggle('is-active',i>=current&&i<current+perView);});
+    }
+    function startAuto(){autoTimer=setInterval(function(){goTo(current+1<totalSlides?current+1:0);},4000);}
+    function stopAuto(){clearInterval(autoTimer);}
+    if(prevBtn)prevBtn.addEventListener('click',function(){stopAuto();goTo(current>0?current-1:totalSlides-1);startAuto();});
+    if(nextBtn)nextBtn.addEventListener('click',function(){stopAuto();goTo(current+1<totalSlides?current+1:0);startAuto();});
+    goTo(0);startAuto();
+    window.addEventListener('resize',function(){perView=getPerView();totalSlides=Math.max(1,cards.length-perView+1);goTo(0);});
+})();
 </script>
 
 </body>

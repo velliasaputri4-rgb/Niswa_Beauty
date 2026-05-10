@@ -409,7 +409,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); line-height: 1.2; }
 /* ============================================
    SECTION COMMON STYLES
    ============================================ */
-section { padding: 100px 0; }
+section { padding: 50px 0; }
 
 /* Layanan Kami langsung nempel di bawah hero */
 section#layanan {
@@ -945,7 +945,7 @@ section#layanan { padding-top: 0 !important; margin-top: 0 !important; }
 /* ============================================
    DASHBOARD
    ============================================ */
-.dashboard-page { background: var(--cream); min-height: 100vh; padding-top: 100px; padding-bottom: 60px; }
+.dashboard-page { background: var(--cream); min-height: 100vh; padding-top: 100px; padding-bottom: 30px; }
 
 .dashboard-header {
     background: linear-gradient(135deg, var(--cream-dark), #7A5C4E);
@@ -1369,7 +1369,7 @@ section#layanan { padding-top: 0 !important; margin-top: 0 !important; }
 }
 
 @media (max-width: 768px) {
-    section { padding: 70px 0; }
+    section { padding: 35px 0; }
     .hero-buttons { flex-direction: column; width: 100%; }
     .hero-buttons a { text-align: center; justify-content: center; }
     .hero-stats { gap: 24px; }
@@ -4325,7 +4325,7 @@ section p {
    LOKASI SECTION — standalone full-width map
    ================================================ */
 .location-section {
-    padding: 70px 0 60px;
+    padding: 40px 0 35px;
     background: #fdfaf7;
 }
 
@@ -4350,7 +4350,7 @@ section p {
    ================================================ */
 .testimoni-section {
     background: #fdfaf7;
-    padding: 80px 0 70px;
+    padding: 45px 0 40px;
     position: relative;
     overflow: hidden;
 }

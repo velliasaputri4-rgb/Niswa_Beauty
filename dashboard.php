@@ -391,6 +391,11 @@ if (isset($_GET['delete_order']) && is_numeric($_GET['delete_order'])) {
             </a>
         </li>
     </ul>
+    <div class="sidebar-section">CMS</div>
+    <ul class="sidebar-nav">
+        <li><a href="cms.php" style="color:var(--gold);"><i class="fas fa-pencil-alt"></i> Panel CMS</a></li>
+        <li><a href="index.php" target="_blank"><i class="fas fa-external-link-alt"></i> Lihat Website</a></li>
+    </ul>
     <div class="mobile-drawer-user">
         <div class="av"><?= strtoupper(substr($_SESSION['user'], 0, 1)) ?></div>
         <div>

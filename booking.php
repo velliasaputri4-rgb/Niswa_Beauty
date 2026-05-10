@@ -215,71 +215,67 @@ $pageTitle = "Booking Appointment — NISWÀ BEAUTY";
                             <div class="col-md-6">
                                 <label class="form-label"><i class="fas fa-spa me-2 text-pink"></i>Pilih Layanan</label>
                                 <select class="form-select" name="layanan" required>
-                                    <option value="">Pilih layanan</option>
+                                    <option value="">— Pilih Layanan —</option>
                                     <?php
-                                    $layanans = [
-                                        // Rambut
-                                        'Creambath',
-                                        'Hair Mask',
-                                        'Hair Spa',
-                                        'Cuci Rambut',
-                                        'Cuci + Catok',
-                                        'Cuci + Blow',
-                                        'Bleaching S',
-                                        'Coloring Full',
-                                        'Bleaching Peek A Boo',
-                                        'Bleaching Highlight',
-                                        'Balayage',
-                                        'Bleaching Full',
-                                        'Down Peim Poni',
-                                        'Keriting Klasik',
-                                        'Keriting Digital',
-                                        'Keratin Treatment',
-                                        'Smoothing Collagen - Lamei',
-                                        'Smoothing Collagen - L\'Oreal',
-                                        'Smoothing Sutra - Inaura',
-                                        'Smoothing Sutra - Matrix',
-                                        'Smoothing Sutra - Go Street',
-                                        'Smoothing Sutra - Silky',
-                                        'Smoothing Keratin - SDB',
-                                        'Smoothing Keratin - Eljo',
-                                        'Smoothing Keratin - Gylo',
-                                        'Smoothing Expres',
-                                        'Smoothing Keratin Expres',
-                                        'Smoothing Crystal',
-                                        // Treatment Spa
-                                        'Bundling Manicure & Pedicure',
-                                        'Manicure / Pedicure',
-                                        'Hand Spa',
-                                        'Foot Spa',
-                                        'Callus Treatment',
-                                        // Henna Series
-                                        'Brow Henna',
-                                        'Nail Henna Tangan',
-                                        'Nail Henna Kaki',
-                                        'Bundling Meni-Henna',
-                                        'Henna Fun',
-                                        // Nail Art & Services
-                                        'Press On Nail Basic',
-                                        'Press On Nail Motif',
-                                        'Kids Basic Gel',
-                                        'Kids Gel + 4 Sticker',
-                                        'Kids Gel + Full Sticker',
-                                        'Gel Basic Tangan / Kaki',
-                                        'Extension',
-                                        'Gel French / Cat Eyes',
-                                        'Remove Gel',
-                                        'Gel Ombre / Blush On',
-                                        'Remove Extension',
-                                        'Bundling Nail Art + Extension',
-                                        // Brow & Lash
-                                        'Brow Bomb',
-                                        'Lashlift',
-                                        'Lashlift Tint',
+                                    $layanansGrouped = [
+                                        'Henna Series' => [
+                                            'Brow Henna',
+                                            'Nail Henna Tangan',
+                                            'Nail Henna Kaki',
+                                            'Bundling Meni-Henna',
+                                            'Henna Fun',
+                                        ],
+                                        'Treatment Spa' => [
+                                            'Bundling Manicure & Pedicure',
+                                            'Manicure / Pedicure',
+                                            'Hand Spa',
+                                            'Foot Spa',
+                                            'Callus Treatment',
+                                        ],
+                                        'Brow & Lash' => [
+                                            'Brow Bomb',
+                                            'Lashlift',
+                                            'Lashlift Tint',
+                                        ],
+                                        'Rambut' => [
+                                            'Creambath',
+                                            'Hair Mask',
+                                            'Hair Spa',
+                                            'Cuci,Catok,Blow',
+                                            'Bleaching S',
+                                            'Coloring Full',
+                                            'Bleaching',
+                                            'Balayage',
+                                            'Down Peim Poni',
+                                            'Keriting Klasik',
+                                            'Keriting Digital',
+                                            'Keratin Treatment',
+                                            'Smoothing',
+                                        ],
+                                        'Nail Art & Services' => [
+                                            'Press On Nail Basic',
+                                            'Press On Nail Motif',
+                                            'Kids Basic Gel',
+                                            'Kids Gel + 4 Sticker',
+                                            'Kids Gel + Full Sticker',
+                                            'Gel Basic Tangan / Kaki',
+                                            'Extension',
+                                            'Gel French / Cat Eyes',
+                                            'Remove Gel',
+                                            'Gel Ombre / Blush On',
+                                            'Remove Extension',
+                                            'Bundling Nail Art + Extension',
+                                        ],
                                     ];
-                                    foreach ($layanans as $l):
+                                    foreach ($layanansGrouped as $grup => $items):
                                     ?>
-                                    <option <?= ($_POST['layanan']??'')===$l ? 'selected' : '' ?>><?= $l ?></option>
+                                    <optgroup label="<?= htmlspecialchars($grup) ?>">
+                                        <?php foreach ($items as $l): ?>
+                                        <option value="<?= htmlspecialchars($l) ?>" <?= ($_POST['layanan']??'')===$l ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($l) ?>
+                                        </option>
+                                        <?php endforeach; ?>
+                                    </optgroup>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
