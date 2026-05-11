@@ -3,12 +3,39 @@
    ================================================ */
 
 // ---- Loading Screen ----
-window.addEventListener('load', () => {
-    setTimeout(() => {
-        const loader = document.getElementById('loadingScreen');
-        if (loader) loader.classList.add('hide');
-    }, 1800);
-});
+// Hanya tampil saat refresh (F5/Ctrl+R), tidak saat navigasi antar halaman
+(function () {
+    const loader = document.getElementById('loadingScreen');
+    if (!loader) return;
+
+    const navType = performance.getEntriesByType('navigation')[0]?.type;
+    const isRefresh = navType === 'reload';
+    const isNavigating = sessionStorage.getItem('navigating') === '1';
+
+    // Hapus flag navigasi setelah dibaca
+    sessionStorage.removeItem('navigating');
+
+    if (isRefresh && !isNavigating) {
+        // Refresh → tampilkan loading
+        window.addEventListener('load', () => {
+            setTimeout(() => loader.classList.add('hide'), 1800);
+        });
+    } else {
+        // Navigasi antar halaman → langsung sembunyikan
+        loader.style.display = 'none';
+    }
+
+    // Tandai setiap klik link internal sebagai navigasi (bukan refresh)
+    document.addEventListener('click', function (e) {
+        const a = e.target.closest('a[href]');
+        if (!a) return;
+        const href = a.getAttribute('href');
+        if (href && !href.startsWith('#') && !href.startsWith('http') && a.target !== '_blank') {
+            sessionStorage.setItem('navigating', '1');
+        }
+    });
+})();
+
 
 // ---- AOS Init ----
 AOS.init({
@@ -443,4 +470,3 @@ function scrollGallery(button, direction) {
         behavior: 'smooth'
     });
 }
-

@@ -116,14 +116,14 @@ $profil = [
 $servicesRows  = $conn ? mysqli_fetch_all(mysqli_query($conn, "SELECT * FROM cms_services ORDER BY sort_order, id"), MYSQLI_ASSOC) : [];
 // Fallback jika tabel kosong
 $defaultServices = [
-    ['id'=>0,'name'=>'Haircut',       'image'=>'image/download (9).jpg',                          'gallery'=>'image/download (9).jpg,image/I LOVE HAIRSTYLE __.jpg,image/Long layers cutting_ (1).jpg'],
-    ['id'=>0,'name'=>'Coloring',      'image'=>'image/WhatsApp Image 2026-05-08 at 11.00.07.jpeg','gallery'=>'image/WhatsApp Image 2026-05-08 at 11.00.07.jpeg,image/WhatsApp Image 2026-05-08 at 11.00.07 (1).jpeg,image/WhatsApp Image 2026-05-08 at 11.00.08.jpeg'],
-    ['id'=>0,'name'=>'Nailart',       'image'=>'image/Fall nails brown nails inspo.jpg',          'gallery'=>'image/Fall nails brown nails inspo.jpg,image/download (11).jpg,image/download (12).jpg'],
+    ['id'=>0,'name'=>'Haircut',       'image'=>'image/download (9).jpg',                          'gallery'=>'image/download (9).jpg,image/I LOVE HAIRSTYLE __.jpg,image/Long layers cutting_ (1).jpg,image/download (10).jpg'],
+    ['id'=>0,'name'=>'Coloring',      'image'=>'image/WhatsApp Image 2026-05-08 at 11.00.07.jpeg','gallery'=>'image/WhatsApp Image 2026-05-08 at 11.00.07.jpeg,image/WhatsApp Image 2026-05-08 at 11.00.07 (1).jpeg,image/WhatsApp Image 2026-05-08 at 11.00.08.jpeg,image/WhatsApp Image 2026-05-08 at 11.00.11.jpeg,image/WhatsApp Image 2026-05-08 at 11.00.11 (1).jpeg'],
+    ['id'=>0,'name'=>'Nailart',       'image'=>'image/Fall nails brown nails inspo.jpg',          'gallery'=>'image/Fall nails brown nails inspo.jpg,image/download (11).jpg,image/download (12).jpg,image/download (13).jpg,image/download (14).jpg'],
     ['id'=>0,'name'=>'Hair Treatment','image'=>'image/WhatsApp Image 2026-05-08 at 22.08.31.jpeg','gallery'=>'image/WhatsApp Image 2026-05-08 at 22.08.31.jpeg,image/Keratin Hair Transformation 💫 Before & After.jpg'],
     ['id'=>0,'name'=>'Foot SPA',      'image'=>'image/download (8).jpg',                          'gallery'=>'image/download (8).jpg,image/footspa.jpeg'],
-    ['id'=>0,'name'=>'Henna Series',  'image'=>'image/WhatsApp Image 2026-05-08 at 11.03.43.jpeg','gallery'=>'image/WhatsApp Image 2026-05-08 at 11.03.43.jpeg,image/WhatsApp Image 2026-05-08 at 11.05.55.jpeg'],
+    ['id'=>0,'name'=>'Henna Series',  'image'=>'image/WhatsApp Image 2026-05-08 at 11.03.43.jpeg','gallery'=>'image/WhatsApp Image 2026-05-08 at 11.03.43.jpeg,image/WhatsApp Image 2026-05-08 at 11.05.55.jpeg,image/WhatsApp Image 2026-05-08 at 22.06.29.jpeg,image/WhatsApp Image 2026-05-08 at 22.06.29 (1).jpeg,image/WhatsApp Image 2026-05-08 at 22.06.29 (2).jpeg'],
     ['id'=>0,'name'=>'Press on Nail', 'image'=>'image/download (6).jpg',                          'gallery'=>'image/download (6).jpg,image/download (15).jpg'],
-    ['id'=>0,'name'=>'Eye Lash',      'image'=>'image/WhatsApp Image 2026-05-08 at 22.14.29.jpeg','gallery'=>'image/WhatsApp Image 2026-05-08 at 22.14.29.jpeg,image/WhatsApp Image 2026-05-08 at 22.16.29.jpeg'],
+    ['id'=>0,'name'=>'Eye Lash',      'image'=>'image/WhatsApp Image 2026-05-08 at 22.14.29.jpeg','gallery'=>'image/WhatsApp Image 2026-05-08 at 22.14.29.jpeg,image/WhatsApp Image 2026-05-08 at 22.16.29.jpeg,image/WhatsApp Image 2026-05-08 at 22.16.30.jpeg'],
 ];
 $services = !empty($servicesRows) ? $servicesRows : $defaultServices;
 
@@ -706,149 +706,6 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
     </div>
 </section>
 
-<!-- ══════════════════════════════════════════════════
-     SECTION: PROFIL TOKO
-══════════════════════════════════════════════════ -->
-<section id="about" class="profil-toko-section">
-    <div class="container">
-
-        <!-- Section Header -->
-        <div class="row justify-content-center mb-5">
-            <div class="col-lg-7 text-center">
-                <div class="section-label" data-aos="fade-up"><span>Kenali Kami</span></div>
-                <h2 class="section-title" data-aos="fade-up" data-aos-delay="100">
-                    Profil <span style="color:var(--cream-accent);">Toko</span>
-                </h2>
-                <p class="text-muted" data-aos="fade-up" data-aos-delay="200" style="font-size:15px;">
-                    Kisah di balik setiap sentuhan kecantikan yang kami hadirkan untuk Anda
-                </p>
-            </div>
-        </div>
-
-        <!-- Biografi Pemilik -->
-        <div class="row justify-content-center mb-5 pb-4 profil-divider">
-            <div class="col-lg-8" data-aos="fade-up" data-aos-delay="100">
-                <div class="profil-badge">
-                    <i class="fas fa-crown me-2"></i>Pemilik
-                </div>
-                <h3 class="profil-name mt-2"><?= esc($profil['owner_name']) ?></h3>
-                <p class="profil-tagline"><?= esc($profil['owner_tagline']) ?></p>
-                <p class="profil-bio"><?= nl2br(esc($profil['owner_bio1'])) ?></p>
-                <p class="profil-bio"><?= nl2br(esc($profil['owner_bio2'])) ?></p>
-            </div>
-        </div>
-
-        <!-- Biografi Toko -->
-        <div class="row align-items-center g-5 mb-5 pb-4 profil-divider flex-lg-row-reverse">
-            <div class="col-lg-5" data-aos="fade-left" data-aos-delay="100">
-                <div class="profil-img-frame profil-img-frame--alt">
-                    <img src="<?= esc($profil['store_image']) ?>" alt="Foto Toko <?= esc($profil['store_name']) ?>"
-                         style="width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:24px;display:block;">
-                    <div class="profil-img-deco profil-img-deco--alt"></div>
-                </div>
-            </div>
-            <div class="col-lg-7" data-aos="fade-right" data-aos-delay="200">
-                <div class="profil-badge profil-badge--toko">
-                    <i class="fas fa-store me-2"></i>Tentang Toko
-                </div>
-                <h3 class="profil-name"><?= esc($profil['store_name']) ?></h3>
-                <p class="profil-tagline"><?= esc($profil['store_tagline']) ?></p>
-                <p class="profil-bio"><?= nl2br(esc($profil['store_bio1'])) ?></p>
-                <p class="profil-bio"><?= nl2br(esc($profil['store_bio2'])) ?></p>
-                <div class="profil-values-row">
-                    <div class="profil-value-item"><i class="fas fa-heart"></i><span>Pelayanan Tulus</span></div>
-                    <div class="profil-value-item"><i class="fas fa-shield-alt"></i><span>Produk Aman & Halal</span></div>
-                    <div class="profil-value-item"><i class="fas fa-star"></i><span>Kualitas Premium</span></div>
-                    <div class="profil-value-item"><i class="fas fa-smile"></i><span>Kepuasan Pelanggan</span></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Sejarah Teknologi -->
-        <div data-aos="fade-up" data-aos-delay="100">
-            <div class="text-center mb-5">
-                <div class="profil-badge profil-badge--tech mx-auto">
-                    <i class="fas fa-history me-2"></i>Sejarah Teknologi
-                </div>
-                <h3 class="profil-name mt-3">Perjalanan Teknologi Toko</h3>
-                <p class="text-muted" style="font-size:15px;max-width:520px;margin:0 auto;">
-                    Dari alat sederhana hingga sistem digital modern — begini kami terus berkembang untuk melayani Anda lebih baik
-                </p>
-            </div>
-            <div class="tech-prose-wrap" data-aos="fade-up" data-aos-delay="150">
-                <p class="tech-prose-text">
-                    <?= nl2br(esc($profil['tech_text'])) ?>
-                </p>
-            </div>
-        </div>
-
-    </div>
-</section>
-
-<!-- PROFIL TOKO STYLES -->
-<style>
-.profil-toko-section {
-    background: linear-gradient(180deg, #fdfaf7 0%, #f5ede4 50%, #fdfaf7 100%);
-    padding: 50px 0; position: relative; overflow: hidden;
-}
-.profil-toko-section::before {
-    content: ''; position: absolute; top: -60px; right: -80px;
-    width: 360px; height: 360px;
-    background: radial-gradient(circle, rgba(214,193,163,0.18) 0%, transparent 70%);
-    pointer-events: none;
-}
-.profil-divider { border-bottom: 1px solid rgba(214,193,163,0.35); padding-bottom: 48px; margin-bottom: 48px !important; }
-.profil-badge {
-    display: inline-flex; align-items: center;
-    background: linear-gradient(135deg, #8B6F5E, #D6C1A3);
-    color: #fff; font-size: 12px; font-weight: 700; font-family: 'Poppins', sans-serif;
-    letter-spacing: 1px; text-transform: uppercase; padding: 6px 18px; border-radius: 50px; margin-bottom: 16px;
-}
-.profil-badge--toko { background: linear-gradient(135deg, #5A4A42, #8B6F5E); }
-.profil-badge--tech  { background: linear-gradient(135deg, #2d1f17, #5A4A42); }
-.profil-img-frame { position: relative; }
-.profil-img-deco {
-    position: absolute; bottom: -16px; right: -16px;
-    width: 80%; height: 80%; border: 2px solid rgba(203,184,157,0.40);
-    border-radius: 24px; z-index: -1;
-}
-.profil-img-deco--alt { bottom: -16px; left: -16px; right: auto; }
-.profil-name { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 700; color: #2d1f17; margin-bottom: 8px; }
-.profil-tagline { font-family: 'Playfair Display', serif; font-style: italic; color: #8B6F5E; font-size: 16px; margin-bottom: 18px; border-left: 3px solid #D6C1A3; padding-left: 14px; }
-.profil-bio { color: #555; font-size: 15px; line-height: 1.8; font-family: 'Poppins', sans-serif; margin-bottom: 14px; }
-.profil-values-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 28px; }
-.profil-value-item {
-    display: flex; align-items: center; gap: 10px;
-    background: #fff; border: 1px solid rgba(214,193,163,0.4); border-radius: 12px;
-    padding: 12px 16px; font-family: 'Poppins', sans-serif; font-size: 13px;
-    font-weight: 500; color: #5A4A42; cursor: default;
-    transition: transform .28s, box-shadow .28s, background .28s, color .28s, border-color .28s;
-}
-.profil-value-item:hover {
-    background: linear-gradient(135deg, #8B6F5E, #D6C1A3); border-color: transparent; color: #fff;
-    transform: translateY(-4px) scale(1.03); box-shadow: 0 10px 28px rgba(139,111,94,0.30);
-}
-.profil-value-item i { color: #8B6F5E; font-size: 16px; width: 20px; text-align: center; transition: color .28s, transform .28s; }
-.profil-value-item:hover i { color: #fff; transform: scale(1.2) rotate(-8deg); }
-.tech-prose-wrap {
-    max-width: 680px; margin: 0 auto; background: #fff; border-radius: 20px;
-    padding: 36px 40px; border: 1px solid rgba(214,193,163,0.35);
-    box-shadow: 0 4px 24px rgba(139,111,94,0.09);
-}
-.tech-prose-text { font-family: 'Poppins', sans-serif; font-size: 15.5px; color: #555; line-height: 2; margin: 0; }
-.tech-prose-highlight {
-    display: inline-flex; align-items: center;
-    background: linear-gradient(135deg, rgba(139,111,94,0.10), rgba(214,193,163,0.18));
-    color: #8B6F5E; font-weight: 600; border: 1px solid rgba(139,111,94,0.22);
-    border-radius: 50px; padding: 2px 12px; font-size: 14px; white-space: nowrap;
-}
-@media (max-width: 768px) {
-    .profil-name { font-size: 26px; }
-    .profil-values-row { grid-template-columns: 1fr; }
-    .tech-prose-wrap { padding: 24px 20px; }
-    .tech-prose-text { font-size: 14px; }
-}
-</style>
 
 <?php include 'footer.php'; ?>
 <button id="backToTop"><i class="fas fa-chevron-up"></i></button>

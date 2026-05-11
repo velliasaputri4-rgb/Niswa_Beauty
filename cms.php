@@ -73,6 +73,151 @@ if ($conn) {
         image VARCHAR(255),
         sort_order INT DEFAULT 0
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    mysqli_query($conn, "CREATE TABLE IF NOT EXISTS cms_navbar (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        section VARCHAR(80) NOT NULL,
+        `key` VARCHAR(120) NOT NULL,
+        value LONGTEXT,
+        updated_at DATETIME DEFAULT NOW() ON UPDATE NOW(),
+        UNIQUE KEY uk_nav_sec_key (section, `key`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    mysqli_query($conn, "CREATE TABLE IF NOT EXISTS cms_footer (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        section VARCHAR(80) NOT NULL,
+        `key` VARCHAR(120) NOT NULL,
+        value LONGTEXT,
+        updated_at DATETIME DEFAULT NOW() ON UPDATE NOW(),
+        UNIQUE KEY uk_foot_sec_key (section, `key`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    mysqli_query($conn, "CREATE TABLE IF NOT EXISTS cms_booking_page (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        section VARCHAR(80) NOT NULL,
+        `key` VARCHAR(120) NOT NULL,
+        value LONGTEXT,
+        updated_at DATETIME DEFAULT NOW() ON UPDATE NOW(),
+        UNIQUE KEY uk_bkpg_sec_key (section, `key`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    /* ── AUTO-SEED: isi default jika tabel masih kosong ── */
+    $cntSvc = (int)(mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM cms_services"))['c'] ?? 0);
+    if ($cntSvc === 0) {
+        $defaultSvcSeed = [
+            ['Haircut',       'image/download (9).jpg',                          'image/download (9).jpg,image/I LOVE HAIRSTYLE __.jpg,image/Long layers cutting_ (1).jpg,image/download (10).jpg'],
+            ['Coloring',      'image/WhatsApp Image 2026-05-08 at 11.00.07.jpeg','image/WhatsApp Image 2026-05-08 at 11.00.07.jpeg,image/WhatsApp Image 2026-05-08 at 11.00.07 (1).jpeg,image/WhatsApp Image 2026-05-08 at 11.00.08.jpeg,image/WhatsApp Image 2026-05-08 at 11.00.11.jpeg,image/WhatsApp Image 2026-05-08 at 11.00.11 (1).jpeg'],
+            ['Nailart',       'image/Fall nails brown nails inspo.jpg',          'image/Fall nails brown nails inspo.jpg,image/download (11).jpg,image/download (12).jpg,image/download (13).jpg,image/download (14).jpg'],
+            ['Hair Treatment','image/WhatsApp Image 2026-05-08 at 22.08.31.jpeg','image/WhatsApp Image 2026-05-08 at 22.08.31.jpeg,image/Keratin Hair Transformation 💫 Before & After.jpg'],
+            ['Foot SPA',      'image/download (8).jpg',                          'image/download (8).jpg,image/footspa.jpeg'],
+            ['Henna Series',  'image/WhatsApp Image 2026-05-08 at 11.03.43.jpeg','image/WhatsApp Image 2026-05-08 at 11.03.43.jpeg,image/WhatsApp Image 2026-05-08 at 11.05.55.jpeg,image/WhatsApp Image 2026-05-08 at 22.06.29.jpeg,image/WhatsApp Image 2026-05-08 at 22.06.29 (1).jpeg,image/WhatsApp Image 2026-05-08 at 22.06.29 (2).jpeg'],
+            ['Press on Nail', 'image/download (6).jpg',                          'image/download (6).jpg,image/download (15).jpg'],
+            ['Eye Lash',      'image/WhatsApp Image 2026-05-08 at 22.14.29.jpeg','image/WhatsApp Image 2026-05-08 at 22.14.29.jpeg,image/WhatsApp Image 2026-05-08 at 22.16.29.jpeg,image/WhatsApp Image 2026-05-08 at 22.16.30.jpeg'],
+        ];
+        $so = 1;
+        foreach ($defaultSvcSeed as [$n,$img,$gal]) {
+            $n=mysqli_real_escape_string($conn,$n); $img=mysqli_real_escape_string($conn,$img); $gal=mysqli_real_escape_string($conn,$gal);
+            mysqli_query($conn,"INSERT INTO cms_services (name,image,gallery,sort_order) VALUES ('$n','$img','$gal',$so)");
+            $so++;
+        }
+    }
+
+    $cntPrc = (int)(mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM cms_prices"))['c'] ?? 0);
+    if ($cntPrc === 0) {
+        $defaultPrcSeed = [
+            ['Henna Series',       'Brow Henna',                      'Rp 25.000'],
+            ['Henna Series',       'Nail Henna Tangan',                'Rp 25.000'],
+            ['Henna Series',       'Nail Henna Kaki',                  'Rp 30.000'],
+            ['Henna Series',       'Bundling Meni-Henna',              'Rp 75.000'],
+            ['Henna Series',       'Henna Fun',                        'Rp 25.000 - 100.000'],
+            ['Treatment Spa',      'Bundling Manicure & Pedicure',     'Rp 100.000'],
+            ['Treatment Spa',      'Manicure / Pedicure',              'Rp 60.000'],
+            ['Treatment Spa',      'Hand Spa',                         'Rp 80.000'],
+            ['Treatment Spa',      'Foot Spa',                         'Rp 100.000'],
+            ['Treatment Spa',      'Callus Treatment',                 'Rp 70.000 - 150.000'],
+            ['Brow & Lash',        'Brow Bomb',                        'Rp 100.000'],
+            ['Brow & Lash',        'Lashlift',                         'Rp 70.000'],
+            ['Brow & Lash',        'Lashlift Tint',                    'Rp 90.000'],
+            ['Rambut',             'Creambath',                        'Rp 75.000'],
+            ['Rambut',             'Hair Mask',                        'Rp 45.000 - 90.000'],
+            ['Rambut',             'Hair Spa',                         'Rp 100.000'],
+            ['Rambut',             'Cuci,Catok,Blow',                  'Rp 25.000 - 50.000'],
+            ['Rambut',             'Bleaching S',                      'Rp 40.000'],
+            ['Rambut',             'Coloring Full',                    'Rp 120.000 - 300.000'],
+            ['Rambut',             'Bleaching',                        'Rp 200.000 - 1.200.000'],
+            ['Rambut',             'Balayage',                         'Rp 250.000 - 700.000'],
+            ['Rambut',             'Down Peim Poni',                   'Rp 100.000 - 300.000'],
+            ['Rambut',             'Keriting Klasik',                  'Rp 300.000 - 700.000'],
+            ['Rambut',             'Keriting Digital',                 'Rp 450.000 - 1.700.000'],
+            ['Rambut',             'Keratin Treatment',                'Rp 200.000'],
+            ['Rambut',             'Smoothing',                        'Rp 200.000 - 400.000'],
+            ['Nail Art & Services','Press On Nail Basic',              'Rp 50.000'],
+            ['Nail Art & Services','Press On Nail Motif',              'Rp 75.000'],
+            ['Nail Art & Services','Kids Basic Gel',                   'Rp 40.000'],
+            ['Nail Art & Services','Kids Gel + 4 Sticker',             'Rp 50.000'],
+            ['Nail Art & Services','Kids Gel + Full Sticker',          'Rp 55.000'],
+            ['Nail Art & Services','Gel Basic Tangan / Kaki',          'Rp 85.000'],
+            ['Nail Art & Services','Extension',                        'Rp 50.000'],
+            ['Nail Art & Services','Gel French / Cat Eyes',            'Rp 105.000'],
+            ['Nail Art & Services','Remove Gel',                       'Rp 50.000'],
+            ['Nail Art & Services','Gel Ombre / Blush On',             'Rp 135.000'],
+            ['Nail Art & Services','Remove Extension',                 'Rp 65.000'],
+            ['Nail Art & Services','Bundling Nail Art + Extension',    'Rp 150.000'],
+        ];
+        $so = 1;
+        foreach ($defaultPrcSeed as [$cat,$nm,$pr]) {
+            $cat=mysqli_real_escape_string($conn,$cat); $nm=mysqli_real_escape_string($conn,$nm); $pr=mysqli_real_escape_string($conn,$pr);
+            mysqli_query($conn,"INSERT INTO cms_prices (category,name,price,sort_order) VALUES ('$cat','$nm','$pr',$so)");
+            $so++;
+        }
+    }
+
+    $cntProd = (int)(mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM cms_products"))['c'] ?? 0);
+    if ($cntProd === 0) {
+        $defaultProdSeed = [
+            ['Cat Eye Nails',         'Rp 22.000','simple', 'image/nail1,22k.jpeg'],
+            ['Cat Eye Nails Pink',    'Rp 17.000','simple', 'image/WhatsApp Image 2026-05-07 at 10.10.41.jpeg'],
+            ['Cat Eye Coquette Nails','Rp 22.000','glam',   'image/cateyeqouket.jpeg'],
+            ['Butterfly Nails',       'Rp 25.000','wedding','image/WhatsApp Image 2026-05-06 at 11.22.27.jpeg'],
+            ['Cat Eye Nails',         'Rp 20.000','simple', 'image/WhatsApp Image 2026-05-06 at 11.05.13.jpeg'],
+            ['Cat Eye Coquette Nails','Rp 22.000','glam',   'image/WhatsApp Image 2026-05-06 at 10.21.26.jpeg'],
+            ['Elegant Nails',         'Rp 22.000','glam',   'image/WhatsApp Image 2026-05-06 at 10.21.24.jpeg'],
+            ['Cat Eye Nails',         'Rp 20.000','simple', 'image/WhatsApp Image 2026-05-06 at 11.05.12.jpeg'],
+            ['Cat Eye Red Nails',     'Rp 20.000','simple', 'image/WhatsApp Image 2026-05-06 at 11.05.12 (1).jpeg'],
+            ['Simple Nails',          'Rp 17.000','simple', 'image/WhatsApp Image 2026-05-07 at 10.09.45.jpeg'],
+            ['Cat Eye Pink Nails',    'Rp 20.000','simple', 'image/WhatsApp Image 2026-05-06 at 11.05.11.jpeg'],
+            ['Sun Flower',            'Rp 17.000','glam',   'image/WhatsApp Image 2026-05-07 at 10.05.32.jpeg'],
+            ['Bling bling Nails',     'Rp 17.000','glam',   'image/WhatsApp Image 2026-05-07 at 10.10.14.jpeg'],
+            ['Elegant Nails',         'Rp 17.000','simple', 'image/WhatsApp Image 2026-05-07 at 10.06.14.jpeg'],
+            ['Elegant Nails',         'Rp 25.000','wedding','image/WhatsApp Image 2026-05-06 at 11.20.31.jpeg'],
+            ['Elegant Nails',         'Rp 25.000','wedding','image/WhatsApp Image 2026-05-06 at 11.17.28.jpeg'],
+        ];
+        $so = 1;
+        foreach ($defaultProdSeed as [$nm,$pr,$cat,$img]) {
+            $nm=mysqli_real_escape_string($conn,$nm); $pr=mysqli_real_escape_string($conn,$pr);
+            $cat=mysqli_real_escape_string($conn,$cat); $img=mysqli_real_escape_string($conn,$img);
+            mysqli_query($conn,"INSERT INTO cms_products (name,price,category,image,sort_order) VALUES ('$nm','$pr','$cat','$img',$so)");
+            $so++;
+        }
+    }
+
+    $cntTesti = (int)(mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM cms_testimonials"))['c'] ?? 0);
+    if ($cntTesti === 0) {
+        $defaultTestiSeed = [
+            ['Ninda Ayu',    'Nail Art & Foot Spa', 'Nail art-nya bagus banget, hasilnya rapi dan tahan lama! Mbak-mbaknya ramah dan sabar. Foot spa-nya juga bikin kaki lega banget. Pasti balik lagi! 🌟',   'linear-gradient(135deg,#f9a8d4,#f472b6)'],
+            ['Rizka Amalia', 'Lashlift',            'Lashlift-nya keren banget, mata jadi keliatan lebih segar dan melek. Tempatnya bersih dan nyaman, harga juga worth it. Recommended banget!',             'linear-gradient(135deg,#6ee7b7,#34d399)'],
+            ['Siti Maryam',  'Callus Treatment',    'Callus treatment-nya top banget, kaki jadi mulus dan lembut. Pelayanan cepat dan tidak mengecewakan. Sudah langganan di sini dari lama dan selalu puas!', 'linear-gradient(135deg,#fde68a,#f59e0b)'],
+            ['Dian Pertiwi', 'Smoothing',           'Smoothing-nya hasilnya halus banget dan tahan lama! Stafnya profesional dan ramah. Tempatnya cozy, betah deh berlama-lama di sini. Recommended!',        'linear-gradient(135deg,#a78bfa,#7c3aed)'],
+            ['Fatimah Zahra','Henna Series',        'Henna series-nya cantik banget, detail dan presisi! Mbak-mbaknya sabar banget ngerjainnya. Harganya juga sangat terjangkau untuk kualitas segini.',       'linear-gradient(135deg,#86efac,#16a34a)'],
+        ];
+        $so = 1;
+        foreach ($defaultTestiSeed as [$nm,$tag,$txt,$clr]) {
+            $nm=mysqli_real_escape_string($conn,$nm); $tag=mysqli_real_escape_string($conn,$tag);
+            $txt=mysqli_real_escape_string($conn,$txt); $clr=mysqli_real_escape_string($conn,$clr);
+            mysqli_query($conn,"INSERT INTO cms_testimonials (name,service_tag,text,avatar_color,sort_order) VALUES ('$nm','$tag','$txt','$clr',$so)");
+            $so++;
+        }
+    }
 }
 
 /* ── Upload helper ── */
@@ -118,6 +263,48 @@ function setProfil($conn, $section, $key, $value) {
     $k = mysqli_real_escape_string($conn, $key);
     $v = mysqli_real_escape_string($conn, $value);
     mysqli_query($conn, "INSERT INTO cms_profil (section,`key`,value) VALUES ('$s','$k','$v')
+                         ON DUPLICATE KEY UPDATE value='$v', updated_at=NOW()");
+}
+function getNavbar($conn, $key, $default = '') {
+    if (!$conn) return $default;
+    $k = mysqli_real_escape_string($conn, $key);
+    $r = mysqli_query($conn, "SELECT value FROM cms_navbar WHERE section='navbar' AND `key`='$k' LIMIT 1");
+    if ($r && $row = mysqli_fetch_assoc($r)) return $row['value'];
+    return $default;
+}
+function setNavbar($conn, $key, $value) {
+    if (!$conn) return;
+    $k = mysqli_real_escape_string($conn, $key);
+    $v = mysqli_real_escape_string($conn, $value);
+    mysqli_query($conn, "INSERT INTO cms_navbar (section,`key`,value) VALUES ('navbar','$k','$v')
+                         ON DUPLICATE KEY UPDATE value='$v', updated_at=NOW()");
+}
+function getFooter($conn, $key, $default = '') {
+    if (!$conn) return $default;
+    $k = mysqli_real_escape_string($conn, $key);
+    $r = mysqli_query($conn, "SELECT value FROM cms_footer WHERE section='footer' AND `key`='$k' LIMIT 1");
+    if ($r && $row = mysqli_fetch_assoc($r)) return $row['value'];
+    return $default;
+}
+function setFooter($conn, $key, $value) {
+    if (!$conn) return;
+    $k = mysqli_real_escape_string($conn, $key);
+    $v = mysqli_real_escape_string($conn, $value);
+    mysqli_query($conn, "INSERT INTO cms_footer (section,`key`,value) VALUES ('footer','$k','$v')
+                         ON DUPLICATE KEY UPDATE value='$v', updated_at=NOW()");
+}
+function getBookingPage($conn, $key, $default = '') {
+    if (!$conn) return $default;
+    $k = mysqli_real_escape_string($conn, $key);
+    $r = mysqli_query($conn, "SELECT value FROM cms_booking_page WHERE section='booking' AND `key`='$k' LIMIT 1");
+    if ($r && $row = mysqli_fetch_assoc($r)) return $row['value'];
+    return $default;
+}
+function setBookingPage($conn, $key, $value) {
+    if (!$conn) return;
+    $k = mysqli_real_escape_string($conn, $key);
+    $v = mysqli_real_escape_string($conn, $value);
+    mysqli_query($conn, "INSERT INTO cms_booking_page (section,`key`,value) VALUES ('booking','$k','$v')
                          ON DUPLICATE KEY UPDATE value='$v', updated_at=NOW()");
 }
 
@@ -284,6 +471,31 @@ if (isset($_GET['logout'])) {
     header("Location: login.php"); exit;
 }
 
+/* ── 10. Navbar ── */
+if ($action === 'save_navbar') {
+    $fields = ['brand_name','btn_book_text','menu_home','menu_services','menu_product','menu_about','menu_booking'];
+    foreach ($fields as $f) setNavbar($conn, $f, $_POST[$f] ?? '');
+    header('Location: cms.php?tab=navbar&saved=1'); exit;
+}
+
+/* ── 11. Footer ── */
+if ($action === 'save_footer') {
+    $fields = ['brand_name','brand_desc',
+               'instagram_url','tiktok_url','whatsapp_url',
+               'address','phone','email','hours',
+               'copyright_text'];
+    foreach ($fields as $f) setFooter($conn, $f, $_POST[$f] ?? '');
+    header('Location: cms.php?tab=footer&saved=1'); exit;
+}
+
+/* ── 12. Booking Page Content ── */
+if ($action === 'save_booking_page') {
+    $fields = ['page_title','page_subtitle','form_title','success_message',
+               'services_list','time_slots'];
+    foreach ($fields as $f) setBookingPage($conn, $f, $_POST[$f] ?? '');
+    header('Location: cms.php?tab=booking_page&saved=1'); exit;
+}
+
 /* ══════════════════════════════════════════════
    LOAD ALL DATA
 ══════════════════════════════════════════════ */
@@ -323,6 +535,41 @@ $profil = [
     'store_bio2'    => getProfil($conn,'profil','store_bio2',   'Tanggal 15 Juli 2023 menjadi tonggak penting dengan resmi berdirinya Niswa Beauty bersama dua orang tim pertama.'),
     'store_image'   => getProfil($conn,'profil','store_image',  'image/WhatsApp Image 2026-05-08 at 10.02.50.jpeg'),
     'tech_text'     => getProfil($conn,'profil','tech_text',    'Niswà Beauty juga terus mengikuti perkembangan zaman. Berawal dari promosi sederhana melalui Story WhatsApp, kini hadir lebih luas lewat Instagram dan TikTok — termasuk penggunaan sistem pembayaran digital QRIS sejak awal tahun 2025.'),
+];
+
+// Navbar
+$navbar = [
+    'brand_name'    => getNavbar($conn, 'brand_name',    'NISWÀ BEAUTY'),
+    'btn_book_text' => getNavbar($conn, 'btn_book_text', 'Book Now'),
+    'menu_home'     => getNavbar($conn, 'menu_home',     'Home'),
+    'menu_services' => getNavbar($conn, 'menu_services', 'Services'),
+    'menu_product'  => getNavbar($conn, 'menu_product',  'Product'),
+    'menu_about'    => getNavbar($conn, 'menu_about',    'About'),
+    'menu_booking'  => getNavbar($conn, 'menu_booking',  'Booking'),
+];
+
+// Footer
+$footer_data = [
+    'brand_name'    => getFooter($conn, 'brand_name',    'NISWÀ BEAUTY'),
+    'brand_desc'    => getFooter($conn, 'brand_desc',    'Kecantikan bertemu kemewahan, dengan sentuhan profesional.'),
+    'instagram_url' => getFooter($conn, 'instagram_url', 'https://www.instagram.com/niswanail?igsh=MXJtYW1kenhuN3VpNA=='),
+    'tiktok_url'    => getFooter($conn, 'tiktok_url',    'https://www.tiktok.com/@niswabeauty?_r=1&_t=ZS-96BG9fNdy7Q'),
+    'whatsapp_url'  => getFooter($conn, 'whatsapp_url',  'https://wa.me/0882006903068'),
+    'address'       => getFooter($conn, 'address',       'Bangsri, Jepara, Jawa Tengah'),
+    'phone'         => getFooter($conn, 'phone',         '+62 882-0069-03068'),
+    'email'         => getFooter($conn, 'email',         'niswabeauty15@gmail.com'),
+    'hours'         => getFooter($conn, 'hours',         'Senin – Sabtu: 09:00 – 20:00'),
+    'copyright_text'=> getFooter($conn, 'copyright_text','NISWÀ BEAUTY. All rights reserved.'),
+];
+
+// Booking Page
+$booking_page = [
+    'page_title'      => getBookingPage($conn, 'page_title',      'Reservasi Online'),
+    'page_subtitle'   => getBookingPage($conn, 'page_subtitle',   'Isi form di bawah untuk memesan jadwal kecantikan Anda'),
+    'form_title'      => getBookingPage($conn, 'form_title',      'Form Booking'),
+    'success_message' => getBookingPage($conn, 'success_message', 'Booking berhasil! Kami akan menghubungi Anda via WhatsApp.'),
+    'services_list'   => getBookingPage($conn, 'services_list',   "Nail Art\nHaircut\nColoring\nFoot SPA\nHenna Series\nPress on Nail\nEye Lash\nHair Treatment"),
+    'time_slots'      => getBookingPage($conn, 'time_slots',      "09:00\n10:00\n11:00\n12:00\n13:00\n14:00\n15:00\n16:00\n17:00\n18:00\n19:00"),
 ];
 
 // Static default price list (displayed when DB is empty, mirroring website)
@@ -697,10 +944,36 @@ input[type=file]{display:none;}
     .sidebar.open{transform:translateX(0);}
     .main-wrap{margin-left:0;}
     .mobile-menu-btn{display:block;}
-    .content{padding:16px;}
-    .topbar{padding:12px 16px;}
-    .stat-grid{grid-template-columns:repeat(2,1fr);}
+    .content{padding:12px;}
+    .topbar{padding:11px 14px;}
+    .topbar-title{font-size:14px;}
+    .stat-grid{grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;}
+    .stat-card{padding:14px;gap:10px;}
+    .stat-icon{width:40px;height:40px;font-size:16px;border-radius:10px;}
+    .stat-num{font-size:20px;}
+    .stat-lbl{font-size:10px;}
     .cms-table{font-size:12px;}
+    .tab-nav{overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;padding-bottom:6px;gap:2px;}
+    .tab-nav::-webkit-scrollbar{height:3px;}
+    .tab-nav::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+    .tab-nav a{white-space:nowrap;padding:7px 11px;font-size:11.5px;flex-shrink:0;}
+    /* Hero tab: single column on mobile */
+    div[style*="grid-template-columns:1fr 380px"]{display:block!important;}
+    div[style*="grid-template-columns:1fr 380px"] > div:last-child{margin-top:16px;}
+    /* Prices tab: single column on mobile */
+    div[style*="grid-template-columns:1fr 1fr"]{display:block!important;}
+    div[style*="grid-template-columns:1fr 1fr"] > div + div{margin-top:16px;}
+    .cms-card-header{flex-wrap:wrap;gap:8px;}
+    .cms-card-header .ms-auto{width:100%;margin-left:0!important;display:flex;justify-content:flex-end;}
+    .cms-modal{border-radius:14px;}
+    .cms-modal-body{padding:16px;}
+    .actions-cell{flex-wrap:wrap;}
+    .btn-edit-cms,.btn-danger-cms{font-size:11px;padding:4px 9px;}
+}
+@media(max-width:420px){
+    .stat-grid{grid-template-columns:1fr 1fr;}
+    .grid-2,.grid-3{grid-template-columns:1fr!important;}
+    .topbar-right span{display:none;}
 }
 .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:190;}
 .sidebar-overlay.open{display:block;}
@@ -755,6 +1028,9 @@ input[type=file]{display:none;}
         <li><a href="cms.php?tab=testimoni" class="<?= $activeTab==='testimoni' ? 'active':'' ?>"><i class="fa-solid fa-comment-dots"></i> Testimoni</a></li>
         <li><a href="cms.php?tab=profil"    class="<?= $activeTab==='profil'    ? 'active':'' ?>"><i class="fa-solid fa-store"></i> Profil Toko</a></li>
         <li><a href="cms.php?tab=kontak"    class="<?= $activeTab==='kontak'    ? 'active':'' ?>"><i class="fa-solid fa-location-dot"></i> Kontak & Maps</a></li>
+        <li><a href="cms.php?tab=navbar"    class="<?= $activeTab==='navbar'    ? 'active':'' ?>"><i class="fa-solid fa-bars"></i> Navbar</a></li>
+        <li><a href="cms.php?tab=footer"    class="<?= $activeTab==='footer'    ? 'active':'' ?>"><i class="fa-solid fa-grip-lines"></i> Footer</a></li>
+        <li><a href="cms.php?tab=booking_page" class="<?= $activeTab==='booking_page' ? 'active':'' ?>"><i class="fa-solid fa-calendar-alt"></i> Halaman Booking</a></li>
     </ul>
 
     <div class="sidebar-lbl">Manajemen</div>
@@ -824,15 +1100,18 @@ input[type=file]{display:none;}
 
         <!-- Tab Nav -->
         <div class="tab-nav">
-            <a href="cms.php?tab=hero"      class="<?= $activeTab==='hero'      ? 'active':'' ?>"><i class="fa-solid fa-image"></i> Hero</a>
-            <a href="cms.php?tab=services"  class="<?= $activeTab==='services'  ? 'active':'' ?>"><i class="fa-solid fa-scissors"></i> Layanan</a>
-            <a href="cms.php?tab=prices"    class="<?= $activeTab==='prices'    ? 'active':'' ?>"><i class="fa-solid fa-tag"></i> Harga</a>
-            <a href="cms.php?tab=products"  class="<?= $activeTab==='products'  ? 'active':'' ?>"><i class="fa-solid fa-box-open"></i> Produk</a>
-            <a href="cms.php?tab=testimoni" class="<?= $activeTab==='testimoni' ? 'active':'' ?>"><i class="fa-solid fa-comment-dots"></i> Testimoni</a>
-            <a href="cms.php?tab=profil"    class="<?= $activeTab==='profil'    ? 'active':'' ?>"><i class="fa-solid fa-store"></i> Profil</a>
-            <a href="cms.php?tab=kontak"    class="<?= $activeTab==='kontak'    ? 'active':'' ?>"><i class="fa-solid fa-location-dot"></i> Kontak</a>
-            <a href="cms.php?tab=bookings"  class="<?= $activeTab==='bookings'  ? 'active':'' ?>"><i class="fa-solid fa-calendar-check"></i> Booking</a>
-            <a href="cms.php?tab=orders"    class="<?= $activeTab==='orders'    ? 'active':'' ?>"><i class="fa-solid fa-bag-shopping"></i> Orders</a>
+            <a href="cms.php?tab=hero"         class="<?= $activeTab==='hero'         ? 'active':'' ?>"><i class="fa-solid fa-image"></i> Hero</a>
+            <a href="cms.php?tab=services"     class="<?= $activeTab==='services'     ? 'active':'' ?>"><i class="fa-solid fa-scissors"></i> Layanan</a>
+            <a href="cms.php?tab=prices"       class="<?= $activeTab==='prices'       ? 'active':'' ?>"><i class="fa-solid fa-tag"></i> Harga</a>
+            <a href="cms.php?tab=products"     class="<?= $activeTab==='products'     ? 'active':'' ?>"><i class="fa-solid fa-box-open"></i> Produk</a>
+            <a href="cms.php?tab=testimoni"    class="<?= $activeTab==='testimoni'    ? 'active':'' ?>"><i class="fa-solid fa-comment-dots"></i> Testimoni</a>
+            <a href="cms.php?tab=profil"       class="<?= $activeTab==='profil'       ? 'active':'' ?>"><i class="fa-solid fa-store"></i> Profil</a>
+            <a href="cms.php?tab=kontak"       class="<?= $activeTab==='kontak'       ? 'active':'' ?>"><i class="fa-solid fa-location-dot"></i> Kontak</a>
+            <a href="cms.php?tab=navbar"       class="<?= $activeTab==='navbar'       ? 'active':'' ?>"><i class="fa-solid fa-bars"></i> Navbar</a>
+            <a href="cms.php?tab=footer"       class="<?= $activeTab==='footer'       ? 'active':'' ?>"><i class="fa-solid fa-grip-lines"></i> Footer</a>
+            <a href="cms.php?tab=booking_page" class="<?= $activeTab==='booking_page' ? 'active':'' ?>"><i class="fa-solid fa-calendar-alt"></i> Booking</a>
+            <a href="cms.php?tab=bookings"     class="<?= $activeTab==='bookings'     ? 'active':'' ?>"><i class="fa-solid fa-calendar-check"></i> Data Booking</a>
+            <a href="cms.php?tab=orders"       class="<?= $activeTab==='orders'       ? 'active':'' ?>"><i class="fa-solid fa-bag-shopping"></i> Orders</a>
         </div>
 
 <?php /* ════════ TAB: HERO ════════ */ ?>
@@ -928,7 +1207,7 @@ input[type=file]{display:none;}
                     <div style="font-size:11.5px;color:var(--text-lt);display:flex;align-items:center;gap:5px;">
                         <i class="fa-solid fa-circle-info"></i> Layanan tampil di section "Layanan Kami"
                     </div>
-                    <button class="btn-sm-add" onclick="openModal('modalService')">
+                    <button class="btn-sm-add" onclick="openAddService()">
                         <i class="fa-solid fa-plus"></i> Tambah Layanan
                     </button>
                 </div>
@@ -1055,7 +1334,7 @@ input[type=file]{display:none;}
                         <i class="fa-solid fa-tag"></i>
                         <h3>Kelola Daftar Harga</h3>
                         <div class="ms-auto">
-                            <button class="btn-sm-add" onclick="openModal('modalPrice')">
+                            <button class="btn-sm-add" onclick="openAddPrice()">
                                 <i class="fa-solid fa-plus"></i> Tambah Item
                             </button>
                         </div>
@@ -1186,7 +1465,7 @@ input[type=file]{display:none;}
                 <i class="fa-solid fa-box-open"></i>
                 <h3>Produk Press On Nail Collection</h3>
                 <div class="ms-auto">
-                    <button class="btn-sm-add" onclick="openModal('modalProduct')">
+                    <button class="btn-sm-add" onclick="openAddProduct()">
                         <i class="fa-solid fa-plus"></i> Tambah Produk
                     </button>
                 </div>
@@ -1319,7 +1598,7 @@ input[type=file]{display:none;}
                 <i class="fa-solid fa-comment-dots"></i>
                 <h3>Testimoni Pelanggan</h3>
                 <div class="ms-auto">
-                    <button class="btn-sm-add" onclick="openModal('modalTesti')">
+                    <button class="btn-sm-add" onclick="openAddTesti()">
                         <i class="fa-solid fa-plus"></i> Tambah Testimoni
                     </button>
                 </div>
@@ -1902,6 +2181,364 @@ input[type=file]{display:none;}
             </div>
         </div>
 
+<?php /* ════════ TAB: NAVBAR ════════ */ ?>
+<?php elseif ($activeTab === 'navbar'): ?>
+
+        <div class="cms-card">
+            <div class="cms-card-header">
+                <i class="fa-solid fa-bars"></i>
+                <h3>Edit Navbar</h3>
+            </div>
+            <div class="cms-card-body">
+                <form method="POST" action="cms.php?action=save_navbar">
+
+                    <!-- Brand -->
+                    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:14px;">
+                        <i class="fa-solid fa-store" style="margin-right:5px;color:var(--primary);"></i>Brand
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-signature" style="margin-right:4px;"></i>Nama Brand (Navbar)</label>
+                        <input type="text" name="brand_name" value="<?= htmlspecialchars($navbar['brand_name']) ?>" placeholder="NISWÀ BEAUTY">
+                        <small style="font-size:11px;color:var(--text-lt);margin-top:4px;display:block;"><i class="fa-solid fa-circle-info" style="margin-right:3px;"></i>Tampil di pojok kiri navbar sebagai logo teks.</small>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
+
+                    <!-- Menu Links -->
+                    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:14px;">
+                        <i class="fa-solid fa-list" style="margin-right:5px;color:var(--primary);"></i>Label Menu
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-house" style="margin-right:4px;"></i>Menu Home</label>
+                            <input type="text" name="menu_home" value="<?= htmlspecialchars($navbar['menu_home']) ?>" placeholder="Home">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-spa" style="margin-right:4px;"></i>Menu Services</label>
+                            <input type="text" name="menu_services" value="<?= htmlspecialchars($navbar['menu_services']) ?>" placeholder="Services">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-box" style="margin-right:4px;"></i>Menu Product</label>
+                            <input type="text" name="menu_product" value="<?= htmlspecialchars($navbar['menu_product']) ?>" placeholder="Product">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-circle-info" style="margin-right:4px;"></i>Menu About</label>
+                            <input type="text" name="menu_about" value="<?= htmlspecialchars($navbar['menu_about']) ?>" placeholder="About">
+                        </div>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
+
+                    <!-- Tombol Book Now -->
+                    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:14px;">
+                        <i class="fa-solid fa-calendar-check" style="margin-right:5px;color:var(--primary);"></i>Tombol CTA
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-calendar-check" style="margin-right:4px;"></i>Teks Tombol "Book Now"</label>
+                        <input type="text" name="btn_book_text" value="<?= htmlspecialchars($navbar['btn_book_text']) ?>" placeholder="Book Now">
+                        <small style="font-size:11px;color:var(--text-lt);margin-top:4px;display:block;"><i class="fa-solid fa-circle-info" style="margin-right:3px;"></i>Tombol utama di ujung kanan navbar yang mengarah ke halaman booking.</small>
+                    </div>
+
+                    <!-- Preview -->
+                    <div style="background:var(--cream);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:20px;">
+                        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-lt);margin-bottom:12px;">
+                            <i class="fa-solid fa-eye" style="margin-right:5px;"></i>Preview Navbar
+                        </div>
+                        <div style="background:#150d10;border-radius:10px;padding:14px 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+                            <div style="color:#D6C1A3;font-family:'Playfair Display',serif;font-weight:700;font-size:15px;"><?= htmlspecialchars($navbar['brand_name']) ?></div>
+                            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+                                <span style="color:#7a6870;font-size:12px;"><?= htmlspecialchars($navbar['menu_home']) ?></span>
+                                <span style="color:#7a6870;font-size:12px;"><?= htmlspecialchars($navbar['menu_services']) ?></span>
+                                <span style="color:#7a6870;font-size:12px;"><?= htmlspecialchars($navbar['menu_product']) ?></span>
+                                <span style="color:#7a6870;font-size:12px;"><?= htmlspecialchars($navbar['menu_about']) ?></span>
+                                <span style="color:#7a6870;font-size:11px;"><i class="fa-solid fa-user"></i></span>
+                                <span style="background:linear-gradient(135deg,#D6C1A3,#8B6F5E);color:#fff;font-size:11px;padding:6px 14px;border-radius:20px;font-weight:600;">
+                                    <i class="fa-solid fa-calendar-check" style="margin-right:4px;"></i><?= htmlspecialchars($navbar['btn_book_text']) ?>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-primary-cms">
+                        <i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan Navbar
+                    </button>
+                </form>
+            </div>
+        </div>
+
+<?php /* ════════ TAB: FOOTER ════════ */ ?>
+<?php elseif ($activeTab === 'footer'): ?>
+
+        <div class="cms-card">
+            <div class="cms-card-header">
+                <i class="fa-solid fa-grip-lines"></i>
+                <h3>Edit Footer</h3>
+            </div>
+            <div class="cms-card-body">
+                <form method="POST" action="cms.php?action=save_footer">
+
+                    <!-- Brand Section -->
+                    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:14px;">
+                        <i class="fa-solid fa-store" style="margin-right:5px;color:var(--primary);"></i>Brand & Deskripsi
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-signature" style="margin-right:4px;"></i>Nama Brand (Footer)</label>
+                            <input type="text" name="brand_name" value="<?= htmlspecialchars($footer_data['brand_name']) ?>" placeholder="NISWÀ BEAUTY">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-copyright" style="margin-right:4px;"></i>Teks Copyright</label>
+                            <input type="text" name="copyright_text" value="<?= htmlspecialchars($footer_data['copyright_text']) ?>" placeholder="NISWÀ BEAUTY. All rights reserved.">
+                            <small style="font-size:11px;color:var(--text-lt);margin-top:4px;display:block;">Tahun otomatis ditambahkan di depan teks ini.</small>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-quote-left" style="margin-right:4px;"></i>Deskripsi Brand</label>
+                        <textarea name="brand_desc" rows="2" placeholder="Kecantikan bertemu kemewahan..."><?= htmlspecialchars($footer_data['brand_desc']) ?></textarea>
+                        <small style="font-size:11px;color:var(--text-lt);margin-top:4px;display:block;">Tagline pendek yang muncul di bawah nama brand di footer.</small>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
+
+                    <!-- Social Media -->
+                    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:14px;">
+                        <i class="fa-solid fa-share-nodes" style="margin-right:5px;color:var(--primary);"></i>Link Media Sosial
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-brands fa-instagram" style="margin-right:4px;color:#e1306c;"></i>URL Instagram</label>
+                        <input type="url" name="instagram_url" value="<?= htmlspecialchars($footer_data['instagram_url']) ?>" placeholder="https://www.instagram.com/niswanail...">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-brands fa-tiktok" style="margin-right:4px;"></i>URL TikTok</label>
+                        <input type="url" name="tiktok_url" value="<?= htmlspecialchars($footer_data['tiktok_url']) ?>" placeholder="https://www.tiktok.com/@niswabeauty...">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-brands fa-whatsapp" style="margin-right:4px;color:#25d366;"></i>URL WhatsApp <small style="text-transform:none;color:var(--text-lt);">(format: https://wa.me/628xxx)</small></label>
+                        <input type="url" name="whatsapp_url" value="<?= htmlspecialchars($footer_data['whatsapp_url']) ?>" placeholder="https://wa.me/628820069...">
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
+
+                    <!-- Kontak Footer -->
+                    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:14px;">
+                        <i class="fa-solid fa-address-book" style="margin-right:5px;color:var(--primary);"></i>Info Kontak (Contact Us)
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-map-marker-alt" style="margin-right:4px;"></i>Alamat</label>
+                            <input type="text" name="address" value="<?= htmlspecialchars($footer_data['address']) ?>" placeholder="Bangsri, Jepara, Jawa Tengah">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-phone-alt" style="margin-right:4px;"></i>Nomor Telepon / WA</label>
+                            <input type="text" name="phone" value="<?= htmlspecialchars($footer_data['phone']) ?>" placeholder="+62 882-0069-03068">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-envelope" style="margin-right:4px;"></i>Email</label>
+                            <input type="email" name="email" value="<?= htmlspecialchars($footer_data['email']) ?>" placeholder="niswabeauty15@gmail.com">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-clock" style="margin-right:4px;"></i>Jam Operasional</label>
+                            <input type="text" name="hours" value="<?= htmlspecialchars($footer_data['hours']) ?>" placeholder="Senin – Sabtu: 09:00 – 20:00">
+                        </div>
+                    </div>
+
+                    <!-- Preview Footer -->
+                    <div style="background:var(--cream);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:20px;">
+                        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-lt);margin-bottom:12px;">
+                            <i class="fa-solid fa-eye" style="margin-right:5px;"></i>Preview Footer
+                        </div>
+                        <div style="background:#150d10;border-radius:10px;padding:20px 24px;">
+                            <div style="display:flex;flex-wrap:wrap;gap:24px;justify-content:space-around;">
+                                <!-- Brand col -->
+                                <div style="text-align:center;min-width:160px;">
+                                    <div style="color:#D6C1A3;font-family:'Playfair Display',serif;font-weight:700;font-size:15px;margin-bottom:6px;"><?= htmlspecialchars($footer_data['brand_name']) ?></div>
+                                    <div style="color:#4a3040;font-size:11px;margin-bottom:10px;"><?= htmlspecialchars($footer_data['brand_desc']) ?></div>
+                                    <div style="display:flex;gap:8px;justify-content:center;">
+                                        <span style="background:rgba(214,193,163,.12);color:#D6C1A3;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;"><i class="fa-brands fa-instagram"></i></span>
+                                        <span style="background:rgba(214,193,163,.12);color:#D6C1A3;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;"><i class="fa-brands fa-tiktok"></i></span>
+                                        <span style="background:rgba(214,193,163,.12);color:#D6C1A3;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;"><i class="fa-brands fa-whatsapp"></i></span>
+                                    </div>
+                                </div>
+                                <!-- Contact col -->
+                                <div style="min-width:180px;">
+                                    <div style="color:#D6C1A3;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Contact Us</div>
+                                    <div style="color:#4a3040;font-size:11px;line-height:1.9;">
+                                        <div><i class="fa-solid fa-map-marker-alt" style="margin-right:5px;color:#8B6F5E;"></i><?= htmlspecialchars($footer_data['address']) ?></div>
+                                        <div><i class="fa-solid fa-phone-alt" style="margin-right:5px;color:#8B6F5E;"></i><?= htmlspecialchars($footer_data['phone']) ?></div>
+                                        <div><i class="fa-solid fa-envelope" style="margin-right:5px;color:#8B6F5E;"></i><?= htmlspecialchars($footer_data['email']) ?></div>
+                                        <div><i class="fa-solid fa-clock" style="margin-right:5px;color:#8B6F5E;"></i><?= htmlspecialchars($footer_data['hours']) ?></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="border-top:1px solid rgba(255,255,255,.05);margin-top:16px;padding-top:12px;text-align:center;color:#3a2535;font-size:10px;">
+                                &copy; <?= date('Y') ?> <?= htmlspecialchars($footer_data['copyright_text']) ?>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-primary-cms">
+                        <i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan Footer
+                    </button>
+                </form>
+            </div>
+        </div>
+
+<?php /* ════════ TAB: BOOKING PAGE ════════ */ ?>
+<?php elseif ($activeTab === 'booking_page'): ?>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
+
+            <!-- Form Edit Konten Halaman Booking -->
+            <div class="cms-card">
+                <div class="cms-card-header">
+                    <i class="fa-solid fa-calendar-alt"></i>
+                    <h3>Konten Halaman Booking</h3>
+                </div>
+                <div class="cms-card-body">
+                    <form method="POST" action="cms.php?action=save_booking_page">
+
+                        <!-- Judul & Subtitle -->
+                        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:14px;">
+                            <i class="fa-solid fa-heading" style="margin-right:5px;color:var(--primary);"></i>Judul Halaman
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-heading" style="margin-right:4px;"></i>Judul Utama Halaman Booking</label>
+                            <input type="text" name="page_title" value="<?= htmlspecialchars($booking_page['page_title']) ?>" placeholder="Reservasi Online">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-align-left" style="margin-right:4px;"></i>Subtitle / Deskripsi Singkat</label>
+                            <input type="text" name="page_subtitle" value="<?= htmlspecialchars($booking_page['page_subtitle']) ?>" placeholder="Isi form di bawah untuk memesan jadwal...">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-file-alt" style="margin-right:4px;"></i>Judul Form Booking</label>
+                            <input type="text" name="form_title" value="<?= htmlspecialchars($booking_page['form_title']) ?>" placeholder="Form Booking">
+                        </div>
+
+                        <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
+
+                        <!-- Pesan Sukses -->
+                        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:14px;">
+                            <i class="fa-solid fa-check-circle" style="margin-right:5px;color:var(--primary);"></i>Pesan Konfirmasi
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-check-circle" style="margin-right:4px;"></i>Pesan Sukses Booking</label>
+                            <textarea name="success_message" rows="2" placeholder="Booking berhasil! Kami akan menghubungi Anda via WhatsApp."><?= htmlspecialchars($booking_page['success_message']) ?></textarea>
+                            <small style="font-size:11px;color:var(--text-lt);margin-top:4px;display:block;">Muncul di modal popup setelah pelanggan berhasil booking.</small>
+                        </div>
+
+                        <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
+
+                        <!-- Daftar Layanan -->
+                        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:14px;">
+                            <i class="fa-solid fa-list-check" style="margin-right:5px;color:var(--primary);"></i>Opsi Dropdown Form
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-spa" style="margin-right:4px;"></i>Daftar Layanan (dropdown pilihan layanan)</label>
+                            <textarea name="services_list" rows="10" placeholder="Nail Art&#10;Haircut&#10;Coloring&#10;..."><?= htmlspecialchars($booking_page['services_list']) ?></textarea>
+                            <small style="font-size:11px;color:var(--text-lt);margin-top:4px;display:block;"><i class="fa-solid fa-circle-info" style="margin-right:3px;"></i>Satu layanan per baris. Akan tampil sebagai opsi di dropdown pilih layanan pada form booking.</small>
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-clock" style="margin-right:4px;"></i>Slot Jam Booking (dropdown pilihan jam)</label>
+                            <textarea name="time_slots" rows="6" placeholder="09:00&#10;10:00&#10;11:00&#10;..."><?= htmlspecialchars($booking_page['time_slots']) ?></textarea>
+                            <small style="font-size:11px;color:var(--text-lt);margin-top:4px;display:block;"><i class="fa-solid fa-circle-info" style="margin-right:3px;"></i>Format 24 jam (HH:MM). Satu slot per baris. Akan tampil di dropdown jam pada form booking.</small>
+                        </div>
+
+                        <button type="submit" class="btn-primary-cms">
+                            <i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan Halaman Booking
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Preview Panel -->
+            <div>
+                <!-- Preview Judul -->
+                <div class="cms-card" style="margin-bottom:16px;">
+                    <div class="cms-card-header">
+                        <i class="fa-solid fa-eye"></i>
+                        <h3>Preview Halaman Booking</h3>
+                    </div>
+                    <div class="cms-card-body" style="padding:0;overflow:hidden;">
+                        <div style="background:linear-gradient(135deg,#5A4A42,#8B6F5E);padding:28px 24px;text-align:center;">
+                            <div style="font-family:'Playfair Display',serif;font-size:22px;color:#fff;font-weight:700;margin-bottom:8px;">
+                                <?= htmlspecialchars($booking_page['page_title']) ?>
+                            </div>
+                            <div style="color:rgba(255,255,255,.75);font-size:13px;">
+                                <?= htmlspecialchars($booking_page['page_subtitle']) ?>
+                            </div>
+                        </div>
+                        <!-- Form preview -->
+                        <div style="padding:18px 20px;">
+                            <div style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);">
+                                <i class="fa-solid fa-calendar-check" style="margin-right:6px;"></i><?= htmlspecialchars($booking_page['form_title']) ?>
+                            </div>
+                            <!-- Layanan preview -->
+                            <div style="margin-bottom:12px;">
+                                <div style="font-size:11px;font-weight:600;color:var(--text-mid);margin-bottom:5px;">Pilih Layanan</div>
+                                <select style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:#fff;color:var(--text);">
+                                    <option value="">Pilih layanan...</option>
+                                    <?php foreach (array_filter(array_map('trim', explode("\n", $booking_page['services_list']))) as $svc): ?>
+                                    <option><?= htmlspecialchars($svc) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <!-- Jam preview -->
+                            <div style="margin-bottom:12px;">
+                                <div style="font-size:11px;font-weight:600;color:var(--text-mid);margin-bottom:5px;">Pilih Jam</div>
+                                <select style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:#fff;color:var(--text);">
+                                    <option value="">Pilih jam...</option>
+                                    <?php foreach (array_filter(array_map('trim', explode("\n", $booking_page['time_slots']))) as $ts): ?>
+                                    <option><?= htmlspecialchars($ts) ?> WIB</option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <!-- Pesan sukses preview -->
+                            <div style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);border-radius:10px;padding:10px 14px;font-size:12px;color:#065f46;display:flex;align-items:flex-start;gap:8px;">
+                                <i class="fa-solid fa-check-circle" style="margin-top:2px;color:#10b981;"></i>
+                                <span><?= htmlspecialchars($booking_page['success_message']) ?></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info layanan yang tersimpan -->
+                <div class="cms-card">
+                    <div class="cms-card-header">
+                        <i class="fa-solid fa-list-check"></i>
+                        <h3>Ringkasan Layanan & Slot Jam</h3>
+                    </div>
+                    <div class="cms-card-body">
+                        <?php
+                        $svcList = array_filter(array_map('trim', explode("\n", $booking_page['services_list'])));
+                        $tsList  = array_filter(array_map('trim', explode("\n", $booking_page['time_slots'])));
+                        ?>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                            <div>
+                                <div style="font-size:11px;font-weight:700;color:var(--text-mid);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">
+                                    <i class="fa-solid fa-spa" style="margin-right:4px;color:var(--primary);"></i>Layanan (<?= count($svcList) ?>)
+                                </div>
+                                <div style="display:flex;flex-direction:column;gap:4px;">
+                                    <?php foreach ($svcList as $sv): ?>
+                                    <span class="cat-badge" style="font-size:10px;"><?= htmlspecialchars($sv) ?></span>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                            <div>
+                                <div style="font-size:11px;font-weight:700;color:var(--text-mid);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">
+                                    <i class="fa-solid fa-clock" style="margin-right:4px;color:var(--primary);"></i>Slot Jam (<?= count($tsList) ?>)
+                                </div>
+                                <div style="display:flex;flex-wrap:wrap;gap:4px;">
+                                    <?php foreach ($tsList as $ts): ?>
+                                    <span style="background:rgba(139,111,94,.08);color:var(--primary);font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;"><?= htmlspecialchars($ts) ?></span>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
 <?php endif; ?>
 
     </div><!-- /.content -->
@@ -2002,6 +2639,7 @@ function openEditOrder(row) {
 }
 
 
+function openEditTesti(row) {
     document.getElementById('testiModalTitle').textContent = 'Edit Testimoni';
     document.getElementById('testiId').value      = row.id;
     document.getElementById('testiName').value    = row.name;
@@ -2014,7 +2652,48 @@ function openEditOrder(row) {
     openModal('modalTesti');
 }
 
-/* ━━ Color Swatch ━━ */
+/* ━━ Open-for-ADD helpers (reset form before opening) ━━ */
+function openAddService() {
+    document.getElementById('serviceModalTitle').textContent = 'Tambah Layanan';
+    document.getElementById('serviceId').value   = '0';
+    document.getElementById('serviceName').value = '';
+    document.getElementById('serviceGallery').value = '';
+    var prev = document.getElementById('svcPreview');
+    if (prev) { prev.src=''; prev.style.display='none'; }
+    openModal('modalService');
+}
+function openAddPrice() {
+    document.getElementById('priceModalTitle').textContent = 'Tambah Item Harga';
+    document.getElementById('priceId').value   = '0';
+    document.getElementById('priceCat').value  = '';
+    document.getElementById('priceName').value = '';
+    document.getElementById('priceVal').value  = '';
+    openModal('modalPrice');
+}
+function openAddProduct() {
+    document.getElementById('prodModalTitle').textContent = 'Tambah Produk';
+    document.getElementById('prodId').value       = '0';
+    document.getElementById('prodName').value     = '';
+    document.getElementById('prodPrice').value    = '';
+    document.getElementById('prodCategory').value = 'simple';
+    var prev = document.getElementById('prodPreview');
+    if (prev) { prev.src=''; prev.style.display='none'; }
+    openModal('modalProduct');
+}
+function openAddTesti() {
+    document.getElementById('testiModalTitle').textContent = 'Tambah Testimoni';
+    document.getElementById('testiId').value      = '0';
+    document.getElementById('testiName').value    = '';
+    document.getElementById('testiService').value = '';
+    document.getElementById('testiText').value    = '';
+    var first = document.querySelector('.swatch');
+    if (first) {
+        document.querySelectorAll('.swatch').forEach(function(s){s.classList.remove('selected');});
+        first.classList.add('selected');
+        document.getElementById('testiColor').value = first.dataset.color;
+    }
+    openModal('modalTesti');
+}
 function selectSwatch(el) {
     document.querySelectorAll('.swatch').forEach(function(s) { s.classList.remove('selected'); });
     el.classList.add('selected');
