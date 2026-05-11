@@ -73,6 +73,41 @@ if (isset($_GET['delete_order']) && is_numeric($_GET['delete_order'])) {
     header('Location: dashboard.php?msg=order_deleted');
     exit;
 }
+
+// Handle edit booking (POST)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_booking_id'])) {
+    $id      = (int)$_POST['edit_booking_id'];
+    $name    = mysqli_real_escape_string($conn, trim($_POST['edit_name']));
+    $phone   = mysqli_real_escape_string($conn, trim($_POST['edit_phone']));
+    $email   = mysqli_real_escape_string($conn, trim($_POST['edit_email']));
+    $service = mysqli_real_escape_string($conn, trim($_POST['edit_service']));
+    $date    = mysqli_real_escape_string($conn, trim($_POST['edit_date']));
+    $time    = mysqli_real_escape_string($conn, trim($_POST['edit_time']));
+    mysqli_query($conn, "UPDATE bookings SET name='$name', phone='$phone', email='$email', service='$service', date='$date', time='$time' WHERE id=$id");
+    header('Location: dashboard.php?msg=booking_updated');
+    exit;
+}
+
+// Handle edit order (POST)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_order_id'])) {
+    $id    = (int)$_POST['edit_order_id'];
+    $nama  = mysqli_real_escape_string($conn, trim($_POST['edit_nama']));
+    $wa    = mysqli_real_escape_string($conn, trim($_POST['edit_whatsapp']));
+    $alamat= mysqli_real_escape_string($conn, trim($_POST['edit_alamat']));
+    $pname = mysqli_real_escape_string($conn, trim($_POST['edit_product_name']));
+    $price = mysqli_real_escape_string($conn, trim($_POST['edit_product_price']));
+    $qty   = (int)$_POST['edit_qty'];
+    $total = mysqli_real_escape_string($conn, trim($_POST['edit_total']));
+    $cat   = mysqli_real_escape_string($conn, trim($_POST['edit_catatan']));
+    if ($id > 0) {
+        mysqli_query($conn, "UPDATE orders SET nama='$nama', whatsapp='$wa', alamat='$alamat', product_name='$pname', product_price='$price', qty=$qty, total='$total', catatan='$cat' WHERE id=$id");
+        header('Location: dashboard.php?msg=order_updated');
+    } else {
+        mysqli_query($conn, "INSERT INTO orders (nama,whatsapp,alamat,product_name,product_price,qty,total,catatan) VALUES ('$nama','$wa','$alamat','$pname','$price',$qty,'$total','$cat')");
+        header('Location: dashboard.php?msg=order_updated');
+    }
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -356,6 +391,57 @@ if (isset($_GET['delete_order']) && is_numeric($_GET['delete_order'])) {
             text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
         }
         .btn-new:hover { color: white; opacity: 0.9; }
+        .btn-edit {
+            background: #eff6ff; color: #2563eb;
+            border: 1px solid #bfdbfe; border-radius: 8px;
+            padding: 6px 12px; font-size: 12px; font-weight: 500;
+            text-decoration: none; transition: 0.2s; white-space: nowrap;
+            display: inline-flex; align-items: center;
+        }
+        .btn-edit:hover { background: #2563eb; color: white; }
+        /* MODAL */
+        .modal-overlay {
+            display:none; position:fixed; inset:0; z-index:9000;
+            background:rgba(0,0,0,0.55); align-items:center; justify-content:center;
+        }
+        .modal-overlay.open { display:flex; }
+        .modal-box {
+            background:#fff; border-radius:20px; width:95%; max-width:480px;
+            max-height:90vh; overflow-y:auto;
+            box-shadow:0 24px 60px rgba(0,0,0,0.25); animation:ppIn .22s ease;
+        }
+        .modal-header {
+            padding:20px 24px 16px; border-bottom:1px solid #f0ebe3;
+            display:flex; align-items:center; justify-content:space-between;
+        }
+        .modal-header h6 { font-size:16px; font-weight:700; color:var(--text-dark); margin:0; }
+        .modal-close {
+            background:none; border:none; font-size:20px; color:var(--text-light);
+            cursor:pointer; line-height:1; padding:0;
+        }
+        .modal-body { padding:20px 24px; }
+        .modal-footer { padding:14px 24px 20px; display:flex; gap:10px; justify-content:flex-end; border-top:1px solid #f0ebe3; }
+        .form-group { margin-bottom:14px; }
+        .form-group label { display:block; font-size:12px; font-weight:600; color:var(--text-mid); margin-bottom:5px; text-transform:uppercase; letter-spacing:0.4px; }
+        .form-group input, .form-group textarea, .form-group select {
+            width:100%; border:1.5px solid #e8e0d8; border-radius:10px;
+            padding:9px 13px; font-size:13px; font-family:'Poppins',sans-serif;
+            outline:none; transition:border 0.2s;
+        }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color:var(--gold); }
+        .form-group textarea { resize:vertical; min-height:70px; }
+        .btn-save {
+            background:linear-gradient(135deg,var(--gold),var(--gold-dark));
+            color:white; border:none; border-radius:30px;
+            padding:10px 24px; font-size:13px; font-weight:600;
+            cursor:pointer; font-family:'Poppins',sans-serif;
+        }
+        .btn-save:hover { opacity:0.9; }
+        .btn-cancel {
+            background:#f5f5f5; color:var(--text-mid); border:none; border-radius:30px;
+            padding:10px 20px; font-size:13px; font-weight:500;
+            cursor:pointer; font-family:'Poppins',sans-serif;
+        }
     </style>
 </head>
 <body>
@@ -451,10 +537,17 @@ if (isset($_GET['delete_order']) && is_numeric($_GET['delete_order'])) {
             <p>Selamat datang, <strong><?= htmlspecialchars($_SESSION['user']) ?></strong> — <?= date('d F Y') ?></p>
         </div>
         <a href="booking.php" class="btn-new"><i class="fas fa-plus"></i> Booking Baru</a>
+        <a href="#" class="btn-new" style="background:linear-gradient(135deg,#059669,#047857);" onclick="openNewOrderModal();return false;"><i class="fas fa-shopping-cart"></i> Pesanan Baru</a>
     </div>
 
     <?php if (isset($_GET['msg']) && $_GET['msg'] === 'deleted'): ?>
     <div class="alert-del"><i class="fas fa-trash-alt"></i> Data booking berhasil dihapus.</div>
+    <?php endif; ?>
+    <?php if (isset($_GET['msg']) && $_GET['msg'] === 'booking_updated'): ?>
+    <div class="alert-del" style="background:#f0fdf4;border-color:#bbf7d0;color:#059669;"><i class="fas fa-check-circle"></i> Data booking berhasil diupdate.</div>
+    <?php endif; ?>
+    <?php if (isset($_GET['msg']) && $_GET['msg'] === 'order_updated'): ?>
+    <div class="alert-del" style="background:#f0fdf4;border-color:#bbf7d0;color:#059669;"><i class="fas fa-check-circle"></i> Data pesanan berhasil diupdate.</div>
     <?php endif; ?>
 
     <!-- STAT CARDS -->
@@ -513,11 +606,17 @@ if (isset($_GET['delete_order']) && is_numeric($_GET['delete_order'])) {
                 <td><?= date('H:i', strtotime($row['time'])) ?> WIB</td>
                 <td style="font-size:12px;color:var(--text-light);"><?= date('d M Y H:i', strtotime($row['created_at'])) ?></td>
                 <td>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <a href="#" onclick="openEditBooking(<?= $row['id'] ?>,'<?= addslashes(htmlspecialchars($row['name'])) ?>','<?= addslashes(htmlspecialchars($row['phone'])) ?>','<?= addslashes(htmlspecialchars($row['email'])) ?>','<?= addslashes(htmlspecialchars($row['service'])) ?>','<?= $row['date'] ?>','<?= substr($row['time'],0,5) ?>');return false;"
+                       class="btn-edit">
+                        <i class="fas fa-pen me-1"></i>Edit
+                    </a>
                     <a href="dashboard.php?delete=<?= $row['id'] ?>"
                        onclick="return confirm('Hapus booking ini?')"
                        class="btn-del">
                         <i class="fas fa-trash-alt me-1"></i>Hapus
                     </a>
+                    </div>
                 </td>
             </tr>
             <?php endwhile; ?>
@@ -545,6 +644,9 @@ if (isset($_GET['delete_order']) && is_numeric($_GET['delete_order'])) {
                 <div class="m-card-row"><span class="lbl">Dibuat</span><span class="val" style="font-size:12px;color:var(--text-light);"><?= date('d M Y H:i', strtotime($row['created_at'])) ?></span></div>
             </div>
             <div class="m-card-footer">
+                <a href="#" onclick="openEditBooking(<?= $row['id'] ?>,'<?= addslashes(htmlspecialchars($row['name'])) ?>','<?= addslashes(htmlspecialchars($row['phone'])) ?>','<?= addslashes(htmlspecialchars($row['email'])) ?>','<?= addslashes(htmlspecialchars($row['service'])) ?>','<?= $row['date'] ?>','<?= substr($row['time'],0,5) ?>');return false;" class="btn-edit">
+                    <i class="fas fa-pen me-1"></i>Edit
+                </a>
                 <a href="dashboard.php?delete=<?= $row['id'] ?>" onclick="return confirm('Hapus booking ini?')" class="btn-del">
                     <i class="fas fa-trash-alt me-1"></i>Hapus
                 </a>
@@ -617,11 +719,17 @@ if (isset($_GET['delete_order']) && is_numeric($_GET['delete_order'])) {
                 <td style="font-size:12px;color:var(--text-light);"><?= htmlspecialchars($row['catatan'] ?: '-') ?></td>
                 <td style="font-size:12px;color:var(--text-light);white-space:nowrap;"><?= date('d M Y H:i', strtotime($row['created_at'])) ?></td>
                 <td>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <a href="#" onclick="openEditOrder(<?= $row['id'] ?>,'<?= addslashes(htmlspecialchars($row['nama'])) ?>','<?= addslashes(htmlspecialchars($row['whatsapp'])) ?>','<?= addslashes(htmlspecialchars($row['alamat'])) ?>','<?= addslashes(htmlspecialchars($row['product_name'])) ?>','<?= addslashes(htmlspecialchars($row['product_price'])) ?>',<?= (int)$row['qty'] ?>,'<?= addslashes(htmlspecialchars($row['total'])) ?>','<?= addslashes(htmlspecialchars($row['catatan'])) ?>');return false;"
+                       class="btn-edit">
+                        <i class="fas fa-pen me-1"></i>Edit
+                    </a>
                     <a href="dashboard.php?delete_order=<?= $row['id'] ?>"
                        onclick="return confirm('Hapus data pembelian ini?')"
                        class="btn-del">
                         <i class="fas fa-trash-alt me-1"></i>Hapus
                     </a>
+                    </div>
                 </td>
             </tr>
             <?php endwhile; ?>
@@ -659,6 +767,9 @@ if (isset($_GET['delete_order']) && is_numeric($_GET['delete_order'])) {
                 <div class="m-card-row"><span class="lbl">Tanggal</span><span class="val" style="font-size:12px;color:var(--text-light);"><?= date('d M Y H:i', strtotime($row['created_at'])) ?></span></div>
             </div>
             <div class="m-card-footer">
+                <a href="#" onclick="openEditOrder(<?= $row['id'] ?>,'<?= addslashes(htmlspecialchars($row['nama'])) ?>','<?= addslashes(htmlspecialchars($row['whatsapp'])) ?>','<?= addslashes(htmlspecialchars($row['alamat'])) ?>','<?= addslashes(htmlspecialchars($row['product_name'])) ?>','<?= addslashes(htmlspecialchars($row['product_price'])) ?>',<?= (int)$row['qty'] ?>,'<?= addslashes(htmlspecialchars($row['total'])) ?>','<?= addslashes(htmlspecialchars($row['catatan'])) ?>');return false;" class="btn-edit">
+                    <i class="fas fa-pen me-1"></i>Edit
+                </a>
                 <a href="dashboard.php?delete_order=<?= $row['id'] ?>" onclick="return confirm('Hapus data pembelian ini?')" class="btn-del">
                     <i class="fas fa-trash-alt me-1"></i>Hapus
                 </a>
@@ -734,8 +845,196 @@ if (searchOrders) {
         document.querySelectorAll('#ordersTable tbody tr').forEach(tr => {
             tr.style.display = tr.innerText.toLowerCase().includes(q) ? '' : 'none';
         });
-    })
+    });
 }
+</script>
+
+<!-- EDIT BOOKING MODAL -->
+<div class="modal-overlay" id="editBookingModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h6><i class="fas fa-pen me-2" style="color:var(--gold);"></i>Edit Booking</h6>
+      <button class="modal-close" onclick="closeEditBooking()">&times;</button>
+    </div>
+    <form method="POST" action="dashboard.php">
+      <div class="modal-body">
+        <input type="hidden" name="edit_booking_id" id="eb_id">
+        <div class="row g-2">
+          <div class="col-12">
+            <div class="form-group"><label>Nama</label><input type="text" name="edit_name" id="eb_name" required></div>
+          </div>
+          <div class="col-6">
+            <div class="form-group"><label>No. HP</label><input type="text" name="edit_phone" id="eb_phone"></div>
+          </div>
+          <div class="col-6">
+            <div class="form-group"><label>Email</label><input type="email" name="edit_email" id="eb_email"></div>
+          </div>
+          <div class="col-12">
+            <div class="form-group"><label>Layanan</label><input type="text" name="edit_service" id="eb_service"></div>
+          </div>
+          <div class="col-6">
+            <div class="form-group"><label>Tanggal</label><input type="date" name="edit_date" id="eb_date"></div>
+          </div>
+          <div class="col-6">
+            <div class="form-group"><label>Jam</label><input type="time" name="edit_time" id="eb_time"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" onclick="closeEditBooking()">Batal</button>
+        <button type="submit" class="btn-save"><i class="fas fa-save me-1"></i>Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- EDIT ORDER MODAL -->
+<div class="modal-overlay" id="editOrderModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h6><i class="fas fa-pen me-2" style="color:var(--gold);"></i>Edit Pesanan</h6>
+      <button class="modal-close" onclick="closeEditOrder()">&times;</button>
+    </div>
+    <form method="POST" action="dashboard.php">
+      <div class="modal-body">
+        <input type="hidden" name="edit_order_id" id="eo_id">
+        <div class="row g-2">
+          <div class="col-6">
+            <div class="form-group"><label>Nama</label><input type="text" name="edit_nama" id="eo_nama" required></div>
+          </div>
+          <div class="col-6">
+            <div class="form-group"><label>WhatsApp</label><input type="text" name="edit_whatsapp" id="eo_whatsapp"></div>
+          </div>
+          <div class="col-12">
+            <div class="form-group"><label>Alamat</label><textarea name="edit_alamat" id="eo_alamat"></textarea></div>
+          </div>
+          <div class="col-12">
+            <div class="form-group"><label>Nama Produk</label><input type="text" name="edit_product_name" id="eo_product_name"></div>
+          </div>
+          <div class="col-6">
+            <div class="form-group"><label>Harga</label><input type="text" name="edit_product_price" id="eo_product_price"></div>
+          </div>
+          <div class="col-3">
+            <div class="form-group"><label>Qty</label><input type="number" min="1" name="edit_qty" id="eo_qty"></div>
+          </div>
+          <div class="col-3">
+            <div class="form-group"><label>Total</label><input type="text" name="edit_total" id="eo_total"></div>
+          </div>
+          <div class="col-12">
+            <div class="form-group"><label>Catatan</label><textarea name="edit_catatan" id="eo_catatan"></textarea></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" onclick="closeEditOrder()">Batal</button>
+        <button type="submit" class="btn-save"><i class="fas fa-save me-1"></i>Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- NEW ORDER MODAL -->
+<div class="modal-overlay" id="newOrderModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h6><i class="fas fa-shopping-cart me-2" style="color:#059669;"></i>Tambah Pesanan Baru</h6>
+      <button class="modal-close" onclick="closeNewOrderModal()">&times;</button>
+    </div>
+    <form method="POST" action="dashboard.php">
+      <div class="modal-body">
+        <input type="hidden" name="edit_order_id" value="0">
+        <?php /* reuse edit order handler but with id=0 we insert instead */ ?>
+        <div class="row g-2">
+          <div class="col-6">
+            <div class="form-group"><label>Nama</label><input type="text" name="edit_nama" required></div>
+          </div>
+          <div class="col-6">
+            <div class="form-group"><label>WhatsApp</label><input type="text" name="edit_whatsapp"></div>
+          </div>
+          <div class="col-12">
+            <div class="form-group"><label>Alamat</label><textarea name="edit_alamat"></textarea></div>
+          </div>
+          <div class="col-12">
+            <div class="form-group"><label>Nama Produk</label><input type="text" name="edit_product_name"></div>
+          </div>
+          <div class="col-6">
+            <div class="form-group"><label>Harga</label><input type="text" name="edit_product_price"></div>
+          </div>
+          <div class="col-3">
+            <div class="form-group"><label>Qty</label><input type="number" min="1" value="1" name="edit_qty"></div>
+          </div>
+          <div class="col-3">
+            <div class="form-group"><label>Total</label><input type="text" name="edit_total"></div>
+          </div>
+          <div class="col-12">
+            <div class="form-group"><label>Catatan</label><textarea name="edit_catatan"></textarea></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-cancel" onclick="closeNewOrderModal()">Batal</button>
+        <button type="submit" class="btn-save"><i class="fas fa-plus me-1"></i>Tambah</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// Edit Booking
+function openEditBooking(id, name, phone, email, service, date, time) {
+    document.getElementById('eb_id').value = id;
+    document.getElementById('eb_name').value = name;
+    document.getElementById('eb_phone').value = phone;
+    document.getElementById('eb_email').value = email;
+    document.getElementById('eb_service').value = service;
+    document.getElementById('eb_date').value = date;
+    document.getElementById('eb_time').value = time;
+    document.getElementById('editBookingModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function closeEditBooking() {
+    document.getElementById('editBookingModal').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+// Edit Order
+function openEditOrder(id, nama, wa, alamat, pname, price, qty, total, catatan) {
+    document.getElementById('eo_id').value = id;
+    document.getElementById('eo_nama').value = nama;
+    document.getElementById('eo_whatsapp').value = wa;
+    document.getElementById('eo_alamat').value = alamat;
+    document.getElementById('eo_product_name').value = pname;
+    document.getElementById('eo_product_price').value = price;
+    document.getElementById('eo_qty').value = qty;
+    document.getElementById('eo_total').value = total;
+    document.getElementById('eo_catatan').value = catatan;
+    document.getElementById('editOrderModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function closeEditOrder() {
+    document.getElementById('editOrderModal').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+// New Order
+function openNewOrderModal() {
+    document.getElementById('newOrderModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function closeNewOrderModal() {
+    document.getElementById('newOrderModal').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+// Close modal on overlay click
+['editBookingModal','editOrderModal','newOrderModal'].forEach(id => {
+    document.getElementById(id).addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+    });
+});
 </script>
 </body>
 </html>
