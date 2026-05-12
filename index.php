@@ -503,6 +503,20 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
         $sorted = [];
         foreach ($catOrder as $c) { if (isset($priceList[$c])) $sorted[$c] = $priceList[$c]; }
         foreach ($priceList as $c => $v) { if (!isset($sorted[$c])) $sorted[$c] = $v; }
+
+        // Fungsi ambil nilai numerik terendah dari string harga (misal "Rp 25.000 - 100.000" → 25000)
+        function lowestPrice($priceStr) {
+            preg_match_all('/[\d.]+/', $priceStr, $m);
+            $nums = array_map(fn($n) => (int)str_replace('.', '', $n), $m[0]);
+            return empty($nums) ? 0 : min($nums);
+        }
+
+        // Urutkan item dalam setiap card dari harga terendah
+        foreach ($sorted as $cat => &$items) {
+            usort($items, fn($a, $b) => lowestPrice($a['price']) - lowestPrice($b['price']));
+        }
+        unset($items);
+
         $delay=0; foreach ($sorted as $cat => $items): ?>
         <div class="price-card" data-aos="fade-up" data-aos-delay="<?= $delay*80 ?>">
             <div class="price-card-header">
