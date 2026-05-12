@@ -497,7 +497,7 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
         <div class="text-center mb-5" data-aos="fade-up">
             <h2 class="services-title">Daftar <span style="color:#8B6F5E;">Harga</span></h2>
             <div class="title-line"></div>
-            <p class="text-muted mt-2">Harga transparan, kualitas terjamin</p>
+            <p class="text-muted mt-2">Harga transparan, kualitas terjamin (Harga tergantung panjang rambut)</p>
         </div>
 
         <div class="price-cards-grid">
