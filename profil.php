@@ -47,9 +47,10 @@ $profil = [
         'Tanggal 15 Juli 2023 menjadi tonggak penting dengan resmi berdirinya Niswa Beauty bersama dua orang tim pertama. Sejak saat itu, usaha berkembang lebih profesional dengan pelayanan yang semakin lengkap dan terstruktur. Beberapa kerja sama dari luar kota hingga tawaran bergabung dengan brand kecantikan besar pernah datang, namun Niswa Beauty memilih untuk tetap berkembang secara mandiri.'
     ),
     'store_image'   => getProfil($conn,'profil','store_image',   'image/WhatsApp Image 2026-05-08 at 10.02.50.jpeg'),
-    'tech_text'     => getProfil($conn,'profil','tech_text',
-        'Niswà Beauty juga terus mengikuti perkembangan zaman. Berawal dari promosi sederhana melalui Story WhatsApp, kini hadir lebih luas lewat Instagram dan TikTok — termasuk penggunaan sistem pembayaran digital QRIS sejak awal tahun 2025. Hingga saat ini, Niswà Beauty terus berkembang untuk memberikan pengalaman kecantikan terbaik bagi setiap pelanggan.'
-    ),
+    'value_item_1'  => getProfil($conn,'profil','value_item_1',  'Pelayanan Tulus'),
+    'value_item_2'  => getProfil($conn,'profil','value_item_2',  'Produk Aman & Halal'),
+    'value_item_3'  => getProfil($conn,'profil','value_item_3',  'Kualitas Premium'),
+    'value_item_4'  => getProfil($conn,'profil','value_item_4',  'Kepuasan Pelanggan'),
 ];
 
 $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
@@ -71,7 +72,7 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
 /* ── Layout Wrapper ── */
         .profil-page-body {
             background: linear-gradient(180deg, #fdfaf7 0%, #f5ede4 40%, #fdfaf7 100%);
-            padding: 110px 0 100px;
+            padding: 110px 0 40px;
         }
 
         /* ── Section Labels ── */
@@ -446,99 +447,7 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
             color: #5A4A42;
         }
 
-        /* ── Tech Section ── */
-        .tech-card {
-            background: linear-gradient(135deg, #5A4A42 0%, #8B6F5E 100%);
-            border-radius: 28px;
-            padding: 56px 60px;
-            position: relative;
-            overflow: hidden;
-            text-align: center;
-        }
-        .tech-card::before {
-            content: '';
-            position: absolute;
-            top: -60px; right: -60px;
-            width: 280px; height: 280px;
-            background: rgba(255,255,255,0.04);
-            border-radius: 50%;
-        }
-        .tech-card::after {
-            content: '';
-            position: absolute;
-            bottom: -80px; left: -40px;
-            width: 220px; height: 220px;
-            background: rgba(214,193,163,0.1);
-            border-radius: 50%;
-        }
-        .tech-card .pp-section-label {
-            background: rgba(255,255,255,0.12);
-            border-color: rgba(255,255,255,0.2);
-            color: #EADBC8;
-        }
-        .tech-card h3 {
-            font-family: 'Playfair Display', serif;
-            color: #fff;
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 20px;
-        }
-        .tech-card p {
-            color: rgba(255,255,255,0.85);
-            font-size: 15px;
-            line-height: 1.9;
-            font-family: 'Poppins', sans-serif;
-            max-width: 680px;
-            margin: 0 auto 36px;
-        }
-        .tech-icons-row {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 28px;
-            flex-wrap: wrap;
-            position: relative;
-            z-index: 1;
-        }
-        .tech-icon-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            color: rgba(255,255,255,0.85);
-            font-size: 12px;
-            font-family: 'Poppins', sans-serif;
-            font-weight: 500;
-        }
-        .tech-icon-item .icon-circle {
-            width: 56px; height: 56px;
-            background: rgba(255,255,255,0.12);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 16px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 22px;
-            backdrop-filter: blur(6px);
-            transition: all 0.3s;
-        }
-        .tech-icon-item:hover .icon-circle {
-            background: rgba(255,255,255,0.28);
-            border-color: rgba(255,255,255,0.5);
-            transform: translateY(-6px) scale(1.08);
-            box-shadow: 0 12px 28px rgba(0,0,0,0.25);
-        }
-        .tech-icon-item .icon-circle i {
-            transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
-        }
-        .tech-icon-item:hover .icon-circle i {
-            transform: scale(1.25) rotate(-8deg);
-        }
-        .tech-icon-item span {
-            transition: color 0.3s, letter-spacing 0.3s;
-        }
-        .tech-icon-item:hover span {
-            color: #fff;
-            letter-spacing: 0.5px;
-        }
+
 
         /* ── Back Button ── */
         .back-btn {
@@ -559,7 +468,7 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
         .pp-divider {
             border: none;
             border-top: 1px solid rgba(214,193,163,0.3);
-            margin: 60px 0;
+            margin: 30px 0;
         }
 
         @media (max-width: 767px) {
@@ -680,69 +589,20 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
                     <p class="store-bio"><?= nl2br(esc($profil['store_bio1'])) ?></p>
                     <p class="store-bio"><?= nl2br(esc($profil['store_bio2'])) ?></p>
                     <div class="store-values">
-                        <div class="store-value-item"><i class="fas fa-heart"></i>Pelayanan Tulus</div>
-                        <div class="store-value-item"><i class="fas fa-shield-alt"></i>Produk Aman & Halal</div>
-                        <div class="store-value-item"><i class="fas fa-star"></i>Kualitas Premium</div>
-                        <div class="store-value-item"><i class="fas fa-smile"></i>Kepuasan Pelanggan</div>
+                        <div class="store-value-item"><i class="fas fa-heart"></i><?= esc($profil['value_item_1'] ?? 'Pelayanan Tulus') ?></div>
+                        <div class="store-value-item"><i class="fas fa-shield-alt"></i><?= esc($profil['value_item_2'] ?? 'Produk Aman & Halal') ?></div>
+                        <div class="store-value-item"><i class="fas fa-star"></i><?= esc($profil['value_item_3'] ?? 'Kualitas Premium') ?></div>
+                        <div class="store-value-item"><i class="fas fa-smile"></i><?= esc($profil['value_item_4'] ?? 'Kepuasan Pelanggan') ?></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <hr class="pp-divider">
-
-        <!-- ══ TEKNOLOGI ══ -->
-        <div class="tech-card" data-aos="fade-up">
-            <div class="pp-section-label"><i class="fas fa-history"></i>Perjalanan Teknologi</div>
-            <h3>Dari Analog ke Digital</h3>
-            <p><?= nl2br(esc($profil['tech_text'])) ?></p>
-            <div class="tech-icons-row">
-                <div class="tech-icon-item">
-                    <div class="icon-circle"><i class="fab fa-whatsapp"></i></div>
-                    <span>WhatsApp Story</span>
-                </div>
-                <div class="tech-icon-item">
-                    <div class="icon-circle" style="font-size:14px;color:#D6C1A3;">→</div>
-                </div>
-                <div class="tech-icon-item">
-                    <div class="icon-circle"><i class="fab fa-instagram"></i></div>
-                    <span>Instagram</span>
-                </div>
-                <div class="tech-icon-item">
-                    <div class="icon-circle" style="font-size:14px;color:#D6C1A3;">→</div>
-                </div>
-                <div class="tech-icon-item">
-                    <div class="icon-circle"><i class="fab fa-tiktok"></i></div>
-                    <span>TikTok</span>
-                </div>
-                <div class="tech-icon-item">
-                    <div class="icon-circle" style="font-size:14px;color:#D6C1A3;">→</div>
-                </div>
-                <div class="tech-icon-item">
-                    <div class="icon-circle"><i class="fas fa-qrcode"></i></div>
-                    <span>QRIS 2025</span>
-                </div>
-            </div>
-        </div>
 
     </div>
 </div>
 
-<!-- ── FOOTER CTA ── -->
-<section style="background:#fdfaf7;padding:60px 0;text-align:center;border-top:1px solid rgba(214,193,163,0.2);">
-    <div class="container">
-        <p style="font-family:'Playfair Display',serif;font-size:22px;color:#2d1f17;margin-bottom:8px;">
-            Ingin merasakan sentuhan kecantikan Niswà?
-        </p>
-        <p style="color:#8B6F5E;font-size:14px;margin-bottom:28px;font-family:'Poppins',sans-serif;">
-            Booking sekarang dan rasakan perbedaannya
-        </p>
-        <a href="booking.php"
-           style="display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#8B6F5E,#D6C1A3);color:#fff;text-decoration:none;padding:14px 36px;border-radius:50px;font-weight:600;font-family:'Poppins',sans-serif;font-size:15px;box-shadow:0 8px 30px rgba(139,111,94,0.3);transition:all 0.3s;">
-            <i class="fas fa-calendar-check"></i> Book Now
-        </a>
-    </div>
-</section>
+
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>

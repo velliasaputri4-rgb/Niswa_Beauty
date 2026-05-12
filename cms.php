@@ -324,6 +324,11 @@ if ($action === 'save_hero') {
     if ($up = handleUpload('hero_img3')) setContent($conn, 'hero', 'img3', $up);
     header('Location: cms.php?tab=hero&saved=1'); exit;
 }
+if ($action === 'delete_hero_img' && isset($_GET['n'])) {
+    $n = (int)$_GET['n'];
+    if ($n >= 1 && $n <= 3) setContent($conn, 'hero', "img$n", '');
+    header('Location: cms.php?tab=hero&saved=1'); exit;
+}
 
 /* ── 2. Kontak & Maps ── */
 if ($action === 'save_kontak') {
@@ -412,7 +417,7 @@ if ($action === 'delete_testi' && isset($_GET['id'])) {
 if ($action === 'save_profil') {
     $fields = ['owner_name','owner_tagline','owner_bio1','owner_bio2',
                'store_name','store_tagline','store_bio1','store_bio2',
-               'store_image','tech_text'];
+               'store_image','value_item_1','value_item_2','value_item_3','value_item_4'];
     foreach ($fields as $f) {
         if ($f === 'store_image') {
             if ($up = handleUpload('store_image_file')) setProfil($conn, 'profil', $f, $up);
@@ -424,7 +429,7 @@ if ($action === 'save_profil') {
 }
 
 /* ── Logout ── */
-if (isset($_GET['logout'])) {
+if (isset($_GET['logout']) && $_GET['logout'] === '1') {
     session_destroy();
     header("Location: login.php"); exit;
 }
@@ -493,7 +498,10 @@ $profil = [
     'store_bio1'    => getProfil($conn,'profil','store_bio1',   'Niswa Beauty merupakan usaha di bidang kecantikan yang berawal dari layanan henna sederhana bernama Niswa Henna.'),
     'store_bio2'    => getProfil($conn,'profil','store_bio2',   'Tanggal 15 Juli 2023 menjadi tonggak penting dengan resmi berdirinya Niswa Beauty bersama dua orang tim pertama.'),
     'store_image'   => getProfil($conn,'profil','store_image',  'image/WhatsApp Image 2026-05-08 at 10.02.50.jpeg'),
-    'tech_text'     => getProfil($conn,'profil','tech_text',    'Niswà Beauty juga terus mengikuti perkembangan zaman. Berawal dari promosi sederhana melalui Story WhatsApp, kini hadir lebih luas lewat Instagram dan TikTok — termasuk penggunaan sistem pembayaran digital QRIS sejak awal tahun 2025.'),
+    'value_item_1'  => getProfil($conn,'profil','value_item_1', 'Pelayanan Tulus'),
+    'value_item_2'  => getProfil($conn,'profil','value_item_2', 'Produk Aman & Halal'),
+    'value_item_3'  => getProfil($conn,'profil','value_item_3', 'Kualitas Premium'),
+    'value_item_4'  => getProfil($conn,'profil','value_item_4', 'Kepuasan Pelanggan'),
 ];
 
 // Navbar
@@ -708,12 +716,13 @@ body{font-family:'Poppins',sans-serif;background:var(--cream);color:var(--text);
 .mobile-drawer-user .role{color:#5a4050;font-size:11px;}
 
 /* ━━ MAIN ━━ */
-.main-wrap{margin-left:250px;min-height:100vh;}
+.main-wrap{margin-left:250px;min-height:100vh;overflow-x:hidden;}
 .topbar{
     background:#fff;padding:14px 28px;
     border-bottom:1px solid var(--border);
     display:flex;align-items:center;justify-content:space-between;
-    position:sticky;top:0;z-index:100;
+    position:sticky;top:0;z-index:500;
+    isolation:isolate;
 }
 .topbar-title{font-size:17px;font-weight:700;color:var(--text);}
 .topbar-title span{color:var(--primary);}
@@ -755,15 +764,16 @@ body{font-family:'Poppins',sans-serif;background:var(--cream);color:var(--text);
 
 /* ━━ TOAST ━━ */
 .toast-bar{
-    position:fixed;top:18px;right:22px;z-index:9999;
+    position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:9999;
     background:var(--success);color:#fff;
-    padding:11px 20px;border-radius:12px;
+    padding:11px 24px;border-radius:12px;
     display:flex;align-items:center;gap:9px;
     font-size:13.5px;font-weight:600;
     box-shadow:0 8px 28px rgba(16,185,129,.35);
     animation:toastIn .4s ease;
+    white-space:nowrap;
 }
-@keyframes toastIn{from{opacity:0;transform:translateY(-16px);}to{opacity:1;transform:translateY(0);}}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(16px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
 
 /* ━━ STAT CARDS ━━ */
 .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:24px;}
@@ -936,6 +946,7 @@ input[type=file]{display:none;}
     display:flex;gap:3px;flex-wrap:wrap;
     margin-bottom:22px;background:#fff;padding:5px;
     border-radius:12px;border:1px solid var(--border);
+    position:relative;z-index:1;
 }
 .tab-nav a{
     padding:8px 14px;border-radius:9px;font-size:12.5px;font-weight:600;
@@ -1056,9 +1067,17 @@ input[type=file]{display:none;}
 <!-- MOBILE TOPBAR -->
 <div class="mobile-topbar">
     <div class="brand"><i class="fas fa-spa me-2"></i>NISWÀ BEAUTY</div>
-    <button class="mobile-hamburger" onclick="openDrawer()" aria-label="Menu">
-        <span></span><span></span><span></span>
-    </button>
+    <div style="display:flex;align-items:center;gap:8px;">
+        <a href="dashboard.php" style="color:var(--gold);font-size:13px;text-decoration:none;padding:6px 10px;background:rgba(255,255,255,.08);border-radius:8px;display:flex;align-items:center;gap:5px;font-weight:600;"><i class="fa-solid fa-arrow-left"></i></a>
+        <a href="index.php" target="_blank" style="color:var(--gold);font-size:13px;text-decoration:none;padding:6px 10px;background:rgba(255,255,255,.08);border-radius:8px;display:flex;align-items:center;gap:5px;font-weight:600;"><i class="fa-solid fa-eye"></i></a>
+        <form method="GET" action="cms.php" style="margin:0;" onsubmit="return confirm('Yakin ingin logout?')">
+            <input type="hidden" name="logout" value="1">
+            <button type="submit" style="background:rgba(255,255,255,.08);border:none;cursor:pointer;color:#e11d48;font-size:13px;padding:6px 10px;border-radius:8px;display:flex;align-items:center;"><i class="fa-solid fa-right-from-bracket"></i></button>
+        </form>
+        <button class="mobile-hamburger" onclick="openDrawer()" aria-label="Menu">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
 </div>
 
 <!-- MOBILE DRAWER OVERLAY -->
@@ -1087,7 +1106,12 @@ input[type=file]{display:none;}
     <ul class="nav-list">
         <li><a href="dashboard.php"><i class="fa-solid fa-gauge-high"></i> Dashboard</a></li>
         <li><a href="index.php" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> Lihat Website</a></li>
-        <li><a href="cms.php?logout=1" onclick="return confirm('Yakin ingin logout?')" style="color:#e11d48;"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
+        <li>
+            <form method="GET" action="cms.php" style="margin:0;" onsubmit="return confirm('Yakin ingin logout?')">
+                <input type="hidden" name="logout" value="1">
+                <button type="submit" style="background:none;border:none;cursor:pointer;color:#e11d48;font-size:14px;display:flex;align-items:center;gap:10px;padding:11px 14px;width:100%;border-radius:10px;font-family:'Poppins',sans-serif;"><i class="fa-solid fa-right-from-bracket" style="width:16px;text-align:center;"></i> Logout</button>
+            </form>
+        </li>
     </ul>
     <div class="mobile-drawer-user">
         <div class="av"><?= strtoupper(substr($_SESSION['user'], 0, 1)) ?></div>
@@ -1121,7 +1145,12 @@ input[type=file]{display:none;}
     <ul class="nav-list">
         <li><a href="dashboard.php"><i class="fa-solid fa-gauge-high"></i> Dashboard</a></li>
         <li><a href="index.php" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> Lihat Website</a></li>
-        <li><a href="cms.php?logout=1" onclick="return confirm('Yakin ingin logout?')" style="color:#e11d48;"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
+        <li>
+            <form method="GET" action="cms.php" style="margin:0;" onsubmit="return confirm('Yakin ingin logout?')">
+                <input type="hidden" name="logout" value="1">
+                <button type="submit" style="background:none;border:none;cursor:pointer;color:#e11d48;font-size:14px;display:flex;align-items:center;gap:10px;padding:11px 14px;width:100%;border-radius:10px;font-family:'Poppins',sans-serif;"><i class="fa-solid fa-right-from-bracket" style="width:16px;text-align:center;"></i> Logout</button>
+            </form>
+        </li>
     </ul>
     <div class="sidebar-user">
         <div class="av"><?= strtoupper(substr($_SESSION['user'], 0, 1)) ?></div>
@@ -1137,7 +1166,7 @@ input[type=file]{display:none;}
     <!-- Topbar -->
     <div class="topbar">
         <div style="display:flex;align-items:center;gap:14px;">
-            <button class="mobile-menu-btn" onclick="openSidebar()"><i class="fa-solid fa-bars"></i></button>
+            <button class="mobile-menu-btn" onclick="openDrawer()"><i class="fa-solid fa-bars"></i></button>
             <div class="topbar-title">Panel <span>CMS</span> — NISWÀ BEAUTY</div>
         </div>
         <div class="topbar-right">
@@ -1148,7 +1177,10 @@ input[type=file]{display:none;}
             <a href="index.php" target="_blank" class="topbar-btn topbar-btn-website">
                 <i class="fa-solid fa-eye"></i> Website
             </a>
-            <a href="cms.php?logout=1" class="topbar-btn-logout" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
+            <form method="GET" action="cms.php" style="margin:0;" onsubmit="return confirm('Yakin ingin logout?')">
+                <input type="hidden" name="logout" value="1">
+                <button type="submit" class="topbar-btn-logout" title="Logout" style="background:none;border:none;cursor:pointer;"><i class="fa-solid fa-right-from-bracket"></i></button>
+            </form>
         </div>
     </div>
 
@@ -1229,7 +1261,13 @@ input[type=file]{display:none;}
                                 </label>
                                 <input type="file" id="hero_img<?= $n ?>_input" name="hero_img<?= $n ?>" accept="image/*" onchange="previewImg(this,'prev_hero<?= $n ?>')">
                                 <?php if ($imgVal): ?>
-                                <img src="<?= htmlspecialchars($imgVal) ?>" class="prev-thumb" id="prev_hero<?= $n ?>" style="display:block;">
+                                <div style="position:relative;margin-top:10px;">
+                                    <img src="<?= htmlspecialchars($imgVal) ?>" class="prev-thumb" id="prev_hero<?= $n ?>" style="display:block;margin-top:0;">
+                                    <a href="cms.php?action=delete_hero_img&n=<?= $n ?>" onclick="return confirm('Hapus foto ini?')"
+                                       style="position:absolute;top:6px;right:6px;background:rgba(239,68,68,.9);color:#fff;border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:13px;text-decoration:none;" title="Hapus foto">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </a>
+                                </div>
                                 <?php else: ?>
                                 <img src="" class="prev-thumb" id="prev_hero<?= $n ?>">
                                 <?php endif; ?>
@@ -1876,21 +1914,24 @@ input[type=file]{display:none;}
 
                     <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
                     <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:16px;">
-                        <i class="fa-solid fa-history" style="margin-right:5px;color:var(--primary);"></i>Teks Sejarah Teknologi
+                        <i class="fa-solid fa-heart" style="margin-right:5px;color:var(--primary);"></i>Value Items Toko
                     </div>
-                    <div class="form-group">
-                        <label>Teks Narasi Teknologi</label>
-                        <textarea name="tech_text" rows="4" placeholder="Cerita perkembangan teknologi/platform salon..."><?= htmlspecialchars($profil['tech_text']) ?></textarea>
-                    </div>
-
-                    <!-- Value items display info -->
-                    <div style="background:var(--cream);border-radius:12px;padding:16px;margin-bottom:18px;border:1px solid var(--border);">
-                        <div style="font-size:12px;font-weight:600;color:var(--text-mid);margin-bottom:10px;"><i class="fa-solid fa-heart" style="margin-right:5px;color:var(--primary);"></i>Value Items (tampil otomatis di website)</div>
-                        <div class="profil-value-items">
-                            <div class="profil-value-item"><i class="fa-solid fa-heart"></i><span>Pelayanan Tulus</span></div>
-                            <div class="profil-value-item"><i class="fa-solid fa-shield-alt"></i><span>Produk Aman & Halal</span></div>
-                            <div class="profil-value-item"><i class="fa-solid fa-star"></i><span>Kualitas Premium</span></div>
-                            <div class="profil-value-item"><i class="fa-solid fa-smile"></i><span>Kepuasan Pelanggan</span></div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-heart" style="margin-right:4px;color:var(--primary);"></i>Value 1</label>
+                            <input type="text" name="value_item_1" value="<?= htmlspecialchars($profil['value_item_1'] ?? 'Pelayanan Tulus') ?>" placeholder="Pelayanan Tulus">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-shield-alt" style="margin-right:4px;color:var(--primary);"></i>Value 2</label>
+                            <input type="text" name="value_item_2" value="<?= htmlspecialchars($profil['value_item_2'] ?? 'Produk Aman & Halal') ?>" placeholder="Produk Aman & Halal">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-star" style="margin-right:4px;color:var(--primary);"></i>Value 3</label>
+                            <input type="text" name="value_item_3" value="<?= htmlspecialchars($profil['value_item_3'] ?? 'Kualitas Premium') ?>" placeholder="Kualitas Premium">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-smile" style="margin-right:4px;color:var(--primary);"></i>Value 4</label>
+                            <input type="text" name="value_item_4" value="<?= htmlspecialchars($profil['value_item_4'] ?? 'Kepuasan Pelanggan') ?>" placeholder="Kepuasan Pelanggan">
                         </div>
                     </div>
 

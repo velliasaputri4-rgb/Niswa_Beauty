@@ -497,7 +497,13 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
         </div>
 
         <div class="price-cards-grid">
-        <?php $delay=0; foreach ($priceList as $cat => $items): ?>
+        <?php
+        // Urutkan: Treatment Spa atas, Nail Art paling bawah
+        $catOrder = ["Brow & Lash","Treatment Spa","Henna Series","Nail Art & Services","Rambut"];
+        $sorted = [];
+        foreach ($catOrder as $c) { if (isset($priceList[$c])) $sorted[$c] = $priceList[$c]; }
+        foreach ($priceList as $c => $v) { if (!isset($sorted[$c])) $sorted[$c] = $v; }
+        $delay=0; foreach ($sorted as $cat => $items): ?>
         <div class="price-card" data-aos="fade-up" data-aos-delay="<?= $delay*80 ?>">
             <div class="price-card-header">
                 <span class="price-card-label"><?= esc($cat) ?></span>
