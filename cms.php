@@ -423,48 +423,6 @@ if ($action === 'save_profil') {
     header('Location: cms.php?tab=profil&saved=1'); exit;
 }
 
-/* ── 8. Booking CRUD ── */
-if ($action === 'save_booking') {
-    $id           = (int)($_POST['booking_id'] ?? 0);
-    $name         = mysqli_real_escape_string($conn, $_POST['bk_name']    ?? '');
-    $phone        = mysqli_real_escape_string($conn, $_POST['bk_phone']   ?? '');
-    $email        = mysqli_real_escape_string($conn, $_POST['bk_email']   ?? '');
-    $service      = mysqli_real_escape_string($conn, $_POST['bk_service'] ?? '');
-    $date         = mysqli_real_escape_string($conn, $_POST['bk_date']    ?? '');
-    $time         = mysqli_real_escape_string($conn, $_POST['bk_time']    ?? '');
-    $jumlah       = (int)($_POST['bk_jumlah'] ?? 1);
-    $catatan      = mysqli_real_escape_string($conn, $_POST['bk_catatan'] ?? '');
-    if ($id) {
-        mysqli_query($conn, "UPDATE bookings SET name='$name', phone='$phone', email='$email', service='$service', date='$date', time='$time', jumlah_orang=$jumlah, catatan='$catatan' WHERE id=$id");
-    }
-    header('Location: cms.php?tab=bookings&saved=1'); exit;
-}
-if ($action === 'delete_booking' && isset($_GET['id'])) {
-    mysqli_query($conn, "DELETE FROM bookings WHERE id=".(int)$_GET['id']);
-    header('Location: cms.php?tab=bookings'); exit;
-}
-
-/* ── 9. Orders CRUD ── */
-if ($action === 'save_order') {
-    $id      = (int)($_POST['order_id']    ?? 0);
-    $nama    = mysqli_real_escape_string($conn, $_POST['or_nama']    ?? '');
-    $wa      = mysqli_real_escape_string($conn, $_POST['or_wa']      ?? '');
-    $product = mysqli_real_escape_string($conn, $_POST['or_product'] ?? '');
-    $price   = mysqli_real_escape_string($conn, $_POST['or_price']   ?? '');
-    $qty     = (int)($_POST['or_qty']     ?? 1);
-    $total   = mysqli_real_escape_string($conn, $_POST['or_total']   ?? '');
-    $alamat  = mysqli_real_escape_string($conn, $_POST['or_alamat']  ?? '');
-    $catatan = mysqli_real_escape_string($conn, $_POST['or_catatan'] ?? '');
-    if ($id) {
-        mysqli_query($conn, "UPDATE orders SET nama='$nama', whatsapp='$wa', product_name='$product', product_price='$price', qty=$qty, total='$total', alamat='$alamat', catatan='$catatan' WHERE id=$id");
-    }
-    header('Location: cms.php?tab=orders&saved=1'); exit;
-}
-if ($action === 'delete_order' && isset($_GET['id'])) {
-    mysqli_query($conn, "DELETE FROM orders WHERE id=".(int)$_GET['id']);
-    header('Location: cms.php?tab=orders'); exit;
-}
-
 /* ── Logout ── */
 if (isset($_GET['logout'])) {
     session_destroy();
@@ -483,7 +441,8 @@ if ($action === 'save_footer') {
     $fields = ['brand_name','brand_desc',
                'instagram_url','tiktok_url','whatsapp_url',
                'address','phone','email','hours',
-               'copyright_text'];
+               'copyright_text',
+               'link_home','link_services','link_product','link_about','link_booking'];
     foreach ($fields as $f) setFooter($conn, $f, $_POST[$f] ?? '');
     header('Location: cms.php?tab=footer&saved=1'); exit;
 }
@@ -560,6 +519,11 @@ $footer_data = [
     'email'         => getFooter($conn, 'email',         'niswabeauty15@gmail.com'),
     'hours'         => getFooter($conn, 'hours',         'Senin – Sabtu: 09:00 – 20:00'),
     'copyright_text'=> getFooter($conn, 'copyright_text','NISWÀ BEAUTY. All rights reserved.'),
+    'link_home'     => getFooter($conn, 'link_home',     '#home'),
+    'link_services' => getFooter($conn, 'link_services', '#services'),
+    'link_product'  => getFooter($conn, 'link_product',  '#product'),
+    'link_about'    => getFooter($conn, 'link_about',    '#about'),
+    'link_booking'  => getFooter($conn, 'link_booking',  'booking.php'),
 ];
 
 // Booking Page
@@ -614,12 +578,7 @@ $servicesRows  = $conn ? mysqli_query($conn, "SELECT * FROM cms_services ORDER B
 $pricesRows    = $conn ? mysqli_query($conn, "SELECT * FROM cms_prices ORDER BY category, sort_order, id") : null;
 $productsRows  = $conn ? mysqli_query($conn, "SELECT * FROM cms_products ORDER BY sort_order, id") : null;
 $testiRows     = $conn ? mysqli_query($conn, "SELECT * FROM cms_testimonials ORDER BY sort_order, id") : null;
-$bookingsRows  = $conn ? mysqli_query($conn, "SELECT * FROM bookings ORDER BY created_at DESC LIMIT 50") : null;
-$ordersRows    = $conn ? mysqli_query($conn, "SELECT * FROM orders ORDER BY created_at DESC LIMIT 50") : null;
-
 // Stats
-$totalBookings = $conn && mysqli_query($conn, "SELECT COUNT(*) c FROM bookings") ? (int)(mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM bookings"))['c'] ?? 0) : 0;
-$totalOrders   = $conn && mysqli_query($conn, "SELECT COUNT(*) c FROM orders")   ? (int)(mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM orders"))['c']   ?? 0) : 0;
 $totalProducts = $conn ? (int)(mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM cms_products"))['c'] ?? 0) : 0;
 $totalServices = $conn ? (int)(mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM cms_services"))['c'] ?? 0) : 0;
 ?>
@@ -656,48 +615,100 @@ body{font-family:'Poppins',sans-serif;background:var(--cream);color:var(--text);
 
 /* ━━ SIDEBAR ━━ */
 .sidebar{
-    width:var(--sidebar-w);background:var(--dark);
+    width:250px;background:var(--dark);
     min-height:100vh;position:fixed;left:0;top:0;
-    display:flex;flex-direction:column;z-index:200;
-    transition:transform .3s;border-right:1px solid rgba(255,255,255,.04);
+    padding:28px 0 100px;z-index:100;
 }
-.sidebar-brand{padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,.06);}
-.sidebar-brand .logo{font-family:'Playfair Display',serif;font-size:18px;color:#fff;font-weight:700;display:flex;align-items:center;gap:10px;}
-.sidebar-brand .logo i{color:var(--gold);}
-.sidebar-brand .tagline{font-size:9px;color:#3a2535;letter-spacing:2.5px;text-transform:uppercase;margin-top:4px;padding-left:28px;font-weight:600;}
-.sidebar-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#3a2535;padding:16px 20px 5px;font-weight:700;}
-.nav-list{list-style:none;padding:0 8px;flex:1;}
-.nav-list li{margin-bottom:1px;}
+.sidebar-brand{
+    color:#fff;font-size:18px;font-weight:700;
+    padding:0 24px 24px;border-bottom:1px solid #1e0d1a;margin-bottom:16px;
+}
+.sidebar-brand i{color:var(--gold);}
+.sidebar-brand small{display:block;font-size:10px;color:#5a4050;letter-spacing:1px;margin-top:4px;font-weight:400;}
+.sidebar-section{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#3a2030;padding:14px 24px 6px;font-weight:700;}
+.nav-list{list-style:none;padding:0 12px;}
+.nav-list li{margin-bottom:2px;}
 .nav-list a{
-    display:flex;align-items:center;gap:11px;padding:10px 14px;
-    color:#7a6870;text-decoration:none;border-radius:10px;
-    font-size:13px;font-weight:500;transition:all .2s;
+    display:flex;align-items:center;gap:10px;padding:11px 14px;
+    color:#8b7880;text-decoration:none;border-radius:10px;
+    font-size:14px;transition:.2s;
 }
-.nav-list a:hover{background:rgba(214,193,163,.1);color:var(--gold);}
-.nav-list a.active{background:rgba(214,193,163,.15);color:var(--gold);}
-.nav-list a i{width:17px;text-align:center;font-size:14px;flex-shrink:0;}
-.sidebar-footer{
-    padding:14px 16px;border-top:1px solid rgba(255,255,255,.05);
+.nav-list a:hover,.nav-list a.active{background:rgba(180,148,110,.12);color:var(--gold);}
+.nav-list a i{width:16px;text-align:center;}
+.sidebar-user{
+    position:fixed;bottom:0;left:0;width:250px;
+    padding:14px 18px;border-top:1px solid #1e0d1a;
     display:flex;align-items:center;gap:10px;
+    background:var(--dark);
 }
-.sidebar-footer .av{
-    width:36px;height:36px;border-radius:50%;
+.sidebar-user .av{
+    width:34px;height:34px;border-radius:50%;
     background:linear-gradient(135deg,var(--gold),#5A4A42);
     display:flex;align-items:center;justify-content:center;
     color:#fff;font-weight:700;font-size:14px;flex-shrink:0;
 }
-.sidebar-footer .info .name{color:var(--gold);font-size:13px;font-weight:600;}
-.sidebar-footer .info .role{color:#4a3040;font-size:10px;}
-.sidebar-footer .logout-btn{
-    margin-left:auto;background:rgba(239,68,68,.12);border:none;
-    color:#ef4444;width:30px;height:30px;border-radius:8px;
-    display:flex;align-items:center;justify-content:center;
-    cursor:pointer;font-size:13px;transition:.2s;text-decoration:none;
+.sidebar-user .name{color:var(--gold);font-size:13px;font-weight:600;}
+.sidebar-user .role{color:#5a4050;font-size:11px;}
+
+/* ━━ MOBILE TOPBAR ━━ */
+.mobile-topbar{
+    display:none;position:fixed;top:0;left:0;right:0;
+    background:var(--dark);z-index:200;
+    padding:14px 18px;
+    align-items:center;justify-content:space-between;
 }
-.sidebar-footer .logout-btn:hover{background:rgba(239,68,68,.25);}
+.mobile-topbar .brand{color:#fff;font-weight:700;font-size:16px;}
+.mobile-topbar .brand i{color:var(--gold);}
+.mobile-hamburger{
+    background:none;border:none;cursor:pointer;
+    display:flex;flex-direction:column;gap:5px;padding:4px;
+}
+.mobile-hamburger span{
+    display:block;width:22px;height:2px;
+    background:var(--gold);border-radius:2px;transition:.3s;
+}
+
+/* ━━ MOBILE DRAWER ━━ */
+.mobile-drawer-overlay{
+    display:none;position:fixed;inset:0;
+    background:rgba(0,0,0,.55);z-index:300;
+}
+.mobile-drawer-overlay.open{display:block;}
+.mobile-drawer{
+    position:fixed;top:0;left:-270px;bottom:0;
+    width:260px;background:var(--dark);
+    z-index:310;padding:28px 0 80px;
+    transition:left .3s ease;overflow-y:auto;
+}
+.mobile-drawer.open{left:0;}
+.mobile-drawer .sidebar-brand{padding:0 22px 22px;border-bottom:1px solid #1e0d1a;margin-bottom:14px;}
+.mobile-drawer .sidebar-section{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#3a2030;padding:14px 22px 6px;font-weight:700;}
+.mobile-drawer .nav-list{list-style:none;padding:0 10px;}
+.mobile-drawer .nav-list li{margin-bottom:2px;}
+.mobile-drawer .nav-list a{
+    display:flex;align-items:center;gap:10px;padding:11px 14px;
+    color:#8b7880;text-decoration:none;border-radius:10px;
+    font-size:14px;transition:.2s;
+}
+.mobile-drawer .nav-list a:hover{background:rgba(180,148,110,.12);color:var(--gold);}
+.mobile-drawer .nav-list a i{width:16px;text-align:center;}
+.mobile-drawer-user{
+    position:absolute;bottom:0;left:0;right:0;
+    padding:14px 18px;border-top:1px solid #1e0d1a;
+    display:flex;align-items:center;gap:10px;
+    background:var(--dark);
+}
+.mobile-drawer-user .av{
+    width:34px;height:34px;border-radius:50%;
+    background:linear-gradient(135deg,var(--gold),#5A4A42);
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:700;font-size:14px;flex-shrink:0;
+}
+.mobile-drawer-user .name{color:var(--gold);font-size:13px;font-weight:600;}
+.mobile-drawer-user .role{color:#5a4050;font-size:11px;}
 
 /* ━━ MAIN ━━ */
-.main-wrap{margin-left:var(--sidebar-w);min-height:100vh;}
+.main-wrap{margin-left:250px;min-height:100vh;}
 .topbar{
     background:#fff;padding:14px 28px;
     border-bottom:1px solid var(--border);
@@ -707,6 +718,38 @@ body{font-family:'Poppins',sans-serif;background:var(--cream);color:var(--text);
 .topbar-title{font-size:17px;font-weight:700;color:var(--text);}
 .topbar-title span{color:var(--primary);}
 .topbar-right{display:flex;align-items:center;gap:12px;}
+.topbar-btn{
+    font-size:12px;text-decoration:none;display:flex;align-items:center;gap:5px;
+    padding:6px 12px;border-radius:8px;font-weight:600;
+    transition:all .22s ease;
+}
+.topbar-btn-dashboard{
+    color:#5A4A42;background:rgba(139,111,94,.08);
+}
+.topbar-btn-dashboard:hover{
+    background:rgba(139,111,94,.22);color:var(--primary-dk);
+    transform:translateX(-2px);
+    box-shadow:0 3px 10px rgba(139,111,94,.18);
+}
+.topbar-btn-website{
+    color:var(--primary);background:rgba(139,111,94,.08);
+}
+.topbar-btn-website:hover{
+    background:rgba(139,111,94,.22);color:var(--primary-dk);
+    box-shadow:0 3px 10px rgba(139,111,94,.18);
+}
+.topbar-btn-logout{
+    color:var(--danger);font-size:16px;text-decoration:none;
+    display:flex;align-items:center;justify-content:center;
+    width:34px;height:34px;border-radius:8px;
+    transition:all .22s ease;
+}
+.topbar-btn-logout:hover{
+    background:rgba(239,68,68,.1);
+    color:#c81e1e;
+    transform:scale(1.15) rotate(8deg);
+    box-shadow:0 3px 10px rgba(239,68,68,.18);
+}
 .mobile-menu-btn{display:none;background:none;border:none;cursor:pointer;color:var(--text);font-size:20px;padding:4px;}
 .content{padding:24px 28px;}
 
@@ -723,23 +766,36 @@ body{font-family:'Poppins',sans-serif;background:var(--cream);color:var(--text);
 @keyframes toastIn{from{opacity:0;transform:translateY(-16px);}to{opacity:1;transform:translateY(0);}}
 
 /* ━━ STAT CARDS ━━ */
-.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:24px;}
 .stat-card{
     background:#fff;border-radius:16px;padding:20px;
     border:1px solid var(--border);
     box-shadow:0 2px 10px rgba(139,111,94,.06);
     display:flex;align-items:center;gap:16px;
+    cursor:default;
+    transition:transform .25s ease, box-shadow .25s ease, border-color .25s ease, background .25s ease;
 }
+.stat-card:hover{
+    transform:translateY(-4px) scale(1.02);
+    box-shadow:0 12px 32px rgba(139,111,94,.18);
+    border-color:var(--gold);
+    background:linear-gradient(135deg,#fffdf9,#fdf5ec);
+}
+.stat-card:hover .stat-icon{ transform:scale(1.12); }
+.stat-card:hover .stat-icon.rose{ background:rgba(244,114,182,.22); }
+.stat-card:hover .stat-icon.blue{ background:rgba(59,130,246,.22); }
+.stat-card:hover .stat-num{ color:var(--primary); }
 .stat-icon{
     width:50px;height:50px;border-radius:14px;
     display:flex;align-items:center;justify-content:center;
     font-size:20px;flex-shrink:0;
+    transition:transform .25s ease, background .25s ease;
 }
 .stat-icon.gold{background:rgba(214,193,163,.2);color:var(--primary);}
 .stat-icon.green{background:rgba(16,185,129,.12);color:#10b981;}
 .stat-icon.rose{background:rgba(244,114,182,.12);color:#f472b6;}
 .stat-icon.blue{background:rgba(59,130,246,.12);color:#3b82f6;}
-.stat-num{font-size:26px;font-weight:700;color:var(--text);font-family:'Playfair Display',serif;line-height:1;}
+.stat-num{font-size:26px;font-weight:700;color:var(--text);font-family:'Playfair Display',serif;line-height:1;transition:color .25s ease;}
 .stat-lbl{font-size:12px;color:var(--text-lt);margin-top:3px;}
 
 /* ━━ CARDS ━━ */
@@ -933,20 +989,13 @@ input[type=file]{display:none;}
 .testi-preview-name{font-weight:700;font-size:13px;color:#2d1f17;}
 .testi-preview-tag{font-size:10px;background:rgba(139,111,94,.1);color:#8B6F5E;padding:2px 9px;border-radius:20px;font-weight:600;margin-left:auto;}
 
-/* ━━ BOOKING/ORDER TABLE ━━ */
-.status-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
-.status-new{background:rgba(59,130,246,.1);color:#3b82f6;}
-.status-done{background:rgba(16,185,129,.1);color:#10b981;}
-
 /* ━━ MOBILE ━━ */
-@media(max-width:768px){
-    .sidebar{transform:translateX(-100%);}
-    .sidebar.open{transform:translateX(0);}
-    .main-wrap{margin-left:0;}
-    .mobile-menu-btn{display:block;}
+@media(max-width:991px){
+    .sidebar{display:none;}
+    .main-wrap{margin-left:0;padding-top:60px;}
+    .mobile-topbar{display:flex;}
+    .topbar{display:none;}
     .content{padding:12px;}
-    .topbar{padding:11px 14px;}
-    .topbar-title{font-size:14px;}
     .stat-grid{grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;}
     .stat-card{padding:14px;gap:10px;}
     .stat-icon{width:40px;height:40px;font-size:16px;border-radius:10px;}
@@ -957,10 +1006,8 @@ input[type=file]{display:none;}
     .tab-nav::-webkit-scrollbar{height:3px;}
     .tab-nav::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
     .tab-nav a{white-space:nowrap;padding:7px 11px;font-size:11.5px;flex-shrink:0;}
-    /* Hero tab: single column on mobile */
     div[style*="grid-template-columns:1fr 380px"]{display:block!important;}
     div[style*="grid-template-columns:1fr 380px"] > div:last-child{margin-top:16px;}
-    /* Prices tab: single column on mobile */
     div[style*="grid-template-columns:1fr 1fr"]{display:block!important;}
     div[style*="grid-template-columns:1fr 1fr"] > div + div{margin-top:16px;}
     .cms-card-header{flex-wrap:wrap;gap:8px;}
@@ -973,10 +1020,7 @@ input[type=file]{display:none;}
 @media(max-width:420px){
     .stat-grid{grid-template-columns:1fr 1fr;}
     .grid-2,.grid-3{grid-template-columns:1fr!important;}
-    .topbar-right span{display:none;}
 }
-.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:190;}
-.sidebar-overlay.open{display:block;}
 
 /* ━━ HERO PREVIEW ━━ */
 .hero-preview{
@@ -1009,45 +1053,82 @@ input[type=file]{display:none;}
 </head>
 <body>
 
-<!-- Sidebar Overlay (mobile) -->
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<!-- MOBILE TOPBAR -->
+<div class="mobile-topbar">
+    <div class="brand"><i class="fas fa-spa me-2"></i>NISWÀ BEAUTY</div>
+    <button class="mobile-hamburger" onclick="openDrawer()" aria-label="Menu">
+        <span></span><span></span><span></span>
+    </button>
+</div>
 
-<!-- ══ SIDEBAR ══ -->
-<aside class="sidebar" id="sidebar">
+<!-- MOBILE DRAWER OVERLAY -->
+<div class="mobile-drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+
+<!-- MOBILE DRAWER -->
+<div class="mobile-drawer" id="mobileDrawer">
     <div class="sidebar-brand">
-        <div class="logo"><i class="fa-solid fa-spa"></i> NISWÀ BEAUTY</div>
-        <div class="tagline">CMS Admin Panel</div>
+        <i class="fas fa-spa me-2"></i>NISWÀ BEAUTY
+        <small>CMS ADMIN PANEL</small>
     </div>
-
-    <div class="sidebar-lbl">Kelola Konten</div>
+    <div class="sidebar-section">Kelola Konten</div>
     <ul class="nav-list">
-        <li><a href="cms.php?tab=hero"      class="<?= $activeTab==='hero'      ? 'active':'' ?>"><i class="fa-solid fa-image"></i> Hero & Slider</a></li>
-        <li><a href="cms.php?tab=services"  class="<?= $activeTab==='services'  ? 'active':'' ?>"><i class="fa-solid fa-scissors"></i> Layanan</a></li>
-        <li><a href="cms.php?tab=prices"    class="<?= $activeTab==='prices'    ? 'active':'' ?>"><i class="fa-solid fa-tag"></i> Daftar Harga</a></li>
-        <li><a href="cms.php?tab=products"  class="<?= $activeTab==='products'  ? 'active':'' ?>"><i class="fa-solid fa-box-open"></i> Produk</a></li>
-        <li><a href="cms.php?tab=testimoni" class="<?= $activeTab==='testimoni' ? 'active':'' ?>"><i class="fa-solid fa-comment-dots"></i> Testimoni</a></li>
-        <li><a href="cms.php?tab=profil"    class="<?= $activeTab==='profil'    ? 'active':'' ?>"><i class="fa-solid fa-store"></i> Profil Toko</a></li>
-        <li><a href="cms.php?tab=kontak"    class="<?= $activeTab==='kontak'    ? 'active':'' ?>"><i class="fa-solid fa-location-dot"></i> Kontak & Maps</a></li>
-        <li><a href="cms.php?tab=navbar"    class="<?= $activeTab==='navbar'    ? 'active':'' ?>"><i class="fa-solid fa-bars"></i> Navbar</a></li>
-        <li><a href="cms.php?tab=footer"    class="<?= $activeTab==='footer'    ? 'active':'' ?>"><i class="fa-solid fa-grip-lines"></i> Footer</a></li>
-        <li><a href="cms.php?tab=booking_page" class="<?= $activeTab==='booking_page' ? 'active':'' ?>"><i class="fa-solid fa-calendar-alt"></i> Halaman Booking</a></li>
+        <li><a href="cms.php?tab=hero"         onclick="closeDrawer()"><i class="fa-solid fa-image"></i> Hero & Slider</a></li>
+        <li><a href="cms.php?tab=services"     onclick="closeDrawer()"><i class="fa-solid fa-scissors"></i> Layanan</a></li>
+        <li><a href="cms.php?tab=prices"       onclick="closeDrawer()"><i class="fa-solid fa-tag"></i> Daftar Harga</a></li>
+        <li><a href="cms.php?tab=products"     onclick="closeDrawer()"><i class="fa-solid fa-box-open"></i> Produk</a></li>
+        <li><a href="cms.php?tab=testimoni"    onclick="closeDrawer()"><i class="fa-solid fa-comment-dots"></i> Testimoni</a></li>
+        <li><a href="cms.php?tab=profil"       onclick="closeDrawer()"><i class="fa-solid fa-store"></i> Profil Toko</a></li>
+        <li><a href="cms.php?tab=kontak"       onclick="closeDrawer()"><i class="fa-solid fa-location-dot"></i> Kontak & Maps</a></li>
+        <li><a href="cms.php?tab=navbar"       onclick="closeDrawer()"><i class="fa-solid fa-bars"></i> Navbar</a></li>
+        <li><a href="cms.php?tab=footer"       onclick="closeDrawer()"><i class="fa-solid fa-grip-lines"></i> Footer</a></li>
+        <li><a href="cms.php?tab=booking_page" onclick="closeDrawer()"><i class="fa-solid fa-calendar-alt"></i> Halaman Booking</a></li>
     </ul>
-
-    <div class="sidebar-lbl">Manajemen</div>
+    <div class="sidebar-section">Sistem</div>
     <ul class="nav-list">
-        <li><a href="cms.php?tab=bookings"  class="<?= $activeTab==='bookings'  ? 'active':'' ?>"><i class="fa-solid fa-calendar-check"></i> Data Booking</a></li>
-        <li><a href="cms.php?tab=orders"    class="<?= $activeTab==='orders'    ? 'active':'' ?>"><i class="fa-solid fa-bag-shopping"></i> Data Order Produk</a></li>
-        <li><a href="dashboard.php"><i class="fa-solid fa-gauge-high"></i> Dashboard Lama</a></li>
+        <li><a href="dashboard.php"><i class="fa-solid fa-gauge-high"></i> Dashboard</a></li>
         <li><a href="index.php" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> Lihat Website</a></li>
+        <li><a href="cms.php?logout=1" onclick="return confirm('Yakin ingin logout?')" style="color:#e11d48;"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
     </ul>
-
-    <div class="sidebar-footer">
+    <div class="mobile-drawer-user">
         <div class="av"><?= strtoupper(substr($_SESSION['user'], 0, 1)) ?></div>
-        <div class="info">
+        <div>
             <div class="name"><?= htmlspecialchars($_SESSION['user']) ?></div>
             <div class="role">Administrator</div>
         </div>
-        <a href="cms.php?logout=1" class="logout-btn" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
+    </div>
+</div>
+
+<!-- ══ SIDEBAR (desktop) ══ -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        <i class="fas fa-spa me-2"></i>NISWÀ BEAUTY
+        <small>CMS ADMIN PANEL</small>
+    </div>
+    <div class="sidebar-section">Kelola Konten</div>
+    <ul class="nav-list">
+        <li><a href="cms.php?tab=hero"         class="<?= $activeTab==='hero'         ? 'active':'' ?>"><i class="fa-solid fa-image"></i> Hero & Slider</a></li>
+        <li><a href="cms.php?tab=services"     class="<?= $activeTab==='services'     ? 'active':'' ?>"><i class="fa-solid fa-scissors"></i> Layanan</a></li>
+        <li><a href="cms.php?tab=prices"       class="<?= $activeTab==='prices'       ? 'active':'' ?>"><i class="fa-solid fa-tag"></i> Daftar Harga</a></li>
+        <li><a href="cms.php?tab=products"     class="<?= $activeTab==='products'     ? 'active':'' ?>"><i class="fa-solid fa-box-open"></i> Produk</a></li>
+        <li><a href="cms.php?tab=testimoni"    class="<?= $activeTab==='testimoni'    ? 'active':'' ?>"><i class="fa-solid fa-comment-dots"></i> Testimoni</a></li>
+        <li><a href="cms.php?tab=profil"       class="<?= $activeTab==='profil'       ? 'active':'' ?>"><i class="fa-solid fa-store"></i> Profil Toko</a></li>
+        <li><a href="cms.php?tab=kontak"       class="<?= $activeTab==='kontak'       ? 'active':'' ?>"><i class="fa-solid fa-location-dot"></i> Kontak & Maps</a></li>
+        <li><a href="cms.php?tab=navbar"       class="<?= $activeTab==='navbar'       ? 'active':'' ?>"><i class="fa-solid fa-bars"></i> Navbar</a></li>
+        <li><a href="cms.php?tab=footer"       class="<?= $activeTab==='footer'       ? 'active':'' ?>"><i class="fa-solid fa-grip-lines"></i> Footer</a></li>
+        <li><a href="cms.php?tab=booking_page" class="<?= $activeTab==='booking_page' ? 'active':'' ?>"><i class="fa-solid fa-calendar-alt"></i> Halaman Booking</a></li>
+    </ul>
+    <div class="sidebar-section">Sistem</div>
+    <ul class="nav-list">
+        <li><a href="dashboard.php"><i class="fa-solid fa-gauge-high"></i> Dashboard</a></li>
+        <li><a href="index.php" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> Lihat Website</a></li>
+        <li><a href="cms.php?logout=1" onclick="return confirm('Yakin ingin logout?')" style="color:#e11d48;"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
+    </ul>
+    <div class="sidebar-user">
+        <div class="av"><?= strtoupper(substr($_SESSION['user'], 0, 1)) ?></div>
+        <div>
+            <div class="name"><?= htmlspecialchars($_SESSION['user']) ?></div>
+            <div class="role">Administrator</div>
+        </div>
     </div>
 </aside>
 
@@ -1061,10 +1142,13 @@ input[type=file]{display:none;}
         </div>
         <div class="topbar-right">
             <span style="font-size:12px;color:var(--text-mid);"><i class="fa-regular fa-circle-user" style="margin-right:4px;"></i><?= htmlspecialchars($_SESSION['user']) ?></span>
-            <a href="index.php" target="_blank" style="font-size:12px;color:var(--primary);text-decoration:none;display:flex;align-items:center;gap:5px;background:rgba(139,111,94,.08);padding:6px 12px;border-radius:8px;">
+            <a href="dashboard.php" class="topbar-btn topbar-btn-dashboard">
+                <i class="fa-solid fa-arrow-left"></i> Dashboard
+            </a>
+            <a href="index.php" target="_blank" class="topbar-btn topbar-btn-website">
                 <i class="fa-solid fa-eye"></i> Website
             </a>
-            <a href="cms.php?logout=1" style="color:var(--danger);font-size:13px;text-decoration:none;" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
+            <a href="cms.php?logout=1" class="topbar-btn-logout" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
         </div>
     </div>
 
@@ -1080,14 +1164,6 @@ input[type=file]{display:none;}
 
         <!-- Stat Cards (always shown) -->
         <div class="stat-grid">
-            <div class="stat-card">
-                <div class="stat-icon gold"><i class="fa-solid fa-calendar-check"></i></div>
-                <div><div class="stat-num"><?= $totalBookings ?></div><div class="stat-lbl">Total Booking</div></div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon green"><i class="fa-solid fa-bag-shopping"></i></div>
-                <div><div class="stat-num"><?= $totalOrders ?></div><div class="stat-lbl">Total Order Produk</div></div>
-            </div>
             <div class="stat-card">
                 <div class="stat-icon rose"><i class="fa-solid fa-box-open"></i></div>
                 <div><div class="stat-num"><?= $totalProducts ?></div><div class="stat-lbl">Produk Aktif</div></div>
@@ -1110,8 +1186,6 @@ input[type=file]{display:none;}
             <a href="cms.php?tab=navbar"       class="<?= $activeTab==='navbar'       ? 'active':'' ?>"><i class="fa-solid fa-bars"></i> Navbar</a>
             <a href="cms.php?tab=footer"       class="<?= $activeTab==='footer'       ? 'active':'' ?>"><i class="fa-solid fa-grip-lines"></i> Footer</a>
             <a href="cms.php?tab=booking_page" class="<?= $activeTab==='booking_page' ? 'active':'' ?>"><i class="fa-solid fa-calendar-alt"></i> Booking</a>
-            <a href="cms.php?tab=bookings"     class="<?= $activeTab==='bookings'     ? 'active':'' ?>"><i class="fa-solid fa-calendar-check"></i> Data Booking</a>
-            <a href="cms.php?tab=orders"       class="<?= $activeTab==='orders'       ? 'active':'' ?>"><i class="fa-solid fa-bag-shopping"></i> Orders</a>
         </div>
 
 <?php /* ════════ TAB: HERO ════════ */ ?>
@@ -1909,278 +1983,6 @@ input[type=file]{display:none;}
             </div>
         </div>
 
-<?php /* ════════ TAB: BOOKINGS ════════ */ ?>
-<?php elseif ($activeTab === 'bookings'): ?>
-
-        <div class="cms-card">
-            <div class="cms-card-header">
-                <i class="fa-solid fa-calendar-check"></i>
-                <h3>Data Booking Terbaru</h3>
-                <div class="ms-auto" style="display:flex;align-items:center;gap:10px;">
-                    <span style="font-size:12px;color:var(--text-lt);">50 data terbaru</span>
-                    <span style="font-size:11px;color:var(--text-lt);background:rgba(139,111,94,.08);padding:4px 10px;border-radius:8px;">
-                        <i class="fa-solid fa-circle-info" style="margin-right:4px;"></i>Klik Edit untuk ubah data booking
-                    </span>
-                </div>
-            </div>
-            <div class="cms-card-body" style="padding:0;">
-                <?php if ($bookingsRows && mysqli_num_rows($bookingsRows) > 0): ?>
-                <div style="overflow-x:auto;">
-                <table class="cms-table">
-                    <thead>
-                        <tr>
-                            <th>#ID</th>
-                            <th>Nama</th>
-                            <th>WhatsApp</th>
-                            <th>Email</th>
-                            <th>Layanan</th>
-                            <th>Tanggal</th>
-                            <th>Jam</th>
-                            <th>Jml</th>
-                            <th>Catatan</th>
-                            <th>Dipesan</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    <?php while ($row = mysqli_fetch_assoc($bookingsRows)): ?>
-                    <tr>
-                        <td><strong>#<?= $row['id'] ?></strong></td>
-                        <td><?= htmlspecialchars($row['name'] ?? '') ?></td>
-                        <td>
-                            <a href="https://wa.me/<?= preg_replace('/[^0-9]/','',$row['phone'] ?? '') ?>" target="_blank"
-                               style="color:#25d366;text-decoration:none;font-weight:600;font-size:12px;">
-                                <i class="fa-brands fa-whatsapp"></i> <?= htmlspecialchars($row['phone'] ?? '') ?>
-                            </a>
-                        </td>
-                        <td style="font-size:12px;"><?= htmlspecialchars($row['email'] ?? '') ?></td>
-                        <td><span class="cat-badge"><?= htmlspecialchars($row['service'] ?? '') ?></span></td>
-                        <td><?= htmlspecialchars($row['date'] ?? '') ?></td>
-                        <td><?= htmlspecialchars($row['time'] ?? '') ?></td>
-                        <td style="text-align:center;"><?= htmlspecialchars($row['jumlah_orang'] ?? 1) ?></td>
-                        <td style="font-size:12px;color:var(--text-mid);max-width:130px;"><?= htmlspecialchars($row['catatan'] ?? '-') ?></td>
-                        <td style="font-size:11px;color:var(--text-lt);"><?= date('d/m/Y H:i', strtotime($row['created_at'] ?? 'now')) ?></td>
-                        <td>
-                            <div class="actions-cell">
-                                <button class="btn-edit-cms" onclick='openEditBooking(<?= json_encode($row) ?>)'>
-                                    <i class="fa-solid fa-pen-to-square"></i> Edit
-                                </button>
-                                <a href="cms.php?tab=bookings&action=delete_booking&id=<?= $row['id'] ?>" class="btn-danger-cms" onclick="return confirm('Hapus data booking #<?= $row['id'] ?> atas nama <?= addslashes(htmlspecialchars($row['name'] ?? '')) ?>?')">
-                                    <i class="fa-solid fa-trash"></i>
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                    <?php endwhile; ?>
-                    </tbody>
-                </table>
-                </div>
-                <?php else: ?>
-                <div class="empty-cms">
-                    <i class="fa-solid fa-calendar-check"></i>
-                    <p>Belum ada data booking.</p>
-                </div>
-                <?php endif; ?>
-            </div>
-        </div>
-
-        <!-- Modal: Edit Booking -->
-        <div class="cms-modal-overlay" id="modalBooking">
-            <div class="cms-modal" style="max-width:640px;">
-                <div class="cms-modal-header">
-                    <h4><i class="fa-solid fa-calendar-check"></i> Edit Data Booking</h4>
-                    <button class="cms-modal-close" onclick="closeModal('modalBooking')">&times;</button>
-                </div>
-                <form method="POST" action="cms.php?action=save_booking">
-                    <input type="hidden" name="booking_id" id="bookingEditId" value="0">
-                    <div class="cms-modal-body">
-                        <div class="grid-2">
-                            <div class="form-group">
-                                <label><i class="fa-solid fa-user" style="margin-right:4px;"></i>Nama Pelanggan</label>
-                                <input type="text" name="bk_name" id="bkName" required placeholder="Nama lengkap">
-                            </div>
-                            <div class="form-group">
-                                <label><i class="fa-brands fa-whatsapp" style="margin-right:4px;"></i>WhatsApp</label>
-                                <input type="text" name="bk_phone" id="bkPhone" placeholder="08xxxxxxxxxx">
-                            </div>
-                            <div class="form-group">
-                                <label><i class="fa-solid fa-envelope" style="margin-right:4px;"></i>Email</label>
-                                <input type="text" name="bk_email" id="bkEmail" placeholder="email@contoh.com">
-                            </div>
-                            <div class="form-group">
-                                <label><i class="fa-solid fa-spa" style="margin-right:4px;"></i>Layanan</label>
-                                <input type="text" name="bk_service" id="bkService" placeholder="Nama layanan">
-                            </div>
-                            <div class="form-group">
-                                <label><i class="fa-solid fa-calendar" style="margin-right:4px;"></i>Tanggal</label>
-                                <input type="date" name="bk_date" id="bkDate">
-                            </div>
-                            <div class="form-group">
-                                <label><i class="fa-solid fa-clock" style="margin-right:4px;"></i>Jam</label>
-                                <select name="bk_time" id="bkTime">
-                                    <?php foreach (['09:00','10:00','11:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00'] as $j): ?>
-                                    <option value="<?= $j ?>"><?= $j ?> WIB</option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label><i class="fa-solid fa-users" style="margin-right:4px;"></i>Jumlah Orang</label>
-                                <select name="bk_jumlah" id="bkJumlah">
-                                    <?php for ($i=1;$i<=10;$i++): ?>
-                                    <option value="<?= $i ?>"><?= $i ?> Orang</option>
-                                    <?php endfor; ?>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fa-solid fa-sticky-note" style="margin-right:4px;"></i>Catatan</label>
-                            <textarea name="bk_catatan" id="bkCatatan" rows="3" placeholder="Catatan tambahan..."></textarea>
-                        </div>
-                        <div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:10px;padding:10px 14px;font-size:12px;color:#b91c1c;display:flex;align-items:center;gap:8px;">
-                            <i class="fa-solid fa-triangle-exclamation"></i>
-                            Perubahan data booking akan langsung tersimpan dan terlihat di website.
-                        </div>
-                    </div>
-                    <div class="cms-modal-footer">
-                        <button type="button" class="btn-edit-cms" onclick="closeModal('modalBooking')">Batal</button>
-                        <button type="submit" class="btn-primary-cms"><i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-<?php /* ════════ TAB: ORDERS ════════ */ ?>
-<?php elseif ($activeTab === 'orders'): ?>
-
-        <div class="cms-card">
-            <div class="cms-card-header">
-                <i class="fa-solid fa-bag-shopping"></i>
-                <h3>Data Order Produk Terbaru</h3>
-                <div class="ms-auto" style="display:flex;align-items:center;gap:10px;">
-                    <span style="font-size:12px;color:var(--text-lt);">50 data terbaru</span>
-                    <span style="font-size:11px;color:var(--text-lt);background:rgba(139,111,94,.08);padding:4px 10px;border-radius:8px;">
-                        <i class="fa-solid fa-circle-info" style="margin-right:4px;"></i>Klik Edit untuk ubah data order
-                    </span>
-                </div>
-            </div>
-            <div class="cms-card-body" style="padding:0;">
-                <?php if ($ordersRows && mysqli_num_rows($ordersRows) > 0): ?>
-                <div style="overflow-x:auto;">
-                <table class="cms-table">
-                    <thead>
-                        <tr>
-                            <th>#ID</th>
-                            <th>Nama</th>
-                            <th>WhatsApp</th>
-                            <th>Produk</th>
-                            <th>Harga</th>
-                            <th>Qty</th>
-                            <th>Total</th>
-                            <th>Alamat</th>
-                            <th>Catatan</th>
-                            <th>Tanggal</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    <?php while ($row = mysqli_fetch_assoc($ordersRows)): ?>
-                    <tr>
-                        <td><strong>#<?= $row['id'] ?></strong></td>
-                        <td><?= htmlspecialchars($row['nama'] ?? '') ?></td>
-                        <td>
-                            <a href="https://wa.me/<?= preg_replace('/[^0-9]/','',$row['whatsapp'] ?? '') ?>" target="_blank"
-                               style="color:#25d366;text-decoration:none;font-weight:600;font-size:12px;">
-                                <i class="fa-brands fa-whatsapp"></i> <?= htmlspecialchars($row['whatsapp'] ?? '') ?>
-                            </a>
-                        </td>
-                        <td><strong><?= htmlspecialchars($row['product_name'] ?? '') ?></strong></td>
-                        <td style="color:var(--primary);font-weight:600;"><?= htmlspecialchars($row['product_price'] ?? '') ?></td>
-                        <td style="text-align:center;"><?= htmlspecialchars($row['qty'] ?? 1) ?></td>
-                        <td style="color:var(--primary);font-weight:700;"><?= htmlspecialchars($row['total'] ?? '') ?></td>
-                        <td style="font-size:12px;max-width:130px;"><?= htmlspecialchars($row['alamat'] ?? '') ?></td>
-                        <td style="font-size:12px;color:var(--text-mid);"><?= htmlspecialchars($row['catatan'] ?? '-') ?></td>
-                        <td style="font-size:11px;color:var(--text-lt);"><?= date('d/m/Y H:i', strtotime($row['created_at'] ?? 'now')) ?></td>
-                        <td>
-                            <div class="actions-cell">
-                                <button class="btn-edit-cms" onclick='openEditOrder(<?= json_encode($row) ?>)'>
-                                    <i class="fa-solid fa-pen-to-square"></i> Edit
-                                </button>
-                                <a href="cms.php?tab=orders&action=delete_order&id=<?= $row['id'] ?>" class="btn-danger-cms" onclick="return confirm('Hapus data order #<?= $row['id'] ?>?')">
-                                    <i class="fa-solid fa-trash"></i>
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                    <?php endwhile; ?>
-                    </tbody>
-                </table>
-                </div>
-                <?php else: ?>
-                <div class="empty-cms">
-                    <i class="fa-solid fa-bag-shopping"></i>
-                    <p>Belum ada data order produk.</p>
-                </div>
-                <?php endif; ?>
-            </div>
-        </div>
-
-        <!-- Modal: Edit Order -->
-        <div class="cms-modal-overlay" id="modalOrder">
-            <div class="cms-modal" style="max-width:640px;">
-                <div class="cms-modal-header">
-                    <h4><i class="fa-solid fa-bag-shopping"></i> Edit Data Order</h4>
-                    <button class="cms-modal-close" onclick="closeModal('modalOrder')">&times;</button>
-                </div>
-                <form method="POST" action="cms.php?action=save_order">
-                    <input type="hidden" name="order_id" id="orderEditId" value="0">
-                    <div class="cms-modal-body">
-                        <div class="grid-2">
-                            <div class="form-group">
-                                <label><i class="fa-solid fa-user" style="margin-right:4px;"></i>Nama Pelanggan</label>
-                                <input type="text" name="or_nama" id="orNama" required placeholder="Nama lengkap">
-                            </div>
-                            <div class="form-group">
-                                <label><i class="fa-brands fa-whatsapp" style="margin-right:4px;"></i>WhatsApp</label>
-                                <input type="text" name="or_wa" id="orWa" placeholder="08xxxxxxxxxx">
-                            </div>
-                            <div class="form-group">
-                                <label><i class="fa-solid fa-box" style="margin-right:4px;"></i>Nama Produk</label>
-                                <input type="text" name="or_product" id="orProduct" placeholder="Nama produk">
-                            </div>
-                            <div class="form-group">
-                                <label><i class="fa-solid fa-tag" style="margin-right:4px;"></i>Harga Satuan</label>
-                                <input type="text" name="or_price" id="orPrice" placeholder="Rp 0">
-                            </div>
-                            <div class="form-group">
-                                <label><i class="fa-solid fa-hashtag" style="margin-right:4px;"></i>Qty</label>
-                                <input type="number" name="or_qty" id="orQty" min="1" value="1">
-                            </div>
-                            <div class="form-group">
-                                <label><i class="fa-solid fa-money-bill" style="margin-right:4px;"></i>Total</label>
-                                <input type="text" name="or_total" id="orTotal" placeholder="Rp 0">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fa-solid fa-map-pin" style="margin-right:4px;"></i>Alamat Pengiriman</label>
-                            <textarea name="or_alamat" id="orAlamat" rows="2" placeholder="Alamat lengkap..."></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fa-solid fa-sticky-note" style="margin-right:4px;"></i>Catatan</label>
-                            <textarea name="or_catatan" id="orCatatan" rows="2" placeholder="Catatan tambahan..."></textarea>
-                        </div>
-                        <div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:10px;padding:10px 14px;font-size:12px;color:#b91c1c;display:flex;align-items:center;gap:8px;">
-                            <i class="fa-solid fa-triangle-exclamation"></i>
-                            Perubahan data order akan langsung tersimpan ke database.
-                        </div>
-                    </div>
-                    <div class="cms-modal-footer">
-                        <button type="button" class="btn-edit-cms" onclick="closeModal('modalOrder')">Batal</button>
-                        <button type="submit" class="btn-primary-cms"><i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
 <?php /* ════════ TAB: NAVBAR ════════ */ ?>
 <?php elseif ($activeTab === 'navbar'): ?>
 
@@ -2319,6 +2121,35 @@ input[type=file]{display:none;}
 
                     <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
 
+                    <!-- Quick Links -->
+                    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:14px;">
+                        <i class="fa-solid fa-link" style="margin-right:5px;color:var(--primary);"></i>Quick Links (Navigasi Footer)
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-house" style="margin-right:4px;"></i>Link Home</label>
+                            <input type="text" name="link_home" value="<?= htmlspecialchars($footer_data['link_home']) ?>" placeholder="#home">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-scissors" style="margin-right:4px;"></i>Link Services</label>
+                            <input type="text" name="link_services" value="<?= htmlspecialchars($footer_data['link_services']) ?>" placeholder="#services">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-box-open" style="margin-right:4px;"></i>Link Product</label>
+                            <input type="text" name="link_product" value="<?= htmlspecialchars($footer_data['link_product']) ?>" placeholder="#product">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-circle-info" style="margin-right:4px;"></i>Link About</label>
+                            <input type="text" name="link_about" value="<?= htmlspecialchars($footer_data['link_about']) ?>" placeholder="#about">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-calendar-check" style="margin-right:4px;"></i>Link Booking</label>
+                            <input type="text" name="link_booking" value="<?= htmlspecialchars($footer_data['link_booking']) ?>" placeholder="booking.php">
+                        </div>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
+
                     <!-- Kontak Footer -->
                     <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:14px;">
                         <i class="fa-solid fa-address-book" style="margin-right:5px;color:var(--primary);"></i>Info Kontak (Contact Us)
@@ -2347,32 +2178,73 @@ input[type=file]{display:none;}
                         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-lt);margin-bottom:12px;">
                             <i class="fa-solid fa-eye" style="margin-right:5px;"></i>Preview Footer
                         </div>
-                        <div style="background:#150d10;border-radius:10px;padding:20px 24px;">
-                            <div style="display:flex;flex-wrap:wrap;gap:24px;justify-content:space-around;">
-                                <!-- Brand col -->
-                                <div style="text-align:center;min-width:160px;">
-                                    <div style="color:#D6C1A3;font-family:'Playfair Display',serif;font-weight:700;font-size:15px;margin-bottom:6px;"><?= htmlspecialchars($footer_data['brand_name']) ?></div>
-                                    <div style="color:#4a3040;font-size:11px;margin-bottom:10px;"><?= htmlspecialchars($footer_data['brand_desc']) ?></div>
+                        <!-- footer-top -->
+                        <div style="background:#150d10;border-radius:10px 10px 0 0;padding:28px 24px 20px;">
+                            <div style="display:flex;flex-wrap:wrap;gap:28px;justify-content:space-around;align-items:flex-start;">
+
+                                <!-- Brand col (center aligned like real footer) -->
+                                <div style="text-align:center;min-width:160px;flex:1;">
+                                    <div style="color:#D6C1A3;font-family:'Playfair Display',serif;font-weight:700;font-size:16px;letter-spacing:.5px;margin-bottom:8px;"><?= htmlspecialchars($footer_data['brand_name']) ?></div>
+                                    <p style="color:#a08090;font-size:11.5px;line-height:1.6;margin-bottom:12px;"><?= htmlspecialchars($footer_data['brand_desc']) ?></p>
                                     <div style="display:flex;gap:8px;justify-content:center;">
-                                        <span style="background:rgba(214,193,163,.12);color:#D6C1A3;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;"><i class="fa-brands fa-instagram"></i></span>
-                                        <span style="background:rgba(214,193,163,.12);color:#D6C1A3;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;"><i class="fa-brands fa-tiktok"></i></span>
-                                        <span style="background:rgba(214,193,163,.12);color:#D6C1A3;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;"><i class="fa-brands fa-whatsapp"></i></span>
+                                        <a href="<?= htmlspecialchars($footer_data['instagram_url']) ?>" target="_blank" rel="noopener"
+                                           style="background:rgba(214,193,163,.12);color:#D6C1A3;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;text-decoration:none;transition:.2s;">
+                                            <i class="fa-brands fa-instagram"></i>
+                                        </a>
+                                        <a href="<?= htmlspecialchars($footer_data['tiktok_url']) ?>" target="_blank" rel="noopener"
+                                           style="background:rgba(214,193,163,.12);color:#D6C1A3;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;text-decoration:none;transition:.2s;">
+                                            <i class="fa-brands fa-tiktok"></i>
+                                        </a>
+                                        <a href="<?= htmlspecialchars($footer_data['whatsapp_url']) ?>" target="_blank" rel="noopener"
+                                           style="background:rgba(214,193,163,.12);color:#D6C1A3;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;text-decoration:none;transition:.2s;">
+                                            <i class="fa-brands fa-whatsapp"></i>
+                                        </a>
                                     </div>
                                 </div>
-                                <!-- Contact col -->
-                                <div style="min-width:180px;">
-                                    <div style="color:#D6C1A3;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Contact Us</div>
-                                    <div style="color:#4a3040;font-size:11px;line-height:1.9;">
-                                        <div><i class="fa-solid fa-map-marker-alt" style="margin-right:5px;color:#8B6F5E;"></i><?= htmlspecialchars($footer_data['address']) ?></div>
-                                        <div><i class="fa-solid fa-phone-alt" style="margin-right:5px;color:#8B6F5E;"></i><?= htmlspecialchars($footer_data['phone']) ?></div>
-                                        <div><i class="fa-solid fa-envelope" style="margin-right:5px;color:#8B6F5E;"></i><?= htmlspecialchars($footer_data['email']) ?></div>
-                                        <div><i class="fa-solid fa-clock" style="margin-right:5px;color:#8B6F5E;"></i><?= htmlspecialchars($footer_data['hours']) ?></div>
-                                    </div>
+
+                                <!-- Quick Links col (center aligned, with chevron like real footer) -->
+                                <div style="text-align:center;min-width:140px;flex:1;">
+                                    <h6 style="color:#D6C1A3;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;font-family:'Poppins',sans-serif;">Quick Links</h6>
+                                    <ul style="list-style:none;padding:0;margin:0;display:inline-block;text-align:left;">
+                                        <li style="margin-bottom:5px;"><a href="<?= htmlspecialchars($footer_data['link_home']) ?>" style="color:#a08090;font-size:12px;text-decoration:none;"><i class="fas fa-chevron-right" style="font-size:9px;margin-right:5px;color:#8B6F5E;"></i>Home</a></li>
+                                        <li style="margin-bottom:5px;"><a href="<?= htmlspecialchars($footer_data['link_services']) ?>" style="color:#a08090;font-size:12px;text-decoration:none;"><i class="fas fa-chevron-right" style="font-size:9px;margin-right:5px;color:#8B6F5E;"></i>Services</a></li>
+                                        <li style="margin-bottom:5px;"><a href="<?= htmlspecialchars($footer_data['link_product']) ?>" style="color:#a08090;font-size:12px;text-decoration:none;"><i class="fas fa-chevron-right" style="font-size:9px;margin-right:5px;color:#8B6F5E;"></i>Products</a></li>
+                                        <li style="margin-bottom:5px;"><a href="<?= htmlspecialchars($footer_data['link_about']) ?>" style="color:#a08090;font-size:12px;text-decoration:none;"><i class="fas fa-chevron-right" style="font-size:9px;margin-right:5px;color:#8B6F5E;"></i>About</a></li>
+                                        <li style="margin-bottom:5px;"><a href="<?= htmlspecialchars($footer_data['link_booking']) ?>" style="color:#a08090;font-size:12px;text-decoration:none;"><i class="fas fa-chevron-right" style="font-size:9px;margin-right:5px;color:#8B6F5E;"></i>Booking</a></li>
+                                    </ul>
                                 </div>
+
+                                <!-- Contact Us col (center aligned like real footer) -->
+                                <div style="text-align:center;min-width:180px;flex:1;">
+                                    <h6 style="color:#D6C1A3;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;font-family:'Poppins',sans-serif;">Contact Us</h6>
+                                    <ul style="list-style:none;padding:0;margin:0;text-align:left;display:inline-block;">
+                                        <li style="display:flex;gap:8px;align-items:flex-start;margin-bottom:7px;color:#a08090;font-size:11.5px;">
+                                            <i class="fas fa-map-marker-alt" style="color:#8B6F5E;margin-top:2px;flex-shrink:0;"></i>
+                                            <span><?= htmlspecialchars($footer_data['address']) ?></span>
+                                        </li>
+                                        <li style="display:flex;gap:8px;align-items:center;margin-bottom:7px;color:#a08090;font-size:11.5px;">
+                                            <i class="fas fa-phone-alt" style="color:#8B6F5E;flex-shrink:0;"></i>
+                                            <span><?= htmlspecialchars($footer_data['phone']) ?></span>
+                                        </li>
+                                        <li style="display:flex;gap:8px;align-items:center;margin-bottom:7px;color:#a08090;font-size:11.5px;">
+                                            <i class="fas fa-envelope" style="color:#8B6F5E;flex-shrink:0;"></i>
+                                            <span><?= htmlspecialchars($footer_data['email']) ?></span>
+                                        </li>
+                                        <li style="display:flex;gap:8px;align-items:center;margin-bottom:0;color:#a08090;font-size:11.5px;">
+                                            <i class="fas fa-clock" style="color:#8B6F5E;flex-shrink:0;"></i>
+                                            <span><?= htmlspecialchars($footer_data['hours']) ?></span>
+                                        </li>
+                                    </ul>
+                                </div>
+
                             </div>
-                            <div style="border-top:1px solid rgba(255,255,255,.05);margin-top:16px;padding-top:12px;text-align:center;color:#3a2535;font-size:10px;">
+                        </div>
+                        <!-- footer-bottom -->
+                        <div style="background:#0e0810;border-radius:0 0 10px 10px;padding:12px 24px;text-align:center;">
+                            <p style="color:#5a4050;font-size:11px;margin:0;">
                                 &copy; <?= date('Y') ?> <?= htmlspecialchars($footer_data['copyright_text']) ?>
-                            </div>
+
+                            </p>
                         </div>
                     </div>
 
@@ -2545,9 +2417,9 @@ input[type=file]{display:none;}
 </div><!-- /.main-wrap -->
 
 <script>
-/* ━━ Sidebar Mobile ━━ */
-function openSidebar()  { document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebarOverlay').classList.add('open'); document.body.style.overflow='hidden'; }
-function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('open'); document.body.style.overflow=''; }
+/* ━━ Mobile Drawer ━━ */
+function openDrawer()  { document.getElementById('mobileDrawer').classList.add('open'); document.getElementById('drawerOverlay').classList.add('open'); document.body.style.overflow='hidden'; }
+function closeDrawer() { document.getElementById('mobileDrawer').classList.remove('open'); document.getElementById('drawerOverlay').classList.remove('open'); document.body.style.overflow=''; }
 
 /* ━━ Modal ━━ */
 function openModal(id)  { document.getElementById(id).classList.add('open'); document.body.style.overflow='hidden'; }
@@ -2611,33 +2483,6 @@ function openEditProduct(row) {
     if (row.image) { prev.src = row.image; prev.style.display='block'; }
     openModal('modalProduct');
 }
-
-function openEditBooking(row) {
-    document.getElementById('bookingEditId').value = row.id;
-    document.getElementById('bkName').value    = row.name    || '';
-    document.getElementById('bkPhone').value   = row.phone   || '';
-    document.getElementById('bkEmail').value   = row.email   || '';
-    document.getElementById('bkService').value = row.service || '';
-    document.getElementById('bkDate').value    = row.date    || '';
-    document.getElementById('bkTime').value    = row.time    || '';
-    document.getElementById('bkJumlah').value  = row.jumlah_orang || 1;
-    document.getElementById('bkCatatan').value = row.catatan || '';
-    openModal('modalBooking');
-}
-
-function openEditOrder(row) {
-    document.getElementById('orderEditId').value = row.id;
-    document.getElementById('orNama').value    = row.nama          || '';
-    document.getElementById('orWa').value      = row.whatsapp      || '';
-    document.getElementById('orProduct').value = row.product_name  || '';
-    document.getElementById('orPrice').value   = row.product_price || '';
-    document.getElementById('orQty').value     = row.qty           || 1;
-    document.getElementById('orTotal').value   = row.total         || '';
-    document.getElementById('orAlamat').value  = row.alamat        || '';
-    document.getElementById('orCatatan').value = row.catatan       || '';
-    openModal('modalOrder');
-}
-
 
 function openEditTesti(row) {
     document.getElementById('testiModalTitle').textContent = 'Edit Testimoni';

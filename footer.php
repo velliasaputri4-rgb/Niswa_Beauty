@@ -104,7 +104,7 @@ if (!isset($footer_data)) {
     </div>
     <div class="footer-bottom">
         <div class="container text-center">
-            <p>&copy; <?= date('Y') ?> <?= htmlspecialchars($footer_data['copyright_text']) ?> &nbsp;·&nbsp; Crafted with <i class="fas fa-heart text-pink"></i> for beauty lovers</p>
+            <p>&copy; <?= date('Y') ?> <?= htmlspecialchars($footer_data['copyright_text']) ?></p>
         </div>
     </div>
 </footer>

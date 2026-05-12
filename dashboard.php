@@ -52,8 +52,25 @@ $ordersResult = mysqli_query($conn, "SELECT * FROM orders ORDER BY created_at DE
 $totalOrders  = ($ordersResult) ? mysqli_num_rows($ordersResult) : 0;
 if ($ordersResult) mysqli_data_seek($ordersResult, 0);
 
-// Mapping product_name → image path
-$productImages = [
+// Mapping product_name+price → image path (dari cms_products, fallback hardcoded)
+// Format key: "nama||harga" agar produk dengan nama sama tapi harga beda dibedakan
+$productImageMap = []; // key: "nama||harga" => path
+$productImageByName = []; // key: "nama" => path (fallback jika harga tidak cocok)
+
+$_pr = mysqli_query($conn, "SELECT name, price, image FROM cms_products WHERE image != '' ORDER BY id");
+if ($_pr) {
+    while ($_row = mysqli_fetch_assoc($_pr)) {
+        $key = $_row['name'] . '||' . $_row['price'];
+        $productImageMap[$key] = $_row['image'];
+        // Simpan juga per nama (ambil yang pertama sebagai fallback)
+        if (!isset($productImageByName[$_row['name']])) {
+            $productImageByName[$_row['name']] = $_row['image'];
+        }
+    }
+}
+
+// Fallback hardcoded jika cms_products kosong
+$_fallbackImages = [
     'Cat Eye Nails'           => 'image/nail1,22k.jpeg',
     'Cat Eye Nails Pink'      => 'image/WhatsApp Image 2026-05-07 at 10.10.41.jpeg',
     'Cat Eye Coquette Nails'  => 'image/cateyeqouket.jpeg',
@@ -65,6 +82,24 @@ $productImages = [
     'Bling bling Nails'       => 'image/WhatsApp Image 2026-05-07 at 10.10.14.jpeg',
     'Elegant Nails'           => 'image/WhatsApp Image 2026-05-06 at 10.21.24.jpeg',
 ];
+
+// Fungsi bantu: ambil gambar produk berdasarkan nama + harga
+function getProductImage($name, $price, $productImageMap, $productImageByName, $fallback) {
+    $key = $name . '||' . $price;
+    if (isset($productImageMap[$key]))   return $productImageMap[$key];
+    if (isset($productImageByName[$name])) return $productImageByName[$name];
+    if (isset($fallback[$name]))          return $fallback[$name];
+    return null;
+}
+
+// Tetap sediakan $productImages untuk kompatibilitas (dipakai di beberapa tempat)
+$productImages = $productImageByName + $_fallbackImages;
+
+// Auto-add kolom product_image jika belum ada
+$_cek_col = mysqli_query($conn, "SHOW COLUMNS FROM orders LIKE 'product_image'");
+if ($_cek_col && mysqli_num_rows($_cek_col) === 0) {
+    mysqli_query($conn, "ALTER TABLE orders ADD COLUMN product_image VARCHAR(255) DEFAULT NULL");
+}
 
 // Handle delete order
 if (isset($_GET['delete_order']) && is_numeric($_GET['delete_order'])) {
@@ -99,8 +134,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_order_id'])) {
     $qty   = (int)$_POST['edit_qty'];
     $total = mysqli_real_escape_string($conn, trim($_POST['edit_total']));
     $cat   = mysqli_real_escape_string($conn, trim($_POST['edit_catatan']));
+
+    // Handle upload gambar produk
+    $uploadedImg = null;
+    if (!empty($_FILES['edit_product_image']['name']) && $_FILES['edit_product_image']['error'] === UPLOAD_ERR_OK) {
+        $ext   = strtolower(pathinfo($_FILES['edit_product_image']['name'], PATHINFO_EXTENSION));
+        $allowed = ['jpg','jpeg','png','webp','gif'];
+        if (in_array($ext, $allowed)) {
+            $uploadDir = 'image/';
+            if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+            $newName = 'order_prod_' . $id . '_' . time() . '.' . $ext;
+            $dest    = $uploadDir . $newName;
+            if (move_uploaded_file($_FILES['edit_product_image']['tmp_name'], $dest)) {
+                $uploadedImg = mysqli_real_escape_string($conn, $dest);
+            }
+        }
+    }
+
     if ($id > 0) {
-        mysqli_query($conn, "UPDATE orders SET nama='$nama', whatsapp='$wa', alamat='$alamat', product_name='$pname', product_price='$price', qty=$qty, total='$total', catatan='$cat' WHERE id=$id");
+        if ($uploadedImg) {
+            mysqli_query($conn, "UPDATE orders SET nama='$nama', whatsapp='$wa', alamat='$alamat', product_name='$pname', product_price='$price', qty=$qty, total='$total', catatan='$cat', product_image='$uploadedImg' WHERE id=$id");
+        } else {
+            mysqli_query($conn, "UPDATE orders SET nama='$nama', whatsapp='$wa', alamat='$alamat', product_name='$pname', product_price='$price', qty=$qty, total='$total', catatan='$cat' WHERE id=$id");
+        }
         header('Location: dashboard.php?msg=order_updated');
     } else {
         mysqli_query($conn, "INSERT INTO orders (nama,whatsapp,alamat,product_name,product_price,qty,total,catatan) VALUES ('$nama','$wa','$alamat','$pname','$price',$qty,'$total','$cat')");
@@ -315,12 +371,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_order_id'])) {
             background: white; border-radius: 16px;
             padding: 22px 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.05);
             position: relative; overflow: hidden;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+            cursor: default;
+        }
+        .stat-card:hover {
+            transform: translateY(-6px) scale(1.03);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.13);
+            background: linear-gradient(135deg, #fff9f4, #fff);
+        }
+        .stat-card:hover .big-icon {
+            opacity: 0.15;
+            transform: translateY(-50%) scale(1.15);
+        }
+        .stat-card:hover .num {
+            letter-spacing: 1px;
         }
         .stat-card .big-icon {
             position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
             font-size: 48px; opacity: 0.07;
+            transition: opacity 0.25s ease, transform 0.25s ease;
         }
-        .stat-card .num { font-size: 32px; font-weight: 700; line-height: 1; }
+        .stat-card .num { font-size: 32px; font-weight: 700; line-height: 1; transition: letter-spacing 0.25s ease; }
         .stat-card .lbl { font-size: 13px; color: var(--text-mid); margin-top: 6px; }
 
         /* TABLE WRAPPER */
@@ -536,8 +607,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_order_id'])) {
             <h2><i class="fas fa-th-large me-2" style="color:var(--gold);"></i>Dashboard</h2>
             <p>Selamat datang, <strong><?= htmlspecialchars($_SESSION['user']) ?></strong> — <?= date('d F Y') ?></p>
         </div>
-        <a href="booking.php" class="btn-new"><i class="fas fa-plus"></i> Booking Baru</a>
-        <a href="#" class="btn-new" style="background:linear-gradient(135deg,#059669,#047857);" onclick="openNewOrderModal();return false;"><i class="fas fa-shopping-cart"></i> Pesanan Baru</a>
+
     </div>
 
     <?php if (isset($_GET['msg']) && $_GET['msg'] === 'deleted'): ?>
@@ -702,7 +772,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_order_id'])) {
                     </div>
                 </td>
                 <td><?= htmlspecialchars($row['whatsapp']) ?></td>
-                <?php $pname=$row['product_name']; $pimg=$productImages[$pname]??null; ?>
+                <?php $pname=$row['product_name']; $pimg=(!empty($row['product_image'])) ? $row['product_image'] : getProductImage($pname,$row['product_price'],$productImageMap,$productImageByName,$_fallbackImages); ?>
                 <td>
                     <?php if($pimg): ?>
                     <span class="badge-svc" style="cursor:pointer;border-bottom:1px dashed #8B6F5E;" onclick="showProdPreview('<?= addslashes(htmlspecialchars($pname)) ?>','<?= addslashes($pimg) ?>','<?= addslashes(htmlspecialchars($row['product_price'])) ?>')">
@@ -720,7 +790,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_order_id'])) {
                 <td style="font-size:12px;color:var(--text-light);white-space:nowrap;"><?= date('d M Y H:i', strtotime($row['created_at'])) ?></td>
                 <td>
                     <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                    <a href="#" onclick="openEditOrder(<?= $row['id'] ?>,'<?= addslashes(htmlspecialchars($row['nama'])) ?>','<?= addslashes(htmlspecialchars($row['whatsapp'])) ?>','<?= addslashes(htmlspecialchars($row['alamat'])) ?>','<?= addslashes(htmlspecialchars($row['product_name'])) ?>','<?= addslashes(htmlspecialchars($row['product_price'])) ?>',<?= (int)$row['qty'] ?>,'<?= addslashes(htmlspecialchars($row['total'])) ?>','<?= addslashes(htmlspecialchars($row['catatan'])) ?>');return false;"
+                    <a href="#" onclick="openEditOrder(<?= $row['id'] ?>,'<?= addslashes(htmlspecialchars($row['nama'])) ?>','<?= addslashes(htmlspecialchars($row['whatsapp'])) ?>','<?= addslashes(htmlspecialchars($row['alamat'])) ?>','<?= addslashes(htmlspecialchars($row['product_name'])) ?>','<?= addslashes(htmlspecialchars($row['product_price'])) ?>',<?= (int)$row['qty'] ?>,'<?= addslashes(htmlspecialchars($row['total'])) ?>','<?= addslashes(htmlspecialchars($row['catatan'])) ?>','<?= addslashes($pimg ?? '') ?>');return false;"
                        class="btn-edit">
                         <i class="fas fa-pen me-1"></i>Edit
                     </a>
@@ -740,7 +810,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_order_id'])) {
         <!-- MOBILE CARD VIEW: ORDERS -->
         <div class="mobile-cards">
         <?php $no=1; mysqli_data_seek($ordersResult,0); while ($row = mysqli_fetch_assoc($ordersResult)): ?>
-        <?php $pname=$row['product_name']; $pimg=$productImages[$pname]??null; ?>
+        <?php $pname=$row['product_name']; $pimg=(!empty($row['product_image'])) ? $row['product_image'] : getProductImage($pname,$row['product_price'],$productImageMap,$productImageByName,$_fallbackImages); ?>
         <div class="m-card">
             <div class="m-card-header">
                 <div class="avatar-cell"><?= strtoupper(substr($row['nama'],0,1)) ?></div>
@@ -767,7 +837,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_order_id'])) {
                 <div class="m-card-row"><span class="lbl">Tanggal</span><span class="val" style="font-size:12px;color:var(--text-light);"><?= date('d M Y H:i', strtotime($row['created_at'])) ?></span></div>
             </div>
             <div class="m-card-footer">
-                <a href="#" onclick="openEditOrder(<?= $row['id'] ?>,'<?= addslashes(htmlspecialchars($row['nama'])) ?>','<?= addslashes(htmlspecialchars($row['whatsapp'])) ?>','<?= addslashes(htmlspecialchars($row['alamat'])) ?>','<?= addslashes(htmlspecialchars($row['product_name'])) ?>','<?= addslashes(htmlspecialchars($row['product_price'])) ?>',<?= (int)$row['qty'] ?>,'<?= addslashes(htmlspecialchars($row['total'])) ?>','<?= addslashes(htmlspecialchars($row['catatan'])) ?>');return false;" class="btn-edit">
+                <a href="#" onclick="openEditOrder(<?= $row['id'] ?>,'<?= addslashes(htmlspecialchars($row['nama'])) ?>','<?= addslashes(htmlspecialchars($row['whatsapp'])) ?>','<?= addslashes(htmlspecialchars($row['alamat'])) ?>','<?= addslashes(htmlspecialchars($row['product_name'])) ?>','<?= addslashes(htmlspecialchars($row['product_price'])) ?>',<?= (int)$row['qty'] ?>,'<?= addslashes(htmlspecialchars($row['total'])) ?>','<?= addslashes(htmlspecialchars($row['catatan'])) ?>','<?= addslashes($pimg ?? '') ?>');return false;" class="btn-edit">
                     <i class="fas fa-pen me-1"></i>Edit
                 </a>
                 <a href="dashboard.php?delete_order=<?= $row['id'] ?>" onclick="return confirm('Hapus data pembelian ini?')" class="btn-del">
@@ -895,7 +965,7 @@ if (searchOrders) {
       <h6><i class="fas fa-pen me-2" style="color:var(--gold);"></i>Edit Pesanan</h6>
       <button class="modal-close" onclick="closeEditOrder()">&times;</button>
     </div>
-    <form method="POST" action="dashboard.php">
+    <form method="POST" action="dashboard.php" enctype="multipart/form-data">
       <div class="modal-body">
         <input type="hidden" name="edit_order_id" id="eo_id">
         <div class="row g-2">
@@ -907,6 +977,35 @@ if (searchOrders) {
           </div>
           <div class="col-12">
             <div class="form-group"><label>Alamat</label><textarea name="edit_alamat" id="eo_alamat"></textarea></div>
+          </div>
+          <div class="col-12">
+            <div class="form-group">
+              <label>Foto Produk</label>
+              <!-- Preview gambar saat ini / baru -->
+              <div id="eo_product_preview" style="display:none;margin-bottom:8px;position:relative;">
+                <img id="eo_product_img" src="" alt=""
+                  style="width:100%;max-height:180px;object-fit:cover;border-radius:12px;border:1.5px solid #e8e0d8;display:block;">
+                <span id="eo_img_badge" style="display:none;position:absolute;top:8px;left:8px;background:#059669;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:0.5px;">BARU</span>
+              </div>
+              <div id="eo_no_img" style="display:none;padding:12px;background:#faf7f2;border-radius:12px;border:1.5px dashed #e0d8ce;text-align:center;font-size:12px;color:var(--text-light);margin-bottom:8px;">
+                <i class="fas fa-image" style="font-size:24px;display:block;margin-bottom:4px;opacity:0.4;"></i>
+                Tidak ada foto untuk produk ini
+              </div>
+              <!-- Tombol upload -->
+              <label for="eo_upload_input" style="
+                  display:inline-flex;align-items:center;gap:6px;cursor:pointer;
+                  background:#f5efe8;color:#8B6F5E;border:1.5px dashed #d4b896;
+                  border-radius:10px;padding:8px 16px;font-size:12px;font-weight:600;
+                  transition:0.2s;width:100%;justify-content:center;">
+                <i class="fas fa-upload"></i> Ganti Foto Produk
+              </label>
+              <input type="file" id="eo_upload_input" name="edit_product_image"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                style="display:none;">
+              <p id="eo_upload_hint" style="font-size:11px;color:var(--text-light);margin-top:5px;margin-bottom:0;text-align:center;">
+                Format: JPG, PNG, WEBP · Maks 5MB · Kosongkan jika tidak ingin ganti foto
+              </p>
+            </div>
           </div>
           <div class="col-12">
             <div class="form-group"><label>Nama Produk</label><input type="text" name="edit_product_name" id="eo_product_name"></div>
@@ -933,51 +1032,6 @@ if (searchOrders) {
   </div>
 </div>
 
-<!-- NEW ORDER MODAL -->
-<div class="modal-overlay" id="newOrderModal">
-  <div class="modal-box">
-    <div class="modal-header">
-      <h6><i class="fas fa-shopping-cart me-2" style="color:#059669;"></i>Tambah Pesanan Baru</h6>
-      <button class="modal-close" onclick="closeNewOrderModal()">&times;</button>
-    </div>
-    <form method="POST" action="dashboard.php">
-      <div class="modal-body">
-        <input type="hidden" name="edit_order_id" value="0">
-        <?php /* reuse edit order handler but with id=0 we insert instead */ ?>
-        <div class="row g-2">
-          <div class="col-6">
-            <div class="form-group"><label>Nama</label><input type="text" name="edit_nama" required></div>
-          </div>
-          <div class="col-6">
-            <div class="form-group"><label>WhatsApp</label><input type="text" name="edit_whatsapp"></div>
-          </div>
-          <div class="col-12">
-            <div class="form-group"><label>Alamat</label><textarea name="edit_alamat"></textarea></div>
-          </div>
-          <div class="col-12">
-            <div class="form-group"><label>Nama Produk</label><input type="text" name="edit_product_name"></div>
-          </div>
-          <div class="col-6">
-            <div class="form-group"><label>Harga</label><input type="text" name="edit_product_price"></div>
-          </div>
-          <div class="col-3">
-            <div class="form-group"><label>Qty</label><input type="number" min="1" value="1" name="edit_qty"></div>
-          </div>
-          <div class="col-3">
-            <div class="form-group"><label>Total</label><input type="text" name="edit_total"></div>
-          </div>
-          <div class="col-12">
-            <div class="form-group"><label>Catatan</label><textarea name="edit_catatan"></textarea></div>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn-cancel" onclick="closeNewOrderModal()">Batal</button>
-        <button type="submit" class="btn-save"><i class="fas fa-plus me-1"></i>Tambah</button>
-      </div>
-    </form>
-  </div>
-</div>
 
 <script>
 // Edit Booking
@@ -998,7 +1052,7 @@ function closeEditBooking() {
 }
 
 // Edit Order
-function openEditOrder(id, nama, wa, alamat, pname, price, qty, total, catatan) {
+function openEditOrder(id, nama, wa, alamat, pname, price, qty, total, catatan, pimg) {
     document.getElementById('eo_id').value = id;
     document.getElementById('eo_nama').value = nama;
     document.getElementById('eo_whatsapp').value = wa;
@@ -1008,26 +1062,54 @@ function openEditOrder(id, nama, wa, alamat, pname, price, qty, total, catatan) 
     document.getElementById('eo_qty').value = qty;
     document.getElementById('eo_total').value = total;
     document.getElementById('eo_catatan').value = catatan;
+    // Reset input file
+    document.getElementById('eo_upload_input').value = '';
+    document.getElementById('eo_img_badge').style.display = 'none';
+    // Tampilkan gambar produk
+    const preview = document.getElementById('eo_product_preview');
+    const noImg   = document.getElementById('eo_no_img');
+    const img     = document.getElementById('eo_product_img');
+    if (pimg) {
+        img.src = pimg;
+        preview.style.display = 'block';
+        noImg.style.display   = 'none';
+    } else {
+        preview.style.display = 'none';
+        noImg.style.display   = 'block';
+    }
     document.getElementById('editOrderModal').classList.add('open');
     document.body.style.overflow = 'hidden';
 }
+
+// Preview live saat pilih file upload
+document.getElementById('eo_upload_input').addEventListener('change', function() {
+    if (!this.files || !this.files[0]) return;
+    const file = this.files[0];
+    if (file.size > 5 * 1024 * 1024) {
+        alert('Ukuran file terlalu besar. Maksimal 5MB.');
+        this.value = '';
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img     = document.getElementById('eo_product_img');
+        const preview = document.getElementById('eo_product_preview');
+        const noImg   = document.getElementById('eo_no_img');
+        const badge   = document.getElementById('eo_img_badge');
+        img.src = e.target.result;
+        preview.style.display = 'block';
+        noImg.style.display   = 'none';
+        badge.style.display   = 'inline-block';
+    };
+    reader.readAsDataURL(file);
+});
 function closeEditOrder() {
     document.getElementById('editOrderModal').classList.remove('open');
     document.body.style.overflow = '';
 }
 
-// New Order
-function openNewOrderModal() {
-    document.getElementById('newOrderModal').classList.add('open');
-    document.body.style.overflow = 'hidden';
-}
-function closeNewOrderModal() {
-    document.getElementById('newOrderModal').classList.remove('open');
-    document.body.style.overflow = '';
-}
-
 // Close modal on overlay click
-['editBookingModal','editOrderModal','newOrderModal'].forEach(id => {
+['editBookingModal','editOrderModal'].forEach(id => {
     document.getElementById(id).addEventListener('click', function(e) {
         if (e.target === this) {
             this.classList.remove('open');
