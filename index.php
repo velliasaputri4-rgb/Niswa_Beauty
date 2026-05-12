@@ -636,31 +636,146 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
                 <p class="text-muted" data-aos="fade-up" data-aos-delay="250" style="font-size:15px;">Kunjungi kami langsung untuk pengalaman kecantikan terbaik</p>
             </div>
         </div>
-        <div data-aos="fade-up" data-aos-delay="300">
-            <div class="map-wrapper map-fullwidth" style="border-radius:20px;overflow:hidden;box-shadow:0 10px 40px rgba(139,111,94,0.18);border:1px solid #EDE5D8;">
-                <div class="map-info-bar" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:linear-gradient(135deg,#5A4A42,#8B6F5E);padding:18px 28px;">
-                    <div class="map-info-left">
-                        <div class="map-salon-name"><i class="fas fa-map-marker-alt"></i> <?= esc($kontak['salon_name']) ?></div>
-                        <div class="map-salon-addr"><?= esc($kontak['address']) ?></div>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
-                        <div style="color:rgba(255,255,255,0.85);font-size:13px;font-family:'Poppins',sans-serif;">
-                            <i class="fas fa-clock me-1" style="color:#D6C1A3;"></i> <?= esc($kontak['hours']) ?>
+
+        <div class="lokasi-split-wrap" data-aos="fade-up" data-aos-delay="300">
+            <!-- Kiri: Maps -->
+            <div class="lokasi-map-col">
+                <div class="lokasi-map-box">
+                    <iframe
+                        src="<?= esc($kontak['maps_embed']) ?>"
+                        width="100%" height="100%" style="border:0;display:block;" allowfullscreen="" loading="lazy"
+                        referrerpolicy="no-referrer-when-downgrade">
+                    </iframe>
+                </div>
+            </div>
+
+            <!-- Kanan: Info -->
+            <div class="lokasi-info-col">
+                <div class="lokasi-info-box">
+                    <div class="lokasi-brand">
+                        <i class="fas fa-spa lokasi-brand-icon"></i>
+                        <div>
+                            <div class="lokasi-brand-name"><?= esc($kontak['salon_name']) ?></div>
+                            <div class="lokasi-brand-sub">Premium Beauty Experience</div>
                         </div>
-                        <a href="<?= esc($kontak['maps_link']) ?>" target="_blank" class="map-open-btn">
+                    </div>
+
+                    <div class="lokasi-divider"></div>
+
+                    <div class="lokasi-detail-list">
+                        <div class="lokasi-detail-item">
+                            <div class="lokasi-detail-icon"><i class="fas fa-map-marker-alt"></i></div>
+                            <div>
+                                <div class="lokasi-detail-label">Alamat</div>
+                                <div class="lokasi-detail-value"><?= esc($kontak['address']) ?></div>
+                            </div>
+                        </div>
+                        <div class="lokasi-detail-item">
+                            <div class="lokasi-detail-icon"><i class="fas fa-clock"></i></div>
+                            <div>
+                                <div class="lokasi-detail-label">Jam Operasional</div>
+                                <div class="lokasi-detail-value"><?= esc($kontak['hours']) ?></div>
+                            </div>
+                        </div>
+                        <div class="lokasi-detail-item">
+                            <div class="lokasi-detail-icon"><i class="fab fa-whatsapp"></i></div>
+                            <div>
+                                <div class="lokasi-detail-label">WhatsApp</div>
+                                <div class="lokasi-detail-value">+<?= esc($kontak['whatsapp']) ?></div>
+                            </div>
+                        </div>
+                        <div class="lokasi-detail-item">
+                            <div class="lokasi-detail-icon"><i class="fas fa-envelope"></i></div>
+                            <div>
+                                <div class="lokasi-detail-label">Email</div>
+                                <div class="lokasi-detail-value">niswabeauty15@gmail.com</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lokasi-divider"></div>
+
+                    <div class="lokasi-actions">
+                        <a href="<?= esc($kontak['maps_link']) ?>" target="_blank" class="lokasi-btn-primary">
                             <i class="fas fa-directions"></i> Petunjuk Arah
+                        </a>
+                        <a href="https://wa.me/<?= esc($kontak['whatsapp']) ?>" target="_blank" class="lokasi-btn-secondary">
+                            <i class="fab fa-whatsapp"></i> Chat Sekarang
                         </a>
                     </div>
                 </div>
-                <iframe
-                    src="<?= esc($kontak['maps_embed']) ?>"
-                    width="100%" height="420" style="border:0;display:block;" allowfullscreen="" loading="lazy"
-                    referrerpolicy="no-referrer-when-downgrade">
-                </iframe>
             </div>
         </div>
     </div>
 </section>
+
+<style>
+.lokasi-split-wrap {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 16px 56px rgba(139,111,94,0.18);
+    border: 1px solid #EDE5D8;
+    min-height: 460px;
+}
+.lokasi-map-col { position: relative; min-height: 380px; }
+.lokasi-map-box { position: absolute; inset: 0; }
+.lokasi-map-box iframe { width: 100%; height: 100%; }
+
+.lokasi-info-col { background: linear-gradient(160deg,#5A4A42 0%,#8B6F5E 100%); }
+.lokasi-info-box { padding: 40px 36px; height: 100%; display: flex; flex-direction: column; justify-content: center; }
+
+.lokasi-brand { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
+.lokasi-brand-icon { font-size: 32px; color: #D6C1A3; flex-shrink: 0; }
+.lokasi-brand-name { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: #fff; line-height: 1.2; }
+.lokasi-brand-sub { font-size: 12px; color: rgba(255,255,255,0.65); font-family: 'Poppins', sans-serif; letter-spacing: .5px; margin-top: 2px; }
+
+.lokasi-divider { border: none; border-top: 1px solid rgba(255,255,255,0.15); margin: 22px 0; }
+
+.lokasi-detail-list { display: flex; flex-direction: column; gap: 18px; }
+.lokasi-detail-item { display: flex; align-items: flex-start; gap: 14px; }
+.lokasi-detail-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: rgba(255,255,255,0.12);
+    display: flex; align-items: center; justify-content: center;
+    color: #D6C1A3; font-size: 15px; flex-shrink: 0;
+    transition: background .2s;
+}
+.lokasi-detail-item:hover .lokasi-detail-icon { background: rgba(255,255,255,0.22); }
+.lokasi-detail-label { font-size: 10.5px; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: .8px; font-family: 'Poppins', sans-serif; font-weight: 600; margin-bottom: 2px; }
+.lokasi-detail-value { font-size: 13.5px; color: #fff; font-family: 'Poppins', sans-serif; font-weight: 500; line-height: 1.4; }
+
+.lokasi-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.lokasi-btn-primary {
+    flex: 1; min-width: 130px; text-align: center;
+    background: linear-gradient(135deg,#D6C1A3,#c4a882);
+    color: #3a2e28; border: none; border-radius: 50px;
+    padding: 11px 20px; font-size: 13px; font-weight: 700;
+    font-family: 'Poppins', sans-serif; text-decoration: none;
+    transition: all .25s; box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+}
+.lokasi-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.22); color: #3a2e28; }
+.lokasi-btn-secondary {
+    flex: 1; min-width: 130px; text-align: center;
+    background: rgba(255,255,255,0.12); color: #fff;
+    border: 1.5px solid rgba(255,255,255,0.3); border-radius: 50px;
+    padding: 11px 20px; font-size: 13px; font-weight: 600;
+    font-family: 'Poppins', sans-serif; text-decoration: none;
+    transition: all .25s;
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+}
+.lokasi-btn-secondary:hover { background: rgba(255,255,255,0.22); color: #fff; transform: translateY(-2px); }
+
+@media (max-width: 768px) {
+    .lokasi-split-wrap { grid-template-columns: 1fr; }
+    .lokasi-map-col { min-height: 280px; position: relative; }
+    .lokasi-map-box { position: relative; height: 280px; }
+    .lokasi-info-box { padding: 28px 22px; }
+}
+</style>
 
 <!-- ══ SECTION TESTIMONI ══ -->
 <section id="testimoni" class="testimoni-section py-5">
