@@ -779,11 +779,6 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
                     <input type="number" name="qty" min="1" max="10" value="1"
                         style="width:100%;padding:10px 14px;border:1.5px solid #e8e0d8;border-radius:10px;font-size:13px;font-family:Poppins,sans-serif;outline:none;">
                 </div>
-                <div style="margin-bottom:18px;">
-                    <label style="font-size:13px;font-weight:500;margin-bottom:6px;display:block;">Catatan (opsional)</label>
-                    <textarea name="catatan" placeholder="Warna, ukuran, atau permintaan khusus..." rows="2"
-                        style="width:100%;padding:10px 14px;border:1.5px solid #e8e0d8;border-radius:10px;font-size:13px;font-family:Poppins,sans-serif;outline:none;resize:none;"></textarea>
-                </div>
                 <button type="submit"
                     style="width:100%;padding:12px;background:linear-gradient(135deg,#8B6F5E,#D6C1A3);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;font-family:Poppins,sans-serif;cursor:pointer;">
                     <i class="fas fa-shopping-bag me-2"></i>Konfirmasi Pesanan
@@ -798,7 +793,7 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
     <div style="background:#fff;border-radius:20px;width:90%;max-width:360px;padding:32px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
         <i class="fas fa-check-circle" style="font-size:56px;color:#10b981;margin-bottom:16px;display:block;"></i>
         <h5 style="font-weight:700;margin-bottom:8px;">Pesanan Berhasil!</h5>
-        <p style="color:#666;font-size:13px;margin-bottom:20px;">Terima kasih! Tim kami akan menghubungi Anda via WhatsApp segera.</p>
+        <p style="color:#666;font-size:13px;margin-bottom:20px;">Terima kasih!</p>
         <button onclick="document.getElementById('successOrder').style.display='none'"
             style="background:linear-gradient(135deg,#8B6F5E,#D6C1A3);color:#fff;border:none;border-radius:30px;padding:10px 28px;font-weight:600;font-family:Poppins,sans-serif;cursor:pointer;">
             Tutup

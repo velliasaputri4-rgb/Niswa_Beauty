@@ -442,8 +442,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_order_id'])) {
         .btn-del {
             background: #fff0f0; color: #e11d48;
             border: 1px solid #fecdd3; border-radius: 8px;
-            padding: 6px 12px; font-size: 12px; font-weight: 500;
+            padding: 6px 10px; font-size: 13px; font-weight: 500;
             text-decoration: none; transition: 0.2s; white-space: nowrap;
+            display: inline-flex; align-items: center; justify-content: center;
         }
         .btn-del:hover { background: #e11d48; color: white; }
         .empty-state { text-align: center; padding: 60px 20px; color: var(--text-light); }
@@ -465,9 +466,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_order_id'])) {
         .btn-edit {
             background: #eff6ff; color: #2563eb;
             border: 1px solid #bfdbfe; border-radius: 8px;
-            padding: 6px 12px; font-size: 12px; font-weight: 500;
+            padding: 6px 10px; font-size: 13px; font-weight: 500;
             text-decoration: none; transition: 0.2s; white-space: nowrap;
-            display: inline-flex; align-items: center;
+            display: inline-flex; align-items: center; justify-content: center;
         }
         .btn-edit:hover { background: #2563eb; color: white; }
         /* MODAL */
@@ -679,12 +680,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_order_id'])) {
                     <div style="display:flex;gap:6px;flex-wrap:wrap;">
                     <a href="#" onclick="openEditBooking(<?= $row['id'] ?>,'<?= addslashes(htmlspecialchars($row['name'])) ?>','<?= addslashes(htmlspecialchars($row['phone'])) ?>','<?= addslashes(htmlspecialchars($row['email'])) ?>','<?= addslashes(htmlspecialchars($row['service'])) ?>','<?= $row['date'] ?>','<?= substr($row['time'],0,5) ?>');return false;"
                        class="btn-edit">
-                        <i class="fas fa-pen me-1"></i>Edit
+                        <i class="fas fa-pen"></i>
                     </a>
                     <a href="dashboard.php?delete=<?= $row['id'] ?>"
                        onclick="return confirm('Hapus booking ini?')"
                        class="btn-del">
-                        <i class="fas fa-trash-alt me-1"></i>Hapus
+                        <i class="fas fa-trash-alt"></i>
                     </a>
                     </div>
                 </td>
@@ -715,10 +716,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_order_id'])) {
             </div>
             <div class="m-card-footer">
                 <a href="#" onclick="openEditBooking(<?= $row['id'] ?>,'<?= addslashes(htmlspecialchars($row['name'])) ?>','<?= addslashes(htmlspecialchars($row['phone'])) ?>','<?= addslashes(htmlspecialchars($row['email'])) ?>','<?= addslashes(htmlspecialchars($row['service'])) ?>','<?= $row['date'] ?>','<?= substr($row['time'],0,5) ?>');return false;" class="btn-edit">
-                    <i class="fas fa-pen me-1"></i>Edit
+                    <i class="fas fa-pen"></i>
                 </a>
                 <a href="dashboard.php?delete=<?= $row['id'] ?>" onclick="return confirm('Hapus booking ini?')" class="btn-del">
-                    <i class="fas fa-trash-alt me-1"></i>Hapus
+                    <i class="fas fa-trash-alt"></i>
                 </a>
             </div>
         </div>
@@ -792,12 +793,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_order_id'])) {
                     <div style="display:flex;gap:6px;flex-wrap:wrap;">
                     <a href="#" onclick="openEditOrder(<?= $row['id'] ?>,'<?= addslashes(htmlspecialchars($row['nama'])) ?>','<?= addslashes(htmlspecialchars($row['whatsapp'])) ?>','<?= addslashes(htmlspecialchars($row['alamat'])) ?>','<?= addslashes(htmlspecialchars($row['product_name'])) ?>','<?= addslashes(htmlspecialchars($row['product_price'])) ?>',<?= (int)$row['qty'] ?>,'<?= addslashes(htmlspecialchars($row['total'])) ?>','<?= addslashes(htmlspecialchars($row['catatan'])) ?>','<?= addslashes($pimg ?? '') ?>');return false;"
                        class="btn-edit">
-                        <i class="fas fa-pen me-1"></i>Edit
+                        <i class="fas fa-pen"></i>
                     </a>
                     <a href="dashboard.php?delete_order=<?= $row['id'] ?>"
                        onclick="return confirm('Hapus data pembelian ini?')"
                        class="btn-del">
-                        <i class="fas fa-trash-alt me-1"></i>Hapus
+                        <i class="fas fa-trash-alt"></i>
                     </a>
                     </div>
                 </td>
@@ -838,10 +839,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_order_id'])) {
             </div>
             <div class="m-card-footer">
                 <a href="#" onclick="openEditOrder(<?= $row['id'] ?>,'<?= addslashes(htmlspecialchars($row['nama'])) ?>','<?= addslashes(htmlspecialchars($row['whatsapp'])) ?>','<?= addslashes(htmlspecialchars($row['alamat'])) ?>','<?= addslashes(htmlspecialchars($row['product_name'])) ?>','<?= addslashes(htmlspecialchars($row['product_price'])) ?>',<?= (int)$row['qty'] ?>,'<?= addslashes(htmlspecialchars($row['total'])) ?>','<?= addslashes(htmlspecialchars($row['catatan'])) ?>','<?= addslashes($pimg ?? '') ?>');return false;" class="btn-edit">
-                    <i class="fas fa-pen me-1"></i>Edit
+                    <i class="fas fa-pen"></i>
                 </a>
                 <a href="dashboard.php?delete_order=<?= $row['id'] ?>" onclick="return confirm('Hapus data pembelian ini?')" class="btn-del">
-                    <i class="fas fa-trash-alt me-1"></i>Hapus
+                    <i class="fas fa-trash-alt"></i>
                 </a>
             </div>
         </div>

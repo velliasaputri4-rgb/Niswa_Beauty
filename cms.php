@@ -454,7 +454,7 @@ if ($action === 'save_footer') {
 
 /* ── 12. Booking Page Content ── */
 if ($action === 'save_booking_page') {
-    $fields = ['page_title','page_subtitle','form_title','success_message',
+    $fields = ['page_title','page_subtitle','form_title',
                'services_list','time_slots'];
     foreach ($fields as $f) setBookingPage($conn, $f, $_POST[$f] ?? '');
     header('Location: cms.php?tab=booking_page&saved=1'); exit;
@@ -539,10 +539,16 @@ $booking_page = [
     'page_title'      => getBookingPage($conn, 'page_title',      'Reservasi Online'),
     'page_subtitle'   => getBookingPage($conn, 'page_subtitle',   'Isi form di bawah untuk memesan jadwal kecantikan Anda'),
     'form_title'      => getBookingPage($conn, 'form_title',      'Form Booking'),
-    'success_message' => getBookingPage($conn, 'success_message', 'Booking berhasil! Kami akan menghubungi Anda via WhatsApp.'),
-    'services_list'   => getBookingPage($conn, 'services_list',   "Nail Art\nHaircut\nColoring\nFoot SPA\nHenna Series\nPress on Nail\nEye Lash\nHair Treatment"),
+    'services_list'   => getBookingPage($conn, 'services_list',   "Brow Henna\nNail Henna Tangan\nNail Henna Kaki\nBundling Meni-Henna\nHenna Fun\nBundling Manicure & Pedicure\nManicure / Pedicure\nHand Spa\nFoot Spa\nCallus Treatment\nBrow Bomb\nLashlift\nLashlift Tint\nCreambath\nHair Mask\nHair Spa\nCuci,Catok,Blow\nBleaching S\nColoring Full\nBleaching\nBalayage\nDown Peim Poni\nKeriting Klasik\nKeriting Digital\nKeratin Treatment\nSmoothing\nPress On Nail Basic\nPress On Nail Motif\nKids Basic Gel\nKids Gel + 4 Sticker\nKids Gel + Full Sticker\nGel Basic Tangan / Kaki\nExtension\nGel French / Cat Eyes\nRemove Gel\nGel Ombre / Blush On\nRemove Extension\nBundling Nail Art + Extension"),
     'time_slots'      => getBookingPage($conn, 'time_slots',      "09:00\n10:00\n11:00\n12:00\n13:00\n14:00\n15:00\n16:00\n17:00\n18:00\n19:00"),
 ];
+
+// Auto-update services_list jika masih berisi data lama
+$_newServices = "Brow Henna\nNail Henna Tangan\nNail Henna Kaki\nBundling Meni-Henna\nHenna Fun\nBundling Manicure & Pedicure\nManicure / Pedicure\nHand Spa\nFoot Spa\nCallus Treatment\nBrow Bomb\nLashlift\nLashlift Tint\nCreambath\nHair Mask\nHair Spa\nCuci,Catok,Blow\nBleaching S\nColoring Full\nBleaching\nBalayage\nDown Peim Poni\nKeriting Klasik\nKeriting Digital\nKeratin Treatment\nSmoothing\nPress On Nail Basic\nPress On Nail Motif\nKids Basic Gel\nKids Gel + 4 Sticker\nKids Gel + Full Sticker\nGel Basic Tangan / Kaki\nExtension\nGel French / Cat Eyes\nRemove Gel\nGel Ombre / Blush On\nRemove Extension\nBundling Nail Art + Extension";
+$_oldKeywords = ['Nail Art', 'Haircut', 'Eye Lash', 'Hair Treatment', 'Press on Nail'];
+$_isOld = false;
+foreach ($_oldKeywords as $_kw) { if (strpos($booking_page['services_list'], $_kw) !== false) { $_isOld = true; break; } }
+if ($_isOld && $conn) { setBookingPage($conn, 'services_list', $_newServices); $booking_page['services_list'] = $_newServices; }
 
 // Static default price list (displayed when DB is empty, mirroring website)
 $defaultPriceList = [
@@ -624,9 +630,19 @@ body{font-family:'Poppins',sans-serif;background:var(--cream);color:var(--text);
 /* ━━ SIDEBAR ━━ */
 .sidebar{
     width:250px;background:var(--dark);
-    min-height:100vh;position:fixed;left:0;top:0;
-    padding:28px 0 100px;z-index:100;
+    height:100vh;position:fixed;left:0;top:0;
+    padding:28px 0 0;z-index:100;
+    display:flex;flex-direction:column;
+    overflow:hidden;
 }
+.sidebar-nav-wrap{
+    flex:1;overflow-y:auto;overflow-x:hidden;
+    padding-bottom:12px;
+}
+.sidebar-nav-wrap::-webkit-scrollbar{width:4px;}
+.sidebar-nav-wrap::-webkit-scrollbar-track{background:transparent;}
+.sidebar-nav-wrap::-webkit-scrollbar-thumb{background:rgba(214,193,163,.2);border-radius:4px;}
+.sidebar-nav-wrap::-webkit-scrollbar-thumb:hover{background:rgba(214,193,163,.4);}
 .sidebar-brand{
     color:#fff;font-size:18px;font-weight:700;
     padding:0 24px 24px;border-bottom:1px solid #1e0d1a;margin-bottom:16px;
@@ -644,7 +660,7 @@ body{font-family:'Poppins',sans-serif;background:var(--cream);color:var(--text);
 .nav-list a:hover,.nav-list a.active{background:rgba(180,148,110,.12);color:var(--gold);}
 .nav-list a i{width:16px;text-align:center;}
 .sidebar-user{
-    position:fixed;bottom:0;left:0;width:250px;
+    flex-shrink:0;
     padding:14px 18px;border-top:1px solid #1e0d1a;
     display:flex;align-items:center;gap:10px;
     background:var(--dark);
@@ -1089,8 +1105,7 @@ input[type=file]{display:none;}
         <i class="fas fa-spa me-2"></i>NISWÀ BEAUTY
         <small>CMS ADMIN PANEL</small>
     </div>
-    <div class="sidebar-section">Kelola Konten</div>
-    <ul class="nav-list">
+    <ul class="nav-list" style="margin-top:8px;">
         <li><a href="cms.php?tab=hero"         onclick="closeDrawer()"><i class="fa-solid fa-image"></i> Hero & Slider</a></li>
         <li><a href="cms.php?tab=services"     onclick="closeDrawer()"><i class="fa-solid fa-scissors"></i> Layanan</a></li>
         <li><a href="cms.php?tab=prices"       onclick="closeDrawer()"><i class="fa-solid fa-tag"></i> Daftar Harga</a></li>
@@ -1101,17 +1116,6 @@ input[type=file]{display:none;}
         <li><a href="cms.php?tab=navbar"       onclick="closeDrawer()"><i class="fa-solid fa-bars"></i> Navbar</a></li>
         <li><a href="cms.php?tab=footer"       onclick="closeDrawer()"><i class="fa-solid fa-grip-lines"></i> Footer</a></li>
         <li><a href="cms.php?tab=booking_page" onclick="closeDrawer()"><i class="fa-solid fa-calendar-alt"></i> Halaman Booking</a></li>
-    </ul>
-    <div class="sidebar-section">Sistem</div>
-    <ul class="nav-list">
-        <li><a href="dashboard.php"><i class="fa-solid fa-gauge-high"></i> Dashboard</a></li>
-        <li><a href="index.php" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> Lihat Website</a></li>
-        <li>
-            <form method="GET" action="cms.php" style="margin:0;" onsubmit="return confirm('Yakin ingin logout?')">
-                <input type="hidden" name="logout" value="1">
-                <button type="submit" style="background:none;border:none;cursor:pointer;color:#e11d48;font-size:14px;display:flex;align-items:center;gap:10px;padding:11px 14px;width:100%;border-radius:10px;font-family:'Poppins',sans-serif;"><i class="fa-solid fa-right-from-bracket" style="width:16px;text-align:center;"></i> Logout</button>
-            </form>
-        </li>
     </ul>
     <div class="mobile-drawer-user">
         <div class="av"><?= strtoupper(substr($_SESSION['user'], 0, 1)) ?></div>
@@ -1128,8 +1132,8 @@ input[type=file]{display:none;}
         <i class="fas fa-spa me-2"></i>NISWÀ BEAUTY
         <small>CMS ADMIN PANEL</small>
     </div>
-    <div class="sidebar-section">Kelola Konten</div>
-    <ul class="nav-list">
+    <div class="sidebar-nav-wrap">
+    <ul class="nav-list" style="margin-top:8px;">
         <li><a href="cms.php?tab=hero"         class="<?= $activeTab==='hero'         ? 'active':'' ?>"><i class="fa-solid fa-image"></i> Hero & Slider</a></li>
         <li><a href="cms.php?tab=services"     class="<?= $activeTab==='services'     ? 'active':'' ?>"><i class="fa-solid fa-scissors"></i> Layanan</a></li>
         <li><a href="cms.php?tab=prices"       class="<?= $activeTab==='prices'       ? 'active':'' ?>"><i class="fa-solid fa-tag"></i> Daftar Harga</a></li>
@@ -1141,17 +1145,7 @@ input[type=file]{display:none;}
         <li><a href="cms.php?tab=footer"       class="<?= $activeTab==='footer'       ? 'active':'' ?>"><i class="fa-solid fa-grip-lines"></i> Footer</a></li>
         <li><a href="cms.php?tab=booking_page" class="<?= $activeTab==='booking_page' ? 'active':'' ?>"><i class="fa-solid fa-calendar-alt"></i> Halaman Booking</a></li>
     </ul>
-    <div class="sidebar-section">Sistem</div>
-    <ul class="nav-list">
-        <li><a href="dashboard.php"><i class="fa-solid fa-gauge-high"></i> Dashboard</a></li>
-        <li><a href="index.php" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> Lihat Website</a></li>
-        <li>
-            <form method="GET" action="cms.php" style="margin:0;" onsubmit="return confirm('Yakin ingin logout?')">
-                <input type="hidden" name="logout" value="1">
-                <button type="submit" style="background:none;border:none;cursor:pointer;color:#e11d48;font-size:14px;display:flex;align-items:center;gap:10px;padding:11px 14px;width:100%;border-radius:10px;font-family:'Poppins',sans-serif;"><i class="fa-solid fa-right-from-bracket" style="width:16px;text-align:center;"></i> Logout</button>
-            </form>
-        </li>
-    </ul>
+    </div><!-- /.sidebar-nav-wrap -->
     <div class="sidebar-user">
         <div class="av"><?= strtoupper(substr($_SESSION['user'], 0, 1)) ?></div>
         <div>
@@ -1315,7 +1309,7 @@ input[type=file]{display:none;}
             <div class="cms-card-header">
                 <i class="fa-solid fa-scissors"></i>
                 <h3>Daftar Layanan</h3>
-                <div class="ms-auto" style="display:flex;gap:8px;">
+                <div class="ms-auto" style="display:flex;gap:8px;align-items:center;">
                     <div style="font-size:11.5px;color:var(--text-lt);display:flex;align-items:center;gap:5px;">
                         <i class="fa-solid fa-circle-info"></i> Layanan tampil di section "Layanan Kami"
                     </div>
@@ -1324,10 +1318,18 @@ input[type=file]{display:none;}
                     </button>
                 </div>
             </div>
+            <!-- Search Services -->
+            <div style="padding:12px 16px;border-bottom:1px solid var(--border);background:var(--cream);">
+                <div style="position:relative;max-width:320px;">
+                    <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-lt);font-size:13px;"></i>
+                    <input type="text" id="searchServices" placeholder="Cari layanan..." oninput="filterTable('searchServices','servicesTable')"
+                        style="width:100%;padding:7px 10px 7px 32px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;color:var(--text-dk);background:#fff;outline:none;">
+                </div>
+            </div>
             <div class="cms-card-body" style="padding:0;">
                 <?php if ($servicesRows && mysqli_num_rows($servicesRows) > 0): ?>
                 <div style="overflow-x:auto;">
-                <table class="cms-table">
+                <table class="cms-table" id="servicesTable">
                     <thead>
                         <tr>
                             <th>#</th>
@@ -1451,11 +1453,19 @@ input[type=file]{display:none;}
                             </button>
                         </div>
                     </div>
+                    <!-- Search Prices -->
+                    <div style="padding:12px 16px;border-bottom:1px solid var(--border);background:var(--cream);">
+                        <div style="position:relative;">
+                            <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-lt);font-size:13px;"></i>
+                            <input type="text" id="searchPrices" placeholder="Cari kategori / nama layanan / harga..." oninput="filterTable('searchPrices','pricesTable')"
+                                style="width:100%;padding:7px 10px 7px 32px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;color:var(--text-dk);background:#fff;outline:none;box-sizing:border-box;">
+                        </div>
+                    </div>
                     <div class="cms-card-body" style="padding:0;">
                         <?php if ($pricesRows && mysqli_num_rows($pricesRows) > 0):
                               mysqli_data_seek($pricesRows, 0); ?>
                         <div style="overflow-x:auto;">
-                        <table class="cms-table">
+                        <table class="cms-table" id="pricesTable">
                             <thead>
                                 <tr>
                                     <th>Kategori</th>
@@ -1582,10 +1592,25 @@ input[type=file]{display:none;}
                     </button>
                 </div>
             </div>
+            <!-- Search + Filter Products -->
+            <div style="padding:12px 16px;border-bottom:1px solid var(--border);background:var(--cream);display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                <div style="position:relative;flex:1;min-width:180px;">
+                    <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-lt);font-size:13px;"></i>
+                    <input type="text" id="searchProducts" placeholder="Cari nama produk / harga..." oninput="filterProducts()"
+                        style="width:100%;padding:7px 10px 7px 32px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;color:var(--text-dk);background:#fff;outline:none;box-sizing:border-box;">
+                </div>
+                <select id="filterProductCat" onchange="filterProducts()"
+                    style="padding:7px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;color:var(--text-dk);background:#fff;outline:none;cursor:pointer;">
+                    <option value="">Semua Kategori</option>
+                    <option value="simple">Simple</option>
+                    <option value="glam">Glam</option>
+                    <option value="wedding">Wedding</option>
+                </select>
+            </div>
             <div class="cms-card-body" style="padding:0;">
                 <?php if ($productsRows && mysqli_num_rows($productsRows) > 0): ?>
                 <div style="overflow-x:auto;">
-                <table class="cms-table">
+                <table class="cms-table" id="productsTable">
                     <thead>
                         <tr>
                             <th>#</th>
@@ -1598,7 +1623,7 @@ input[type=file]{display:none;}
                     </thead>
                     <tbody>
                     <?php $no=1; while ($row = mysqli_fetch_assoc($productsRows)): ?>
-                    <tr>
+                    <tr data-cat="<?= htmlspecialchars($row['category']) ?>">
                         <td><?= $no++ ?></td>
                         <td><?php if($row['image']): ?><img src="<?= htmlspecialchars($row['image']) ?>" class="img-preview"><?php else: ?><span style="color:var(--text-lt);">—</span><?php endif; ?></td>
                         <td><strong><?= htmlspecialchars($row['name']) ?></strong></td>
@@ -2329,25 +2354,13 @@ input[type=file]{display:none;}
 
                         <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
 
-                        <!-- Pesan Sukses -->
-                        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:14px;">
-                            <i class="fa-solid fa-check-circle" style="margin-right:5px;color:var(--primary);"></i>Pesan Konfirmasi
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fa-solid fa-check-circle" style="margin-right:4px;"></i>Pesan Sukses Booking</label>
-                            <textarea name="success_message" rows="2" placeholder="Booking berhasil! Kami akan menghubungi Anda via WhatsApp."><?= htmlspecialchars($booking_page['success_message']) ?></textarea>
-                            <small style="font-size:11px;color:var(--text-lt);margin-top:4px;display:block;">Muncul di modal popup setelah pelanggan berhasil booking.</small>
-                        </div>
-
-                        <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
-
                         <!-- Daftar Layanan -->
                         <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:14px;">
                             <i class="fa-solid fa-list-check" style="margin-right:5px;color:var(--primary);"></i>Opsi Dropdown Form
                         </div>
                         <div class="form-group">
                             <label><i class="fa-solid fa-spa" style="margin-right:4px;"></i>Daftar Layanan (dropdown pilihan layanan)</label>
-                            <textarea name="services_list" rows="10" placeholder="Nail Art&#10;Haircut&#10;Coloring&#10;..."><?= htmlspecialchars($booking_page['services_list']) ?></textarea>
+                            <textarea name="services_list" rows="10" placeholder="Brow Henna&#10;Nail Henna Tangan&#10;Foot Spa&#10;..."><?= htmlspecialchars($booking_page['services_list']) ?></textarea>
                             <small style="font-size:11px;color:var(--text-lt);margin-top:4px;display:block;"><i class="fa-solid fa-circle-info" style="margin-right:3px;"></i>Satu layanan per baris. Akan tampil sebagai opsi di dropdown pilih layanan pada form booking.</small>
                         </div>
                         <div class="form-group">
@@ -2405,12 +2418,6 @@ input[type=file]{display:none;}
                                     <?php endforeach; ?>
                                 </select>
                             </div>
-                            <!-- Pesan sukses preview -->
-                            <div style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.25);border-radius:10px;padding:10px 14px;font-size:12px;color:#065f46;display:flex;align-items:flex-start;gap:8px;">
-                                <i class="fa-solid fa-check-circle" style="margin-top:2px;color:#10b981;"></i>
-                                <span><?= htmlspecialchars($booking_page['success_message']) ?></span>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -2589,6 +2596,54 @@ function selectSwatch(el) {
     var first = document.querySelector('.swatch');
     if (first) first.classList.add('selected');
 })();
+
+/* ━━ Search / Filter Tables ━━ */
+function filterTable(inputId, tableId) {
+    var query = document.getElementById(inputId).value.toLowerCase().trim();
+    var rows   = document.querySelectorAll('#' + tableId + ' tbody tr');
+    var found  = 0;
+    rows.forEach(function(row) {
+        var text = row.textContent.toLowerCase();
+        var show = query === '' || text.indexOf(query) !== -1;
+        row.style.display = show ? '' : 'none';
+        if (show) found++;
+    });
+    // Show/hide "no result" row
+    var noRow = document.getElementById(tableId + '_noResult');
+    if (!noRow) {
+        noRow = document.createElement('tr');
+        noRow.id = tableId + '_noResult';
+        noRow.innerHTML = '<td colspan="10" style="text-align:center;padding:20px;color:var(--text-lt);font-size:13px;"><i class="fa-solid fa-search" style="margin-right:6px;"></i>Tidak ada hasil yang cocok</td>';
+        var tbody = document.querySelector('#' + tableId + ' tbody');
+        if (tbody) tbody.appendChild(noRow);
+    }
+    noRow.style.display = (found === 0 && query !== '') ? '' : 'none';
+}
+
+function filterProducts() {
+    var query = (document.getElementById('searchProducts').value || '').toLowerCase().trim();
+    var cat   = (document.getElementById('filterProductCat').value || '').toLowerCase();
+    var rows  = document.querySelectorAll('#productsTable tbody tr');
+    var found = 0;
+    rows.forEach(function(row) {
+        var text    = row.textContent.toLowerCase();
+        var rowCat  = (row.getAttribute('data-cat') || '').toLowerCase();
+        var matchQ  = query === '' || text.indexOf(query) !== -1;
+        var matchC  = cat === '' || rowCat === cat;
+        var show    = matchQ && matchC;
+        row.style.display = show ? '' : 'none';
+        if (show) found++;
+    });
+    var noRow = document.getElementById('productsTable_noResult');
+    if (!noRow) {
+        noRow = document.createElement('tr');
+        noRow.id = 'productsTable_noResult';
+        noRow.innerHTML = '<td colspan="10" style="text-align:center;padding:20px;color:var(--text-lt);font-size:13px;"><i class="fa-solid fa-search" style="margin-right:6px;"></i>Tidak ada produk yang cocok</td>';
+        var tbody = document.querySelector('#productsTable tbody');
+        if (tbody) tbody.appendChild(noRow);
+    }
+    noRow.style.display = (found === 0 && (query !== '' || cat !== '')) ? '' : 'none';
+}
 </script>
 
 </body>

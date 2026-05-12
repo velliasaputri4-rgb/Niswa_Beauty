@@ -312,12 +312,6 @@ $pageTitle = "Booking Appointment — NISWÀ BEAUTY";
                                 </select>
                             </div>
 
-                            <!-- Catatan -->
-                            <div class="col-12">
-                                <label class="form-label"><i class="fas fa-sticky-note me-2 text-pink"></i>Catatan Tambahan</label>
-                                <textarea class="form-control" name="catatan" rows="3"
-                                          placeholder="Alergi, preferensi khusus, dll"><?= htmlspecialchars($_POST['catatan'] ?? '') ?></textarea>
-                            </div>
 
                             <!-- Submit -->
                             <div class="col-12">
@@ -372,7 +366,6 @@ $pageTitle = "Booking Appointment — NISWÀ BEAUTY";
                     <i class="fas fa-check-circle" style="font-size:48px;color:#10b981;"></i>
                 </div>
                 <h5 class="mb-1">Booking Berhasil!</h5>
-                <p class="text-success mb-2" style="font-size:13px;">Terima kasih! Tim kami akan menghubungi via WhatsApp dalam 30 menit.</p>
                 <div class="mb-3">
                     <strong style="font-size:13px;">Detail Booking:</strong><br>
                     <small class="text-muted">
@@ -380,9 +373,6 @@ $pageTitle = "Booking Appointment — NISWÀ BEAUTY";
                         Tanggal: <span id="modalDate"></span> | Jam: <span id="modalTime"></span>
                     </small>
                 </div>
-                <a href="https://wa.me/628971440805" target="_blank" class="btn btn-success btn-sm me-1">
-                    <i class="fab fa-whatsapp me-1"></i>Chat Konfirmasi
-                </a>
                 <button class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
             </div>
         </div>
