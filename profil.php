@@ -90,6 +90,18 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
             border-radius: 50px;
             font-family: 'Poppins', sans-serif;
             margin-bottom: 14px;
+            transition: box-shadow 0.3s, transform 0.3s;
+        }
+        .pp-section-label:hover {
+            box-shadow: 0 4px 16px rgba(139,111,94,0.18);
+            transform: translateY(-2px);
+        }
+        .pp-section-label i,
+        .owner-crown-label i {
+            transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        .pp-section-label:hover i {
+            transform: scale(1.3) rotate(-10deg);
         }
 
         /* ══ OWNER SECTION — Simple ══ */
@@ -117,6 +129,34 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
             background: linear-gradient(135deg, #D6C1A3, #8B6F5E);
             padding: 3px;
             flex-shrink: 0;
+            cursor: pointer;
+            transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1),
+                        box-shadow 0.4s ease,
+                        background 0.4s ease;
+            position: relative;
+        }
+        .owner-avatar-ring::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            background: conic-gradient(#D6C1A3, #8B6F5E, #C4A882, #D6C1A3);
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+        .owner-avatar-ring:hover {
+            transform: scale(1.12) rotate(5deg);
+            box-shadow: 0 10px 32px rgba(139,111,94,0.35);
+            background: linear-gradient(135deg, #8B6F5E, #D6C1A3);
+        }
+        .owner-avatar-ring:hover::before {
+            opacity: 1;
+            animation: spin-ring 2s linear infinite;
+        }
+        @keyframes spin-ring {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
         }
         .owner-avatar-inner {
             width: 100%; height: 100%; border-radius: 50%;
@@ -124,6 +164,12 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
             display: flex; align-items: center; justify-content: center;
             font-family: 'Playfair Display', serif;
             font-size: 30px; color: #D6C1A3; font-weight: 700;
+            transition: background 0.4s ease, color 0.4s ease, font-size 0.35s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        .owner-avatar-ring:hover .owner-avatar-inner {
+            background: #3a2c24;
+            color: #fff;
+            font-size: 34px;
         }
 
         /* Identitas tengah */
@@ -180,9 +226,9 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
             transform: translateY(-4px);
             box-shadow: 0 8px 24px rgba(139,111,94,0.13);
         }
-        .owner-stat-item:hover .owner-stat-icon { color: #8B6F5E; }
+        .owner-stat-item:hover .owner-stat-icon { color: #8B6F5E; transform: scale(1.3) rotate(-8deg); }
         .owner-stat-item:hover .owner-stat-num { color: #2d1f17; }
-        .owner-stat-icon { font-size: 16px; color: #C4A882; }
+        .owner-stat-icon { font-size: 16px; color: #C4A882; transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), color 0.3s; }
         .owner-stat-num {
             font-family: 'Playfair Display', serif;
             font-size: 24px; font-weight: 700;
@@ -393,10 +439,11 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
             font-size: 14px;
             width: 18px;
             text-align: center;
-            transition: transform 0.3s;
+            transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), color 0.3s;
         }
         .store-value-item:hover i {
-            transform: scale(1.2);
+            transform: scale(1.35) rotate(-10deg);
+            color: #5A4A42;
         }
 
         /* ── Tech Section ── */
@@ -474,8 +521,23 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
             transition: all 0.3s;
         }
         .tech-icon-item:hover .icon-circle {
-            background: rgba(255,255,255,0.22);
-            transform: translateY(-4px);
+            background: rgba(255,255,255,0.28);
+            border-color: rgba(255,255,255,0.5);
+            transform: translateY(-6px) scale(1.08);
+            box-shadow: 0 12px 28px rgba(0,0,0,0.25);
+        }
+        .tech-icon-item .icon-circle i {
+            transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        .tech-icon-item:hover .icon-circle i {
+            transform: scale(1.25) rotate(-8deg);
+        }
+        .tech-icon-item span {
+            transition: color 0.3s, letter-spacing 0.3s;
+        }
+        .tech-icon-item:hover span {
+            color: #fff;
+            letter-spacing: 0.5px;
         }
 
         /* ── Back Button ── */
