@@ -561,12 +561,11 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
             <p>Press On Nails premium untuk tampil cantik instan <i class="fa-solid fa-sparkles" style="color:#D6C1A3;font-size:0.9em;"></i></p>
         </div>
 
-        <!-- Filter Buttons (dinamis dari kategori produk) -->
+        <!-- Filter Buttons -->
         <div class="filter-buttons" data-aos="fade-up" data-aos-delay="100">
-            <button class="active" data-filter="all">Semua</button>
-            <?php foreach ($categories as $cat): ?>
-            <button data-filter="<?= esc($cat) ?>"><?= esc(ucfirst($cat)) ?></button>
-            <?php endforeach; ?>
+            <button class="active" data-filter="simple">Simple</button>
+            <button data-filter="glam">Glam</button>
+            <button data-filter="wedding">Wedding</button>
         </div>
 
         <div class="product-grid" data-aos="fade-up" data-aos-delay="150">
@@ -824,18 +823,25 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
 
 <!-- Product Filter -->
 <script>
-document.querySelectorAll(".filter-buttons button").forEach(btn=>{
-    btn.addEventListener("click",()=>{
-        document.querySelectorAll(".filter-buttons button").forEach(b=>b.classList.remove("active"));
-        btn.classList.add("active");
-        const filter=btn.dataset.filter;
-        document.querySelectorAll(".product-card").forEach(card=>{
-            const show=filter==="all"||card.dataset.category===filter;
-            card.style.display=show?"":"none";
-            if(show)card.style.animation="cardFadeIn 0.3s ease forwards";
+(function(){
+    // Terapkan filter awal: tampilkan hanya "simple" saat load
+    document.querySelectorAll(".product-card").forEach(function(card){
+        card.style.display = card.dataset.category === "simple" ? "" : "none";
+    });
+
+    document.querySelectorAll(".filter-buttons button").forEach(function(btn){
+        btn.addEventListener("click", function(){
+            document.querySelectorAll(".filter-buttons button").forEach(function(b){ b.classList.remove("active"); });
+            btn.classList.add("active");
+            var filter = btn.dataset.filter;
+            document.querySelectorAll(".product-card").forEach(function(card){
+                var show = card.dataset.category === filter;
+                card.style.display = show ? "" : "none";
+                if(show) card.style.animation = "cardFadeIn 0.3s ease forwards";
+            });
         });
     });
-});
+})();
 </script>
 <style>
 @keyframes cardFadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
