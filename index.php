@@ -133,7 +133,11 @@ $pricesRows = $conn ? mysqli_fetch_all(mysqli_query($conn, "SELECT * FROM cms_pr
 $priceList = [];
 if (!empty($pricesRows)) {
     foreach ($pricesRows as $pr) {
-        $priceList[$pr['category']][] = ['name'=>$pr['name'], 'price'=>$pr['price']];
+        $priceList[$pr['category']][] = [
+            'name'  => $pr['name'],
+            'price' => $pr['price'],
+            'desc'  => $pr['description'] ?? '',
+        ];
     }
 } else {
     // Fallback hardcoded
@@ -528,8 +532,15 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
                     <thead><tr><th>Layanan</th><th class="text-end">Harga</th></tr></thead>
                     <tbody>
                         <?php foreach ($items as $row): ?>
-                        <tr>
-                            <td><?= esc($row['name']) ?></td>
+                        <tr class="price-row-clickable" 
+                            data-name="<?= htmlspecialchars($row['name'], ENT_QUOTES) ?>"
+                            data-price="<?= htmlspecialchars($row['price'], ENT_QUOTES) ?>"
+                            data-desc="<?= htmlspecialchars($row['desc'] ?? '', ENT_QUOTES) ?>"
+                            data-cat="<?= htmlspecialchars($cat, ENT_QUOTES) ?>">
+                            <td>
+                                <?= esc($row['name']) ?>
+                                <span class="price-row-hint"><i class="fa-solid fa-circle-info"></i></span>
+                            </td>
                             <td class="text-end price-cell"><?= esc($row['price']) ?></td>
                         </tr>
                         <?php endforeach; ?>
@@ -545,6 +556,183 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
         </div>
     </div>
 </section>
+
+<!-- ══ MODAL DESKRIPSI HARGA ══ -->
+<div id="priceModal" class="price-modal-overlay" onclick="closePriceModal(event)">
+    <div class="price-modal-box">
+        <button class="price-modal-close" onclick="closePriceModal(null)"><i class="fa-solid fa-xmark"></i></button>
+        <div class="price-modal-cat" id="pmCat"></div>
+        <div class="price-modal-name" id="pmName"></div>
+        <div class="price-modal-price" id="pmPrice"></div>
+        <div class="price-modal-divider"></div>
+        <div class="price-modal-desc" id="pmDesc"></div>
+        <a id="pmWa" href="#" target="_blank" class="price-modal-wa" style="display:none !important;"></a>
+    </div>
+</div>
+
+<style>
+/* ── Clickable rows ── */
+.price-row-clickable { cursor: pointer; }
+.price-row-clickable:hover { background: #fdf0e8 !important; }
+.price-row-clickable:hover td:first-child { color: #8B6F5E; font-weight: 600; }
+.price-row-hint {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: #f0e4d8; color: #c4a080; font-size: 9px;
+    margin-left: 6px; opacity: 0; transition: opacity .2s;
+    vertical-align: middle;
+}
+.price-row-clickable:hover .price-row-hint { opacity: 1; }
+
+/* ── Modal overlay ── */
+.price-modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 9999;
+    background: rgba(50,35,30,0.55); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center; padding: 20px;
+}
+.price-modal-overlay.open { display: flex; animation: pmFadeIn .2s ease; }
+@keyframes pmFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ── Modal box ── */
+.price-modal-box {
+    background: #fff; border-radius: 20px; padding: 32px 28px 26px;
+    max-width: 400px; width: 100%; position: relative;
+    box-shadow: 0 24px 64px rgba(50,35,30,0.22);
+    animation: pmSlideUp .25s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes pmSlideUp { from { transform: translateY(20px) scale(.97); opacity:0; } to { transform: none; opacity:1; } }
+
+.price-modal-close {
+    position: absolute; top: 14px; right: 16px;
+    background: #f5ede6; border: none; border-radius: 50%;
+    width: 30px; height: 30px; font-size: 14px; color: #8B6F5E;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background .15s;
+}
+.price-modal-close:hover { background: #e8d8cc; }
+
+.price-modal-cat {
+    display: inline-block; background: #fdf0e8; color: #a07050;
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .7px; border-radius: 50px; padding: 3px 12px;
+    margin-bottom: 12px; font-family: 'Poppins', sans-serif;
+}
+.price-modal-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px; font-weight: 700; color: #3a2a22;
+    line-height: 1.2; margin-bottom: 8px;
+}
+.price-modal-price {
+    font-size: 20px; font-weight: 800; color: #8B6F5E;
+    font-family: 'Poppins', sans-serif; margin-bottom: 4px;
+}
+.price-modal-divider {
+    border: none; border-top: 1px solid #f0e8df;
+    margin: 16px 0;
+}
+.price-modal-desc {
+    font-size: 13.5px; color: #666; line-height: 1.7;
+    font-family: 'Poppins', sans-serif; min-height: 40px;
+    margin-bottom: 20px;
+}
+.price-modal-wa {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; background: linear-gradient(135deg,#25d366,#128c4a);
+    color: #fff; font-weight: 700; font-size: 14px; border-radius: 50px;
+    padding: 12px; text-decoration: none; font-family: 'Poppins', sans-serif;
+    transition: all .2s; box-shadow: 0 4px 16px rgba(37,211,102,0.3);
+}
+.price-modal-wa:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(37,211,102,0.4); color:#fff; }
+</style>
+
+<script>
+// ── Deskripsi otomatis per layanan ──
+var priceDescriptions = {
+    // Henna
+    'Brow Henna': 'Pewarnaan alis dengan henna alami yang tahan lama. Mengisi alis tipis dan memberikan tampilan tegas, natural, dan rapi.',
+    'Nail Henna Tangan': 'Motif henna indah di kuku & tangan menggunakan bahan alami. Cocok untuk acara formal maupun casual.',
+    'Nail Henna Kaki': 'Desain henna elegan di area kuku dan kaki. Bahan aman, cocok untuk semua usia.',
+    'Bundling Meni-Henna': 'Paket hemat manicure lengkap + nail henna. Dua layanan kecantikan dalam satu sesi.',
+    'Henna Fun': 'Henna dekoratif di tangan dengan berbagai motif pilihan. Semakin kompleks motif, semakin artistik hasilnya.',
+    // Treatment Spa
+    'Bundling Manicure & Pedicure': 'Paket lengkap perawatan tangan & kaki: scrub, masker, pemotongan kuku, dan finishing oil.',
+    'Manicure / Pedicure': 'Perawatan kuku dan kulit tangan atau kaki dengan teknik profesional. Kulit lebih lembut, kuku lebih sehat.',
+    'Hand Spa': 'Perawatan intensif tangan: scrub eksfoliasi, masker pelembap, dan pijat relaksasi. Tangan terasa lembut & cerah.',
+    'Foot Spa': 'Terapi kaki lengkap mulai dari perendaman, scrub, masker, hingga pijat refleksi. Cocok setelah hari panjang.',
+    'Callus Treatment': 'Pengangkatan kapalan dan kulit keras di telapak kaki secara profesional. Makin tebal kalus, makin intensif perawatannya.',
+    // Brow & Lash
+    'Brow Bomb': 'Perawatan alis all-in-one: lifting, tinting, dan setting. Alis tampak tebal, tegas, dan terbentuk sempurna tanpa makeup.',
+    'Lashlift': 'Keriting bulu mata permanen tanpa sambungan. Mata terlihat lebih besar dan terbuka secara alami hingga 6–8 minggu.',
+    'Lashlift Tint': 'Lashlift plus pewarnaan bulu mata agar lebih gelap dan dramatis. Tanpa maskara pun sudah memukau.',
+    // Rambut
+    'Creambath': 'Perawatan rambut dengan krim nutrisi, pijat kepala, dan uap hangat. Rambut lebih lebat, lembut, dan berkilau.',
+    'Hair Mask': 'Masker rambut intensif sesuai jenis rambut. Menutrisi dari dalam, mengurangi frizz, dan mengembalikan kilau alami.',
+    'Hair Spa': 'Spa rambut lengkap: shampo, kondisioner, masker, uap, dan pijat. Solusi untuk rambut rusak & kering.',
+    'Cuci,Catok,Blow': 'Cuci rambut + blow dry atau catok sesuai selera. Rambut bersih, rapi, dan siap tampil.',
+    'Bleaching S': 'Bleaching parsial (highlight/poni) untuk mencerahkan area tertentu. Cocok untuk warna pastel atau ombre.',
+    'Coloring Full': 'Pewarnaan rambut penuh dari akar hingga ujung. Pilihan warna beragam, hasil merata dan tahan lama.',
+    'Bleaching': 'Bleaching full atau intensif untuk mengangkat pigmen rambut. Harga tergantung panjang dan ketebalan rambut.',
+    'Balayage': 'Teknik pewarnaan gradasi tangan bebas yang menghasilkan tampilan natural sun-kissed. Setiap hasil unik dan personal.',
+    'Down Peim Poni': 'Pelurus poni dengan teknik perm down. Poni turun rapi tahan lama tanpa perlu di-styling setiap hari.',
+    'Keriting Klasik': 'Keriting permanen dengan batang spiral klasik. Cocok untuk tampilan volume dan berkarakter.',
+    'Keriting Digital': 'Keriting digital dengan alat pemanas modern. Hasil lebih bergelombang lembut, tahan lama, dan terlihat natural.',
+    'Keratin Treatment': 'Perawatan keratin untuk melembutkan dan meluruskan rambut secara alami. Mengurangi frizz & mudah diatur.',
+    'Smoothing': 'Pelurusan rambut semi-permanen yang membuat rambut lurus, halus, dan mudah di-styling. Tahan 3–6 bulan.',
+    // Nail Art
+    'Press On Nail Basic': 'Press on nail siap pakai dengan desain simpel dan elegan. Mudah dipasang sendiri, tahan beberapa hari.',
+    'Press On Nail Motif': 'Press on nail dengan motif artistik dan detail lebih kompleks. Cocok untuk event spesial.',
+    'Kids Basic Gel': 'Gel kuku aman khusus anak-anak. Warna solid lembut yang tahan lama dan tidak berbau menyengat.',
+    'Kids Gel + 4 Sticker': 'Gel warna + 4 stiker kuku pilihan anak. Tampilan lucu dan menggemaskan.',
+    'Kids Gel + Full Sticker': 'Gel warna + stiker kuku penuh di semua jari. Seru untuk tampilan spesial si kecil.',
+    'Gel Basic Tangan / Kaki': 'Gel warna solid untuk tangan atau kaki dengan hasil rapi dan tahan lama. Cocok untuk tampilan sehari-hari maupun acara spesial.',
+    'Extension': 'Perpanjangan kuku menggunakan bahan gel berkualitas. Kuku tampak lebih panjang dan elegan secara instan.',
+    'Gel French / Cat Eyes': 'Gel dengan desain French classic atau efek cat eye yang memukau. Hasil bersih, presisi, dan tahan lama.',
+    'Remove Gel': 'Pembersihan gel kuku secara aman tanpa merusak kuku asli. Proses cepat dan nyaman menggunakan teknik profesional.',
+    'Gel Ombre / Blush On': 'Gradasi warna lembut ombre atau efek blush on di kuku. Tampilan feminin, romantis, dan cocok untuk berbagai kesempatan.',
+    'Remove Extension': 'Pelepasan extension kuku secara aman dan menyeluruh. Kuku asli tetap terjaga kesehatannya setelah proses pengangkatan.',
+    'Bundling Nail Art + Extension': 'Paket hemat: extension kuku plus nail art desain pilihan. Dua layanan premium dalam satu sesi yang efisien.',
+};
+
+function getDesc(name, cat) {
+    if (priceDescriptions[name]) return priceDescriptions[name];
+    // Fallback generik berdasarkan kategori
+    var fallbacks = {
+        'Nail Art & Services': 'Layanan nail art profesional dengan bahan berkualitas. Hubungi kami untuk konsultasi desain.',
+        'Treatment Spa': 'Perawatan spa premium menggunakan bahan pilihan. Nikmati relaksasi dan hasil optimal.',
+        'Henna Series': 'Layanan henna menggunakan bahan alami aman. Cocok untuk berbagai kesempatan.',
+        'Brow & Lash': 'Perawatan alis dan bulu mata untuk tampilan lebih percaya diri.',
+        'Rambut': 'Perawatan rambut profesional untuk hasil maksimal sesuai kebutuhan kamu.',
+    };
+    return fallbacks[cat] || 'Hubungi kami untuk informasi lebih lengkap tentang layanan ini.';
+}
+
+document.querySelectorAll('.price-row-clickable').forEach(function(row) {
+    row.addEventListener('click', function() {
+        var name  = this.dataset.name;
+        var price = this.dataset.price;
+        var desc  = this.dataset.desc;
+        var cat   = this.dataset.cat;
+        document.getElementById('pmCat').textContent   = cat;
+        document.getElementById('pmName').textContent  = name;
+        document.getElementById('pmPrice').textContent = price;
+        document.getElementById('pmDesc').textContent  = desc || getDesc(name, cat);
+        var wa = '<?= $kontak["whatsapp"] ?? "62882006900" ?>';
+        var msg = encodeURIComponent('Halo, saya ingin booking layanan *' + name + '* (' + price + '). Apakah tersedia?');
+        document.getElementById('pmWa').href = 'https://wa.me/' + wa + '?text=' + msg;
+        document.getElementById('priceModal').classList.add('open');
+        document.body.style.overflow = 'hidden';
+    });
+});
+
+function closePriceModal(e) {
+    if (e && e.target !== document.getElementById('priceModal')) return;
+    document.getElementById('priceModal').classList.remove('open');
+    document.body.style.overflow = '';
+}
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closePriceModal(null);
+});
+</script>
 
 <style>
 .price-list-section { background: linear-gradient(180deg,#fdfaf7 0%,#f5ede4 100%); padding: 45px 0; }

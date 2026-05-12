@@ -38,8 +38,14 @@ if ($conn) {
         category VARCHAR(120),
         name VARCHAR(200),
         price VARCHAR(60),
+        description TEXT DEFAULT NULL,
         sort_order INT DEFAULT 0
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    // AUTO-ADD kolom description jika tabel lama belum punya
+    $chkDesc = mysqli_query($conn, "SHOW COLUMNS FROM cms_prices LIKE 'description'");
+    if ($chkDesc && mysqli_num_rows($chkDesc) === 0) {
+        mysqli_query($conn, "ALTER TABLE cms_prices ADD COLUMN description TEXT DEFAULT NULL AFTER price");
+    }
 
     mysqli_query($conn, "CREATE TABLE IF NOT EXISTS cms_products (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -124,51 +130,66 @@ if ($conn) {
 
     $cntPrc = (int)(mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM cms_prices"))['c'] ?? 0);
     if ($cntPrc === 0) {
+        // [category, name, price, description]  — deskripsi selaras dengan priceDescriptions di index.php
         $defaultPrcSeed = [
-            ['Henna Series',       'Brow Henna',                      'Rp 25.000'],
-            ['Henna Series',       'Nail Henna Tangan',                'Rp 25.000'],
-            ['Henna Series',       'Nail Henna Kaki',                  'Rp 30.000'],
-            ['Henna Series',       'Bundling Meni-Henna',              'Rp 75.000'],
-            ['Henna Series',       'Henna Fun',                        'Rp 25.000 - 100.000'],
-            ['Treatment Spa',      'Bundling Manicure & Pedicure',     'Rp 100.000'],
-            ['Treatment Spa',      'Manicure / Pedicure',              'Rp 60.000'],
-            ['Treatment Spa',      'Hand Spa',                         'Rp 80.000'],
-            ['Treatment Spa',      'Foot Spa',                         'Rp 100.000'],
-            ['Treatment Spa',      'Callus Treatment',                 'Rp 70.000 - 150.000'],
-            ['Brow & Lash',        'Brow Bomb',                        'Rp 100.000'],
-            ['Brow & Lash',        'Lashlift',                         'Rp 70.000'],
-            ['Brow & Lash',        'Lashlift Tint',                    'Rp 90.000'],
-            ['Rambut',             'Creambath',                        'Rp 75.000'],
-            ['Rambut',             'Hair Mask',                        'Rp 45.000 - 90.000'],
-            ['Rambut',             'Hair Spa',                         'Rp 100.000'],
-            ['Rambut',             'Cuci,Catok,Blow',                  'Rp 25.000 - 50.000'],
-            ['Rambut',             'Bleaching S',                      'Rp 40.000'],
-            ['Rambut',             'Coloring Full',                    'Rp 120.000 - 300.000'],
-            ['Rambut',             'Bleaching',                        'Rp 200.000 - 1.200.000'],
-            ['Rambut',             'Balayage',                         'Rp 250.000 - 700.000'],
-            ['Rambut',             'Down Peim Poni',                   'Rp 100.000 - 300.000'],
-            ['Rambut',             'Keriting Klasik',                  'Rp 300.000 - 700.000'],
-            ['Rambut',             'Keriting Digital',                 'Rp 450.000 - 1.700.000'],
-            ['Rambut',             'Keratin Treatment',                'Rp 200.000'],
-            ['Rambut',             'Smoothing',                        'Rp 200.000 - 400.000'],
-            ['Nail Art & Services','Press On Nail Basic',              'Rp 50.000'],
-            ['Nail Art & Services','Press On Nail Motif',              'Rp 75.000'],
-            ['Nail Art & Services','Kids Basic Gel',                   'Rp 40.000'],
-            ['Nail Art & Services','Kids Gel + 4 Sticker',             'Rp 50.000'],
-            ['Nail Art & Services','Kids Gel + Full Sticker',          'Rp 55.000'],
-            ['Nail Art & Services','Gel Basic Tangan / Kaki',          'Rp 85.000'],
-            ['Nail Art & Services','Extension',                        'Rp 50.000'],
-            ['Nail Art & Services','Gel French / Cat Eyes',            'Rp 105.000'],
-            ['Nail Art & Services','Remove Gel',                       'Rp 50.000'],
-            ['Nail Art & Services','Gel Ombre / Blush On',             'Rp 135.000'],
-            ['Nail Art & Services','Remove Extension',                 'Rp 65.000'],
-            ['Nail Art & Services','Bundling Nail Art + Extension',    'Rp 150.000'],
+            ['Henna Series',       'Brow Henna',                      'Rp 25.000',             'Pewarnaan alis dengan henna alami yang tahan lama. Mengisi alis tipis dan memberikan tampilan tegas, natural, dan rapi.'],
+            ['Henna Series',       'Nail Henna Tangan',               'Rp 25.000',             'Motif henna indah di kuku & tangan menggunakan bahan alami. Cocok untuk acara formal maupun casual.'],
+            ['Henna Series',       'Nail Henna Kaki',                 'Rp 30.000',             'Desain henna elegan di area kuku dan kaki. Bahan aman, cocok untuk semua usia.'],
+            ['Henna Series',       'Bundling Meni-Henna',             'Rp 75.000',             'Paket hemat manicure lengkap + nail henna. Dua layanan kecantikan dalam satu sesi.'],
+            ['Henna Series',       'Henna Fun',                       'Rp 25.000 - 100.000',   'Henna dekoratif di tangan dengan berbagai motif pilihan. Semakin kompleks motif, semakin artistik hasilnya.'],
+            ['Treatment Spa',      'Bundling Manicure & Pedicure',    'Rp 100.000',            'Paket lengkap perawatan tangan & kaki: scrub, masker, pemotongan kuku, dan finishing oil.'],
+            ['Treatment Spa',      'Manicure / Pedicure',             'Rp 60.000',             'Perawatan kuku dan kulit tangan atau kaki dengan teknik profesional. Kulit lebih lembut, kuku lebih sehat.'],
+            ['Treatment Spa',      'Hand Spa',                        'Rp 80.000',             'Perawatan intensif tangan: scrub eksfoliasi, masker pelembap, dan pijat relaksasi. Tangan terasa lembut & cerah.'],
+            ['Treatment Spa',      'Foot Spa',                        'Rp 100.000',            'Terapi kaki lengkap mulai dari perendaman, scrub, masker, hingga pijat refleksi. Cocok setelah hari panjang.'],
+            ['Treatment Spa',      'Callus Treatment',                'Rp 70.000 - 150.000',   'Pengangkatan kapalan dan kulit keras di telapak kaki secara profesional. Makin tebal kalus, makin intensif perawatannya.'],
+            ['Brow & Lash',        'Brow Bomb',                       'Rp 100.000',            'Perawatan alis all-in-one: lifting, tinting, dan setting. Alis tampak tebal, tegas, dan terbentuk sempurna tanpa makeup.'],
+            ['Brow & Lash',        'Lashlift',                        'Rp 70.000',             'Keriting bulu mata permanen tanpa sambungan. Mata terlihat lebih besar dan terbuka secara alami hingga 6–8 minggu.'],
+            ['Brow & Lash',        'Lashlift Tint',                   'Rp 90.000',             'Lashlift plus pewarnaan bulu mata agar lebih gelap dan dramatis. Tanpa maskara pun sudah memukau.'],
+            ['Rambut',             'Creambath',                       'Rp 75.000',             'Perawatan rambut dengan krim nutrisi, pijat kepala, dan uap hangat. Rambut lebih lebat, lembut, dan berkilau.'],
+            ['Rambut',             'Hair Mask',                       'Rp 45.000 - 90.000',    'Masker rambut intensif sesuai jenis rambut. Menutrisi dari dalam, mengurangi frizz, dan mengembalikan kilau alami.'],
+            ['Rambut',             'Hair Spa',                        'Rp 100.000',            'Spa rambut lengkap: shampo, kondisioner, masker, uap, dan pijat. Solusi untuk rambut rusak & kering.'],
+            ['Rambut',             'Cuci,Catok,Blow',                 'Rp 25.000 - 50.000',    'Cuci rambut + blow dry atau catok sesuai selera. Rambut bersih, rapi, dan siap tampil.'],
+            ['Rambut',             'Bleaching S',                     'Rp 40.000',             'Bleaching parsial (highlight/poni) untuk mencerahkan area tertentu. Cocok untuk warna pastel atau ombre.'],
+            ['Rambut',             'Coloring Full',                   'Rp 120.000 - 300.000',  'Pewarnaan rambut penuh dari akar hingga ujung. Pilihan warna beragam, hasil merata dan tahan lama.'],
+            ['Rambut',             'Bleaching',                       'Rp 200.000 - 1.200.000','Bleaching full atau intensif untuk mengangkat pigmen rambut. Harga tergantung panjang dan ketebalan rambut.'],
+            ['Rambut',             'Balayage',                        'Rp 250.000 - 700.000',  'Teknik pewarnaan gradasi tangan bebas yang menghasilkan tampilan natural sun-kissed. Setiap hasil unik dan personal.'],
+            ['Rambut',             'Down Peim Poni',                  'Rp 100.000 - 300.000',  'Pelurus poni dengan teknik perm down. Poni turun rapi tahan lama tanpa perlu di-styling setiap hari.'],
+            ['Rambut',             'Keriting Klasik',                 'Rp 300.000 - 700.000',  'Keriting permanen dengan batang spiral klasik. Cocok untuk tampilan volume dan berkarakter.'],
+            ['Rambut',             'Keriting Digital',                'Rp 450.000 - 1.700.000','Keriting digital dengan alat pemanas modern. Hasil lebih bergelombang lembut, tahan lama, dan terlihat natural.'],
+            ['Rambut',             'Keratin Treatment',               'Rp 200.000',            'Perawatan keratin untuk melembutkan dan meluruskan rambut secara alami. Mengurangi frizz & mudah diatur.'],
+            ['Rambut',             'Smoothing',                       'Rp 200.000 - 400.000',  'Pelurusan rambut semi-permanen yang membuat rambut lurus, halus, dan mudah di-styling. Tahan 3–6 bulan.'],
+            ['Nail Art & Services','Press On Nail Basic',             'Rp 50.000',             'Press on nail siap pakai dengan desain simpel dan elegan. Mudah dipasang sendiri, tahan beberapa hari.'],
+            ['Nail Art & Services','Press On Nail Motif',             'Rp 75.000',             'Press on nail dengan motif artistik dan detail lebih kompleks. Cocok untuk event spesial.'],
+            ['Nail Art & Services','Kids Basic Gel',                  'Rp 40.000',             'Gel kuku aman khusus anak-anak. Warna solid lembut yang tahan lama dan tidak berbau menyengat.'],
+            ['Nail Art & Services','Kids Gel + 4 Sticker',            'Rp 50.000',             'Gel warna + 4 stiker kuku pilihan anak. Tampilan lucu dan menggemaskan.'],
+            ['Nail Art & Services','Kids Gel + Full Sticker',         'Rp 55.000',             'Gel warna + stiker kuku penuh di semua jari. Seru untuk tampilan spesial si kecil.'],
+            ['Nail Art & Services','Gel Basic Tangan / Kaki',         'Rp 85.000',             'Gel warna solid untuk tangan atau kaki dengan hasil rapi dan tahan lama. Cocok untuk tampilan sehari-hari maupun acara spesial.'],
+            ['Nail Art & Services','Extension',                       'Rp 50.000',             'Perpanjangan kuku menggunakan bahan gel berkualitas. Kuku tampak lebih panjang dan elegan secara instan.'],
+            ['Nail Art & Services','Gel French / Cat Eyes',           'Rp 105.000',            'Gel dengan desain French classic atau efek cat eye yang memukau. Hasil bersih, presisi, dan tahan lama.'],
+            ['Nail Art & Services','Remove Gel',                      'Rp 50.000',             'Pembersihan gel kuku secara aman tanpa merusak kuku asli. Proses cepat dan nyaman menggunakan teknik profesional.'],
+            ['Nail Art & Services','Gel Ombre / Blush On',            'Rp 135.000',            'Gradasi warna lembut ombre atau efek blush on di kuku. Tampilan feminin, romantis, dan cocok untuk berbagai kesempatan.'],
+            ['Nail Art & Services','Remove Extension',                'Rp 65.000',             'Pelepasan extension kuku secara aman dan menyeluruh. Kuku asli tetap terjaga kesehatannya setelah proses pengangkatan.'],
+            ['Nail Art & Services','Bundling Nail Art + Extension',   'Rp 150.000',            'Paket hemat: extension kuku plus nail art desain pilihan. Dua layanan premium dalam satu sesi yang efisien.'],
         ];
         $so = 1;
-        foreach ($defaultPrcSeed as [$cat,$nm,$pr]) {
-            $cat=mysqli_real_escape_string($conn,$cat); $nm=mysqli_real_escape_string($conn,$nm); $pr=mysqli_real_escape_string($conn,$pr);
-            mysqli_query($conn,"INSERT INTO cms_prices (category,name,price,sort_order) VALUES ('$cat','$nm','$pr',$so)");
+        foreach ($defaultPrcSeed as [$cat,$nm,$pr,$desc]) {
+            $cat=mysqli_real_escape_string($conn,$cat); $nm=mysqli_real_escape_string($conn,$nm);
+            $pr=mysqli_real_escape_string($conn,$pr);   $desc=mysqli_real_escape_string($conn,$desc);
+            mysqli_query($conn,"INSERT INTO cms_prices (category,name,price,description,sort_order) VALUES ('$cat','$nm','$pr','$desc',$so)");
             $so++;
+        }
+    }
+
+    // AUTO-PATCH: isi deskripsi yang masih NULL/kosong di DB dengan deskripsi default
+    $descMap = [];
+    foreach ($defaultPrcSeed as [$cat,$nm,$pr,$desc]) { $descMap[$nm] = $desc; }
+    $emptyDescRows = mysqli_query($conn, "SELECT id, name FROM cms_prices WHERE (description IS NULL OR description = '')");
+    if ($emptyDescRows) {
+        while ($edr = mysqli_fetch_assoc($emptyDescRows)) {
+            if (!empty($descMap[$edr['name']])) {
+                $d = mysqli_real_escape_string($conn, $descMap[$edr['name']]);
+                mysqli_query($conn, "UPDATE cms_prices SET description='$d' WHERE id=".(int)$edr['id']);
+            }
         }
     }
 
@@ -362,10 +383,11 @@ if ($action === 'save_price') {
     $cat   = mysqli_real_escape_string($conn, $_POST['price_cat']  ?? '');
     $name  = mysqli_real_escape_string($conn, $_POST['price_name'] ?? '');
     $price = mysqli_real_escape_string($conn, $_POST['price_val']  ?? '');
+    $desc  = mysqli_real_escape_string($conn, $_POST['price_desc'] ?? '');
     if ($id) {
-        mysqli_query($conn, "UPDATE cms_prices SET category='$cat', name='$name', price='$price' WHERE id=$id");
+        mysqli_query($conn, "UPDATE cms_prices SET category='$cat', name='$name', price='$price', description='$desc' WHERE id=$id");
     } else {
-        mysqli_query($conn, "INSERT INTO cms_prices (category,name,price) VALUES ('$cat','$name','$price')");
+        mysqli_query($conn, "INSERT INTO cms_prices (category,name,price,description) VALUES ('$cat','$name','$price','$desc')");
     }
     header('Location: cms.php?tab=prices&saved=1'); exit;
 }
@@ -552,39 +574,55 @@ foreach ($_oldKeywords as $_kw) { if (strpos($booking_page['services_list'], $_k
 if ($_isOld && $conn) { setBookingPage($conn, 'services_list', $_newServices); $booking_page['services_list'] = $_newServices; }
 
 // Static default price list (displayed when DB is empty, mirroring website)
+// description = sama persis dengan priceDescriptions di index.php
 $defaultPriceList = [
     'Henna Series' => [
-        ['name'=>'Brow Henna','price'=>'Rp 25.000'],
-        ['name'=>'Nail Henna Tangan','price'=>'Rp 25.000'],
-        ['name'=>'Nail Henna Kaki','price'=>'Rp 30.000'],
-        ['name'=>'Bundling Meni-Henna','price'=>'Rp 75.000'],
-        ['name'=>'Henna Fun','price'=>'Rp 25.000 - 100.000'],
+        ['name'=>'Brow Henna',        'price'=>'Rp 25.000',        'description'=>'Pewarnaan alis dengan henna alami yang tahan lama. Mengisi alis tipis dan memberikan tampilan tegas, natural, dan rapi.'],
+        ['name'=>'Nail Henna Tangan', 'price'=>'Rp 25.000',        'description'=>'Motif henna indah di kuku & tangan menggunakan bahan alami. Cocok untuk acara formal maupun casual.'],
+        ['name'=>'Nail Henna Kaki',   'price'=>'Rp 30.000',        'description'=>'Desain henna elegan di area kuku dan kaki. Bahan aman, cocok untuk semua usia.'],
+        ['name'=>'Bundling Meni-Henna','price'=>'Rp 75.000',       'description'=>'Paket hemat manicure lengkap + nail henna. Dua layanan kecantikan dalam satu sesi.'],
+        ['name'=>'Henna Fun',         'price'=>'Rp 25.000 - 100.000','description'=>'Henna dekoratif di tangan dengan berbagai motif pilihan. Semakin kompleks motif, semakin artistik hasilnya.'],
     ],
     'Treatment Spa' => [
-        ['name'=>'Bundling Manicure & Pedicure','price'=>'Rp 100.000'],
-        ['name'=>'Manicure / Pedicure','price'=>'Rp 60.000'],
-        ['name'=>'Hand Spa','price'=>'Rp 80.000'],
-        ['name'=>'Foot Spa','price'=>'Rp 100.000'],
-        ['name'=>'Callus Treatment','price'=>'Rp 70.000 - 150.000'],
+        ['name'=>'Bundling Manicure & Pedicure','price'=>'Rp 100.000',      'description'=>'Paket lengkap perawatan tangan & kaki: scrub, masker, pemotongan kuku, dan finishing oil.'],
+        ['name'=>'Manicure / Pedicure',         'price'=>'Rp 60.000',       'description'=>'Perawatan kuku dan kulit tangan atau kaki dengan teknik profesional. Kulit lebih lembut, kuku lebih sehat.'],
+        ['name'=>'Hand Spa',                    'price'=>'Rp 80.000',       'description'=>'Perawatan intensif tangan: scrub eksfoliasi, masker pelembap, dan pijat relaksasi. Tangan terasa lembut & cerah.'],
+        ['name'=>'Foot Spa',                    'price'=>'Rp 100.000',      'description'=>'Terapi kaki lengkap mulai dari perendaman, scrub, masker, hingga pijat refleksi. Cocok setelah hari panjang.'],
+        ['name'=>'Callus Treatment',            'price'=>'Rp 70.000 - 150.000','description'=>'Pengangkatan kapalan dan kulit keras di telapak kaki secara profesional. Makin tebal kalus, makin intensif perawatannya.'],
     ],
     'Brow & Lash' => [
-        ['name'=>'Brow Bomb','price'=>'Rp 100.000'],
-        ['name'=>'Lashlift','price'=>'Rp 70.000'],
-        ['name'=>'Lashlift Tint','price'=>'Rp 90.000'],
+        ['name'=>'Brow Bomb',    'price'=>'Rp 100.000','description'=>'Perawatan alis all-in-one: lifting, tinting, dan setting. Alis tampak tebal, tegas, dan terbentuk sempurna tanpa makeup.'],
+        ['name'=>'Lashlift',     'price'=>'Rp 70.000', 'description'=>'Keriting bulu mata permanen tanpa sambungan. Mata terlihat lebih besar dan terbuka secara alami hingga 6–8 minggu.'],
+        ['name'=>'Lashlift Tint','price'=>'Rp 90.000', 'description'=>'Lashlift plus pewarnaan bulu mata agar lebih gelap dan dramatis. Tanpa maskara pun sudah memukau.'],
     ],
     'Rambut' => [
-        ['name'=>'Creambath','price'=>'Rp 75.000'],
-        ['name'=>'Hair Mask','price'=>'Rp 45.000 - 90.000'],
-        ['name'=>'Smoothing','price'=>'Rp 200.000 - 400.000'],
-        ['name'=>'Keratin Treatment','price'=>'Rp 200.000'],
-        ['name'=>'Coloring Full','price'=>'Rp 120.000 - 300.000'],
+        ['name'=>'Creambath',       'price'=>'Rp 75.000',           'description'=>'Perawatan rambut dengan krim nutrisi, pijat kepala, dan uap hangat. Rambut lebih lebat, lembut, dan berkilau.'],
+        ['name'=>'Hair Mask',       'price'=>'Rp 45.000 - 90.000',  'description'=>'Masker rambut intensif sesuai jenis rambut. Menutrisi dari dalam, mengurangi frizz, dan mengembalikan kilau alami.'],
+        ['name'=>'Hair Spa',        'price'=>'Rp 100.000',           'description'=>'Spa rambut lengkap: shampo, kondisioner, masker, uap, dan pijat. Solusi untuk rambut rusak & kering.'],
+        ['name'=>'Cuci,Catok,Blow', 'price'=>'Rp 25.000 - 50.000',  'description'=>'Cuci rambut + blow dry atau catok sesuai selera. Rambut bersih, rapi, dan siap tampil.'],
+        ['name'=>'Bleaching S',     'price'=>'Rp 40.000',            'description'=>'Bleaching parsial (highlight/poni) untuk mencerahkan area tertentu. Cocok untuk warna pastel atau ombre.'],
+        ['name'=>'Coloring Full',   'price'=>'Rp 120.000 - 300.000', 'description'=>'Pewarnaan rambut penuh dari akar hingga ujung. Pilihan warna beragam, hasil merata dan tahan lama.'],
+        ['name'=>'Bleaching',       'price'=>'Rp 200.000 - 1.200.000','description'=>'Bleaching full atau intensif untuk mengangkat pigmen rambut. Harga tergantung panjang dan ketebalan rambut.'],
+        ['name'=>'Balayage',        'price'=>'Rp 250.000 - 700.000', 'description'=>'Teknik pewarnaan gradasi tangan bebas yang menghasilkan tampilan natural sun-kissed. Setiap hasil unik dan personal.'],
+        ['name'=>'Down Peim Poni',  'price'=>'Rp 100.000 - 300.000', 'description'=>'Pelurus poni dengan teknik perm down. Poni turun rapi tahan lama tanpa perlu di-styling setiap hari.'],
+        ['name'=>'Keriting Klasik', 'price'=>'Rp 300.000 - 700.000', 'description'=>'Keriting permanen dengan batang spiral klasik. Cocok untuk tampilan volume dan berkarakter.'],
+        ['name'=>'Keriting Digital','price'=>'Rp 450.000 - 1.700.000','description'=>'Keriting digital dengan alat pemanas modern. Hasil lebih bergelombang lembut, tahan lama, dan terlihat natural.'],
+        ['name'=>'Keratin Treatment','price'=>'Rp 200.000',          'description'=>'Perawatan keratin untuk melembutkan dan meluruskan rambut secara alami. Mengurangi frizz & mudah diatur.'],
+        ['name'=>'Smoothing',       'price'=>'Rp 200.000 - 400.000', 'description'=>'Pelurusan rambut semi-permanen yang membuat rambut lurus, halus, dan mudah di-styling. Tahan 3–6 bulan.'],
     ],
     'Nail Art & Services' => [
-        ['name'=>'Gel Basic Tangan / Kaki','price'=>'Rp 85.000'],
-        ['name'=>'Press On Nail Basic','price'=>'Rp 50.000'],
-        ['name'=>'Press On Nail Motif','price'=>'Rp 75.000'],
-        ['name'=>'Gel French / Cat Eyes','price'=>'Rp 105.000'],
-        ['name'=>'Remove Gel','price'=>'Rp 50.000'],
+        ['name'=>'Press On Nail Basic',          'price'=>'Rp 50.000',  'description'=>'Press on nail siap pakai dengan desain simpel dan elegan. Mudah dipasang sendiri, tahan beberapa hari.'],
+        ['name'=>'Press On Nail Motif',          'price'=>'Rp 75.000',  'description'=>'Press on nail dengan motif artistik dan detail lebih kompleks. Cocok untuk event spesial.'],
+        ['name'=>'Kids Basic Gel',               'price'=>'Rp 40.000',  'description'=>'Gel kuku aman khusus anak-anak. Warna solid lembut yang tahan lama dan tidak berbau menyengat.'],
+        ['name'=>'Kids Gel + 4 Sticker',         'price'=>'Rp 50.000',  'description'=>'Gel warna + 4 stiker kuku pilihan anak. Tampilan lucu dan menggemaskan.'],
+        ['name'=>'Kids Gel + Full Sticker',      'price'=>'Rp 55.000',  'description'=>'Gel warna + stiker kuku penuh di semua jari. Seru untuk tampilan spesial si kecil.'],
+        ['name'=>'Gel Basic Tangan / Kaki',      'price'=>'Rp 85.000',  'description'=>'Gel warna solid untuk tangan atau kaki dengan hasil rapi dan tahan lama. Cocok untuk tampilan sehari-hari maupun acara spesial.'],
+        ['name'=>'Extension',                    'price'=>'Rp 50.000',  'description'=>'Perpanjangan kuku menggunakan bahan gel berkualitas. Kuku tampak lebih panjang dan elegan secara instan.'],
+        ['name'=>'Gel French / Cat Eyes',        'price'=>'Rp 105.000', 'description'=>'Gel dengan desain French classic atau efek cat eye yang memukau. Hasil bersih, presisi, dan tahan lama.'],
+        ['name'=>'Remove Gel',                   'price'=>'Rp 50.000',  'description'=>'Pembersihan gel kuku secara aman tanpa merusak kuku asli. Proses cepat dan nyaman menggunakan teknik profesional.'],
+        ['name'=>'Gel Ombre / Blush On',         'price'=>'Rp 135.000', 'description'=>'Gradasi warna lembut ombre atau efek blush on di kuku. Tampilan feminin, romantis, dan cocok untuk berbagai kesempatan.'],
+        ['name'=>'Remove Extension',             'price'=>'Rp 65.000',  'description'=>'Pelepasan extension kuku secara aman dan menyeluruh. Kuku asli tetap terjaga kesehatannya setelah proses pengangkatan.'],
+        ['name'=>'Bundling Nail Art + Extension','price'=>'Rp 150.000', 'description'=>'Paket hemat: extension kuku plus nail art desain pilihan. Dua layanan premium dalam satu sesi yang efisien.'],
     ],
 ];
 
@@ -1472,6 +1510,7 @@ input[type=file]{display:none;}
                                     <th>Kategori</th>
                                     <th>Nama</th>
                                     <th>Harga</th>
+                                    <th>Deskripsi</th>
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
@@ -1481,6 +1520,7 @@ input[type=file]{display:none;}
                                 <td><span class="cat-badge"><?= htmlspecialchars($row['category']) ?></span></td>
                                 <td><?= htmlspecialchars($row['name']) ?></td>
                                 <td style="color:var(--primary);font-weight:700;"><?= htmlspecialchars($row['price']) ?></td>
+                                <td style="font-size:12px;color:var(--text-mid);max-width:180px;"><?= htmlspecialchars(substr($row['description'] ?? '', 0, 60)) ?><?= strlen($row['description'] ?? '') > 60 ? '…' : '' ?></td>
                                 <td>
                                     <div class="actions-cell">
                                         <button class="btn-edit-cms" onclick='openEditPrice(<?= json_encode($row) ?>)'>
@@ -1522,6 +1562,12 @@ input[type=file]{display:none;}
                         foreach ($items as $item)
                             $displayPrices[$cat][] = $item;
                 }
+                // Urutkan kategori sesuai catOrder di index.php
+                $catOrder = ["Brow & Lash","Treatment Spa","Henna Series","Nail Art & Services","Rambut"];
+                $sortedDisplay = [];
+                foreach ($catOrder as $c) { if (isset($displayPrices[$c])) $sortedDisplay[$c] = $displayPrices[$c]; }
+                foreach ($displayPrices as $c => $v) { if (!isset($sortedDisplay[$c])) $sortedDisplay[$c] = $v; }
+                $displayPrices = $sortedDisplay;
                 foreach ($displayPrices as $cat => $items): ?>
                 <div class="price-preview-card" style="margin-bottom:12px;">
                     <div class="price-preview-header">
@@ -1570,6 +1616,10 @@ input[type=file]{display:none;}
                         <div class="form-group">
                             <label>Harga</label>
                             <input type="text" name="price_val" id="priceVal" placeholder="cth: Rp 150.000 atau Rp 100.000 - 300.000" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Deskripsi <small style="text-transform:none;color:var(--text-lt);">(opsional — tampil saat baris diklik di website)</small></label>
+                            <textarea name="price_desc" id="priceDesc" rows="3" placeholder="cth: Termasuk creambath, blow dry, dan vitamin rambut. Durasi ±60 menit."></textarea>
                         </div>
                     </div>
                     <div class="cms-modal-footer">
@@ -2558,6 +2608,7 @@ function openEditPrice(row) {
     document.getElementById('priceCat').value  = row.category;
     document.getElementById('priceName').value = row.name;
     document.getElementById('priceVal').value  = row.price;
+    document.getElementById('priceDesc').value = row.description || '';
     openModal('modalPrice');
 }
 
@@ -2601,6 +2652,7 @@ function openAddPrice() {
     document.getElementById('priceCat').value  = '';
     document.getElementById('priceName').value = '';
     document.getElementById('priceVal').value  = '';
+    document.getElementById('priceDesc').value = '';
     openModal('modalPrice');
 }
 function openAddProduct() {
