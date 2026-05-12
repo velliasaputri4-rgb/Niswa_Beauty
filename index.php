@@ -605,8 +605,9 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
 .product-section-title span { color:#8B6F5E; }
 .product-section-title p { color:#888; margin-top:10px; font-size:15px; }
 .filter-buttons { text-align:center; margin-bottom:40px; display:flex; justify-content:center; gap:8px; flex-wrap:wrap; }
-.filter-buttons button { border:1.5px solid #e8ddd4; background:#fff; border-radius:50px; padding:8px 20px; font-weight:500; color:#666; cursor:pointer; font-size:14px; font-family:'Poppins',sans-serif; transition:.2s; }
-.filter-buttons button.active { background:linear-gradient(135deg,#8B6F5E,#D6C1A3); color:#fff; border-color:transparent; }
+.filter-buttons button { border:1.5px solid #e8ddd4; background:#fff; border-radius:50px; padding:8px 20px; font-weight:500; color:#666; cursor:pointer; font-size:14px; font-family:'Poppins',sans-serif; transition:all .25s cubic-bezier(0.4,0,0.2,1); box-shadow:0 2px 8px rgba(139,111,94,0.06); }
+.filter-buttons button:hover:not(.active) { background:linear-gradient(135deg,rgba(139,111,94,0.1),rgba(214,193,163,0.15)); color:#8B6F5E; border-color:#D6C1A3; transform:translateY(-2px); box-shadow:0 6px 18px rgba(139,111,94,0.15); }
+.filter-buttons button.active { background:linear-gradient(135deg,#8B6F5E,#D6C1A3); color:#fff; border-color:transparent; box-shadow:0 6px 20px rgba(139,111,94,0.35); transform:translateY(-2px); }
 .product-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:20px; }
 .product-card { background:#fff; border-radius:20px; overflow:hidden; transition:.3s; }
 .product-card:hover { transform:translateY(-8px); box-shadow:0 12px 40px rgba(139,111,94,0.15); }
