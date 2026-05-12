@@ -332,7 +332,7 @@ if ($action === 'delete_hero_img' && isset($_GET['n'])) {
 
 /* ── 2. Kontak & Maps ── */
 if ($action === 'save_kontak') {
-    foreach (['salon_name','address','hours','whatsapp','maps_embed','maps_link'] as $k)
+    foreach (['salon_name','address','hours','whatsapp','email','maps_embed','maps_link'] as $k)
         setContent($conn, 'kontak', $k, $_POST[$k] ?? '');
     header('Location: cms.php?tab=kontak&saved=1'); exit;
 }
@@ -483,6 +483,7 @@ $kontak = [
     'address'    => getContent($conn,'kontak','address',   'Jl. Watulumpang, Bangsri, Jepara'),
     'hours'      => getContent($conn,'kontak','hours',     'Senin – Minggu, 08.00 – 20.00'),
     'whatsapp'   => getContent($conn,'kontak','whatsapp',  '62812345678'),
+    'email'      => getContent($conn,'kontak','email',     'niswabeauty15@gmail.com'),
     'maps_embed' => getContent($conn,'kontak','maps_embed','https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3959.0!2d110.7708502!3d-6.5253308!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e7123c39ad21875%3A0xd77e4fd098899e2c!2sNISWA%20BEAUTY%20Nail%20%26%20Foot%20Spa!5e0!3m2!1sid!2sid!4v1715000000000!5m2!1sid!2sid'),
     'maps_link'  => getContent($conn,'kontak','maps_link', 'https://maps.app.goo.gl/czQHcN15FMvfFZy76'),
 ];
@@ -1971,6 +1972,8 @@ input[type=file]{display:none;}
 <?php elseif ($activeTab === 'kontak'): ?>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
+
+            <!-- Form Edit -->
             <div class="cms-card">
                 <div class="cms-card-header">
                     <i class="fa-solid fa-location-dot"></i>
@@ -1985,19 +1988,25 @@ input[type=file]{display:none;}
                             </div>
                             <div class="form-group">
                                 <label><i class="fa-brands fa-whatsapp" style="margin-right:4px;"></i>WhatsApp <small style="text-transform:none;color:var(--text-lt);">(awali 62)</small></label>
-                                <input type="tel" name="whatsapp" value="<?= htmlspecialchars($kontak['whatsapp']) ?>" placeholder="62812345678">
+                                <input type="tel" name="whatsapp" value="<?= htmlspecialchars($kontak['whatsapp']) ?>" placeholder="6288200690xxxx">
                             </div>
                         </div>
                         <div class="form-group">
                             <label><i class="fa-solid fa-map-pin" style="margin-right:4px;"></i>Alamat Lengkap</label>
-                            <input type="text" name="address" value="<?= htmlspecialchars($kontak['address']) ?>" placeholder="Jl. ...">
+                            <input type="text" name="address" value="<?= htmlspecialchars($kontak['address']) ?>" placeholder="Jl. Watulumpang, Bangsri, Jepara">
+                        </div>
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label><i class="fa-regular fa-clock" style="margin-right:4px;"></i>Jam Operasional</label>
+                                <input type="text" name="hours" value="<?= htmlspecialchars($kontak['hours']) ?>" placeholder="Senin – Minggu, 08.00 – 20.00">
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fa-solid fa-envelope" style="margin-right:4px;"></i>Email</label>
+                                <input type="email" name="email" value="<?= htmlspecialchars($kontak['email']) ?>" placeholder="niswabeauty15@gmail.com">
+                            </div>
                         </div>
                         <div class="form-group">
-                            <label><i class="fa-regular fa-clock" style="margin-right:4px;"></i>Jam Operasional</label>
-                            <input type="text" name="hours" value="<?= htmlspecialchars($kontak['hours']) ?>" placeholder="Senin – Minggu, 08.00 – 20.00">
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fa-solid fa-link" style="margin-right:4px;"></i>Link Google Maps (tombol Petunjuk Arah)</label>
+                            <label><i class="fa-solid fa-link" style="margin-right:4px;"></i>Link Google Maps <small style="text-transform:none;color:var(--text-lt);">(tombol Petunjuk Arah)</small></label>
                             <input type="url" name="maps_link" value="<?= htmlspecialchars($kontak['maps_link']) ?>" placeholder="https://maps.app.goo.gl/...">
                         </div>
                         <div class="form-group">
@@ -2012,41 +2021,72 @@ input[type=file]{display:none;}
                 </div>
             </div>
 
-            <!-- Maps Preview + Info Bar -->
+            <!-- Preview (sesuai tampilan website: maps kiri + info kanan) -->
             <div>
                 <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-lt);margin-bottom:10px;">
                     <i class="fa-solid fa-eye" style="margin-right:5px;"></i>Preview Lokasi (tampilan website)
                 </div>
-                <!-- Info bar preview -->
-                <div style="background:linear-gradient(135deg,#5A4A42,#8B6F5E);border-radius:12px 12px 0 0;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
-                    <div>
-                        <div style="color:#fff;font-weight:700;font-size:14px;"><i class="fa-solid fa-map-marker-alt" style="margin-right:6px;"></i><?= htmlspecialchars($kontak['salon_name']) ?></div>
-                        <div style="color:rgba(255,255,255,.75);font-size:12px;margin-top:3px;"><?= htmlspecialchars($kontak['address']) ?></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;border-radius:14px;overflow:hidden;border:1.5px solid var(--border);box-shadow:0 4px 18px rgba(139,111,94,0.10);min-height:320px;">
+                    <!-- Kiri: Maps -->
+                    <div style="position:relative;min-height:280px;">
+                        <?php if ($kontak['maps_embed']): ?>
+                        <iframe src="<?= htmlspecialchars($kontak['maps_embed']) ?>" width="100%" height="100%" style="border:0;display:block;position:absolute;inset:0;" loading="lazy"></iframe>
+                        <?php else: ?>
+                        <div style="position:absolute;inset:0;background:var(--cream);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;">
+                            <i class="fa-solid fa-map" style="font-size:28px;color:var(--border);"></i>
+                            <span style="font-size:12px;color:var(--text-lt);">Belum ada embed maps</span>
+                        </div>
+                        <?php endif; ?>
                     </div>
-                    <div style="color:rgba(255,255,255,.8);font-size:12px;">
-                        <i class="fa-solid fa-clock" style="color:var(--gold);margin-right:4px;"></i><?= htmlspecialchars($kontak['hours']) ?>
+                    <!-- Kanan: Info -->
+                    <div style="background:linear-gradient(160deg,#5A4A42 0%,#8B6F5E 100%);padding:20px 18px;display:flex;flex-direction:column;justify-content:center;gap:14px;">
+                        <!-- Brand -->
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <i class="fa-solid fa-spa" style="font-size:22px;color:#D6C1A3;flex-shrink:0;"></i>
+                            <div>
+                                <div style="font-family:'Playfair Display',serif;font-size:14px;font-weight:700;color:#fff;line-height:1.2;"><?= htmlspecialchars($kontak['salon_name']) ?></div>
+                                <div style="font-size:10px;color:rgba(255,255,255,0.6);margin-top:2px;">Premium Beauty Experience</div>
+                            </div>
+                        </div>
+                        <div style="border-top:1px solid rgba(255,255,255,0.15);"></div>
+                        <!-- Detail items -->
+                        <?php
+                        $infoItems = [
+                            ['fa-map-marker-alt', 'Alamat',          $kontak['address']],
+                            ['fa-clock',          'Jam Operasional', $kontak['hours']],
+                            ['fa-brands fa-whatsapp', 'WhatsApp',    '+' . $kontak['whatsapp']],
+                            ['fa-envelope',       'Email',           $kontak['email']],
+                        ];
+                        foreach ($infoItems as [$ic,$lbl,$val]): ?>
+                        <div style="display:flex;align-items:flex-start;gap:10px;">
+                            <div style="width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                                <i class="<?= strpos($ic,'fa-brands')===false ? 'fa-solid ' : '' ?><?= $ic ?>" style="color:#D6C1A3;font-size:12px;"></i>
+                            </div>
+                            <div>
+                                <div style="font-size:9px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:.7px;font-weight:600;"><?= $lbl ?></div>
+                                <div style="font-size:11.5px;color:#fff;font-weight:500;margin-top:1px;line-height:1.35;"><?= htmlspecialchars($val ?: '—') ?></div>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                        <div style="border-top:1px solid rgba(255,255,255,0.15);"></div>
+                        <!-- Action buttons -->
+                        <div style="display:flex;gap:7px;">
+                            <span style="flex:1;text-align:center;background:linear-gradient(135deg,#D6C1A3,#c4a882);color:#3a2e28;border-radius:50px;padding:7px 10px;font-size:11px;font-weight:700;">
+                                <i class="fa-solid fa-directions"></i> Petunjuk Arah
+                            </span>
+                            <span style="flex:1;text-align:center;background:rgba(255,255,255,0.12);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:50px;padding:7px 10px;font-size:11px;font-weight:600;">
+                                <i class="fa-brands fa-whatsapp"></i> Chat Sekarang
+                            </span>
+                        </div>
                     </div>
                 </div>
-                <?php if ($kontak['maps_embed']): ?>
-                <div style="border-radius:0 0 12px 12px;overflow:hidden;border:1.5px solid var(--border);">
-                    <iframe src="<?= htmlspecialchars($kontak['maps_embed']) ?>" width="100%" height="300" style="border:0;display:block;" loading="lazy"></iframe>
-                </div>
-                <?php else: ?>
-                <div style="height:200px;background:var(--cream);border:1.5px solid var(--border);border-radius:0 0 12px 12px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;">
-                    <i class="fa-solid fa-map" style="font-size:32px;color:var(--border);"></i>
-                    <span style="font-size:13px;color:var(--text-lt);">Belum ada embed maps</span>
-                </div>
-                <?php endif; ?>
-
-                <!-- WhatsApp info -->
-                <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:14px;">
-                    <div style="font-size:12px;font-weight:600;color:var(--text-mid);margin-bottom:8px;"><i class="fa-brands fa-whatsapp" style="color:#25d366;margin-right:5px;"></i>Info WhatsApp</div>
-                    <div style="font-size:13px;color:var(--text);">
-                        Nomor: <strong>+<?= htmlspecialchars($kontak['whatsapp']) ?></strong>
-                    </div>
-                    <div style="font-size:12px;color:var(--text-lt);margin-top:4px;">Link: https://wa.me/<?= htmlspecialchars($kontak['whatsapp']) ?></div>
+                <!-- WA link info -->
+                <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-top:12px;font-size:12px;color:var(--text-mid);">
+                    <i class="fa-brands fa-whatsapp" style="color:#25d366;margin-right:5px;"></i>
+                    Link WA aktif: <strong>https://wa.me/<?= htmlspecialchars($kontak['whatsapp']) ?></strong>
                 </div>
             </div>
+
         </div>
 
 <?php /* ════════ TAB: NAVBAR ════════ */ ?>
