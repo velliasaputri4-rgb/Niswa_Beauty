@@ -521,7 +521,28 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
         }
         unset($items);
 
-        $delay=0; foreach ($sorted as $cat => $items): ?>
+        // Gambar representatif per kategori
+        $catImages = [
+            'Henna Series'        => 'image/WhatsApp Image 2026-05-08 at 11.03.43.jpeg',
+            'Treatment Spa'       => 'image/download (8).jpg',
+            'Brow & Lash'         => 'image/WhatsApp Image 2026-05-08 at 22.14.29.jpeg',
+            'Nail Art & Services' => 'image/Fall nails brown nails inspo.jpg',
+            'Rambut'              => 'image/WhatsApp Image 2026-05-08 at 11.00.07.jpeg',
+        ];
+        foreach ($services as $svc) {
+            $sn = $svc['name'];
+            if (!empty($svc['image'])) {
+                if (stripos($sn,'henna')  !== false && empty($catImages['Henna Series']))        $catImages['Henna Series']        = $svc['image'];
+                if ((stripos($sn,'foot')  !== false || stripos($sn,'spa') !== false) && empty($catImages['Treatment Spa']))  $catImages['Treatment Spa']       = $svc['image'];
+                if ((stripos($sn,'lash')  !== false || stripos($sn,'eye') !== false) && empty($catImages['Brow & Lash']))    $catImages['Brow & Lash']         = $svc['image'];
+                if (stripos($sn,'nail')   !== false && empty($catImages['Nail Art & Services'])) $catImages['Nail Art & Services'] = $svc['image'];
+                if ((stripos($sn,'hair')  !== false || stripos($sn,'color') !== false) && empty($catImages['Rambut']))       $catImages['Rambut']              = $svc['image'];
+            }
+        }
+
+        $delay=0; foreach ($sorted as $cat => $items):
+            $catImg = $catImages[$cat] ?? '';
+        ?>
         <div class="price-card" data-aos="fade-up" data-aos-delay="<?= $delay*80 ?>">
             <div class="price-card-header">
                 <span class="price-card-label"><?= esc($cat) ?></span>
@@ -531,12 +552,15 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
                 <table class="price-table">
                     <thead><tr><th>Layanan</th><th class="text-end">Harga</th></tr></thead>
                     <tbody>
-                        <?php foreach ($items as $row): ?>
+                        <?php foreach ($items as $row):
+                            $rowImg = !empty($row['image']) ? $row['image'] : $catImg;
+                        ?>
                         <tr class="price-row-clickable" 
                             data-name="<?= htmlspecialchars($row['name'], ENT_QUOTES) ?>"
                             data-price="<?= htmlspecialchars($row['price'], ENT_QUOTES) ?>"
                             data-desc="<?= htmlspecialchars($row['desc'] ?? '', ENT_QUOTES) ?>"
-                            data-cat="<?= htmlspecialchars($cat, ENT_QUOTES) ?>">
+                            data-cat="<?= htmlspecialchars($cat, ENT_QUOTES) ?>"
+                            data-img="<?= htmlspecialchars($rowImg, ENT_QUOTES) ?>">
                             <td>
                                 <?= esc($row['name']) ?>
                                 <span class="price-row-hint"><i class="fa-solid fa-circle-info"></i></span>
@@ -561,9 +585,16 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
 <div id="priceModal" class="price-modal-overlay" onclick="closePriceModal(event)">
     <div class="price-modal-box">
         <button class="price-modal-close" onclick="closePriceModal(null)"><i class="fa-solid fa-xmark"></i></button>
-        <div class="price-modal-cat" id="pmCat"></div>
-        <div class="price-modal-name" id="pmName"></div>
-        <div class="price-modal-price" id="pmPrice"></div>
+        <div class="price-modal-header-row">
+            <div class="price-modal-img-wrap" id="pmImgWrap">
+                <img id="pmImg" src="" alt="" class="price-modal-img">
+            </div>
+            <div class="price-modal-header-info">
+                <div class="price-modal-cat" id="pmCat"></div>
+                <div class="price-modal-name" id="pmName"></div>
+                <div class="price-modal-price" id="pmPrice"></div>
+            </div>
+        </div>
         <div class="price-modal-divider"></div>
         <div class="price-modal-desc" id="pmDesc"></div>
         <a id="pmWa" href="#" target="_blank" class="price-modal-wa" style="display:none !important;"></a>
@@ -643,6 +674,15 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
     transition: all .2s; box-shadow: 0 4px 16px rgba(37,211,102,0.3);
 }
 .price-modal-wa:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(37,211,102,0.4); color:#fff; }
+
+/* ── Modal image ── */
+.price-modal-header-row { display:flex; align-items:center; gap:14px; margin-bottom:4px; }
+.price-modal-img-wrap { flex-shrink:0; width:72px; height:72px; border-radius:14px; overflow:hidden; box-shadow:0 4px 14px rgba(139,111,94,0.18); border:2px solid #f0e0d0; background:#fdf5ef; }
+.price-modal-img { width:100%; height:100%; object-fit:cover; transition:opacity .25s ease; }
+.price-modal-header-info { flex:1; min-width:0; }
+.price-modal-header-info .price-modal-cat { margin-bottom:6px; }
+.price-modal-header-info .price-modal-name { font-size:18px; margin-bottom:4px; }
+.price-modal-header-info .price-modal-price { font-size:17px; margin-bottom:0; }
 </style>
 
 <script>
@@ -712,10 +752,23 @@ document.querySelectorAll('.price-row-clickable').forEach(function(row) {
         var price = this.dataset.price;
         var desc  = this.dataset.desc;
         var cat   = this.dataset.cat;
+        var img   = this.dataset.img || '';
         document.getElementById('pmCat').textContent   = cat;
         document.getElementById('pmName').textContent  = name;
         document.getElementById('pmPrice').textContent = price;
         document.getElementById('pmDesc').textContent  = desc || getDesc(name, cat);
+        var pmImg = document.getElementById('pmImg');
+        var pmImgWrap = document.getElementById('pmImgWrap');
+        if (img) {
+            pmImg.style.opacity = '0';
+            pmImg.src = img;
+            pmImg.alt = name;
+            pmImg.onload = function() { pmImg.style.opacity = '1'; };
+            pmImg.onerror = function() { pmImgWrap.style.display = 'none'; };
+            pmImgWrap.style.display = '';
+        } else {
+            pmImgWrap.style.display = 'none';
+        }
         var wa = '<?= $kontak["whatsapp"] ?? "62882006900" ?>';
         var msg = encodeURIComponent('Halo, saya ingin booking layanan *' + name + '* (' + price + '). Apakah tersedia?');
         document.getElementById('pmWa').href = 'https://wa.me/' + wa + '?text=' + msg;
