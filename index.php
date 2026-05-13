@@ -521,28 +521,7 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
         }
         unset($items);
 
-        // Gambar representatif per kategori
-        $catImages = [
-            'Henna Series'        => 'image/WhatsApp Image 2026-05-08 at 11.03.43.jpeg',
-            'Treatment Spa'       => 'image/download (8).jpg',
-            'Brow & Lash'         => 'image/WhatsApp Image 2026-05-08 at 22.14.29.jpeg',
-            'Nail Art & Services' => 'image/Fall nails brown nails inspo.jpg',
-            'Rambut'              => 'image/WhatsApp Image 2026-05-08 at 11.00.07.jpeg',
-        ];
-        foreach ($services as $svc) {
-            $sn = $svc['name'];
-            if (!empty($svc['image'])) {
-                if (stripos($sn,'henna')  !== false && empty($catImages['Henna Series']))        $catImages['Henna Series']        = $svc['image'];
-                if ((stripos($sn,'foot')  !== false || stripos($sn,'spa') !== false) && empty($catImages['Treatment Spa']))  $catImages['Treatment Spa']       = $svc['image'];
-                if ((stripos($sn,'lash')  !== false || stripos($sn,'eye') !== false) && empty($catImages['Brow & Lash']))    $catImages['Brow & Lash']         = $svc['image'];
-                if (stripos($sn,'nail')   !== false && empty($catImages['Nail Art & Services'])) $catImages['Nail Art & Services'] = $svc['image'];
-                if ((stripos($sn,'hair')  !== false || stripos($sn,'color') !== false) && empty($catImages['Rambut']))       $catImages['Rambut']              = $svc['image'];
-            }
-        }
-
-        $delay=0; foreach ($sorted as $cat => $items):
-            $catImg = $catImages[$cat] ?? '';
-        ?>
+        $delay=0; foreach ($sorted as $cat => $items): ?>
         <div class="price-card" data-aos="fade-up" data-aos-delay="<?= $delay*80 ?>">
             <div class="price-card-header">
                 <span class="price-card-label"><?= esc($cat) ?></span>
@@ -552,15 +531,12 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
                 <table class="price-table">
                     <thead><tr><th>Layanan</th><th class="text-end">Harga</th></tr></thead>
                     <tbody>
-                        <?php foreach ($items as $row):
-                            $rowImg = !empty($row['image']) ? $row['image'] : $catImg;
-                        ?>
+                        <?php foreach ($items as $row): ?>
                         <tr class="price-row-clickable" 
                             data-name="<?= htmlspecialchars($row['name'], ENT_QUOTES) ?>"
                             data-price="<?= htmlspecialchars($row['price'], ENT_QUOTES) ?>"
                             data-desc="<?= htmlspecialchars($row['desc'] ?? '', ENT_QUOTES) ?>"
-                            data-cat="<?= htmlspecialchars($cat, ENT_QUOTES) ?>"
-                            data-img="<?= htmlspecialchars($rowImg, ENT_QUOTES) ?>">
+                            data-cat="<?= htmlspecialchars($cat, ENT_QUOTES) ?>">
                             <td>
                                 <?= esc($row['name']) ?>
                                 <span class="price-row-hint"><i class="fa-solid fa-circle-info"></i></span>
@@ -585,16 +561,9 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
 <div id="priceModal" class="price-modal-overlay" onclick="closePriceModal(event)">
     <div class="price-modal-box">
         <button class="price-modal-close" onclick="closePriceModal(null)"><i class="fa-solid fa-xmark"></i></button>
-        <div class="price-modal-header-row">
-            <div class="price-modal-img-wrap" id="pmImgWrap">
-                <img id="pmImg" src="" alt="" class="price-modal-img">
-            </div>
-            <div class="price-modal-header-info">
-                <div class="price-modal-cat" id="pmCat"></div>
-                <div class="price-modal-name" id="pmName"></div>
-                <div class="price-modal-price" id="pmPrice"></div>
-            </div>
-        </div>
+        <div class="price-modal-cat" id="pmCat"></div>
+        <div class="price-modal-name" id="pmName"></div>
+        <div class="price-modal-price" id="pmPrice"></div>
         <div class="price-modal-divider"></div>
         <div class="price-modal-desc" id="pmDesc"></div>
         <a id="pmWa" href="#" target="_blank" class="price-modal-wa" style="display:none !important;"></a>
@@ -674,15 +643,6 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
     transition: all .2s; box-shadow: 0 4px 16px rgba(37,211,102,0.3);
 }
 .price-modal-wa:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(37,211,102,0.4); color:#fff; }
-
-/* ── Modal image ── */
-.price-modal-header-row { display:flex; align-items:center; gap:14px; margin-bottom:4px; }
-.price-modal-img-wrap { flex-shrink:0; width:72px; height:72px; border-radius:14px; overflow:hidden; box-shadow:0 4px 14px rgba(139,111,94,0.18); border:2px solid #f0e0d0; background:#fdf5ef; }
-.price-modal-img { width:100%; height:100%; object-fit:cover; transition:opacity .25s ease; }
-.price-modal-header-info { flex:1; min-width:0; }
-.price-modal-header-info .price-modal-cat { margin-bottom:6px; }
-.price-modal-header-info .price-modal-name { font-size:18px; margin-bottom:4px; }
-.price-modal-header-info .price-modal-price { font-size:17px; margin-bottom:0; }
 </style>
 
 <script>
@@ -752,23 +712,10 @@ document.querySelectorAll('.price-row-clickable').forEach(function(row) {
         var price = this.dataset.price;
         var desc  = this.dataset.desc;
         var cat   = this.dataset.cat;
-        var img   = this.dataset.img || '';
         document.getElementById('pmCat').textContent   = cat;
         document.getElementById('pmName').textContent  = name;
         document.getElementById('pmPrice').textContent = price;
         document.getElementById('pmDesc').textContent  = desc || getDesc(name, cat);
-        var pmImg = document.getElementById('pmImg');
-        var pmImgWrap = document.getElementById('pmImgWrap');
-        if (img) {
-            pmImg.style.opacity = '0';
-            pmImg.src = img;
-            pmImg.alt = name;
-            pmImg.onload = function() { pmImg.style.opacity = '1'; };
-            pmImg.onerror = function() { pmImgWrap.style.display = 'none'; };
-            pmImgWrap.style.display = '';
-        } else {
-            pmImgWrap.style.display = 'none';
-        }
         var wa = '<?= $kontak["whatsapp"] ?? "62882006900" ?>';
         var msg = encodeURIComponent('Halo, saya ingin booking layanan *' + name + '* (' + price + '). Apakah tersedia?');
         document.getElementById('pmWa').href = 'https://wa.me/' + wa + '?text=' + msg;
@@ -829,6 +776,8 @@ document.addEventListener('keydown', function(e) {
             $pName = esc($p['name']);
             $pPrice = esc($p['price']);
             $pCat = esc($p['category'] ?? 'simple');
+            $pDisc = (int)($p['discount_pct'] ?? 0);
+            $pMinBuy = (int)($p['min_purchase'] ?? 0);
         ?>
             <div class="product-card" data-category="<?= $pCat ?>">
                 <div class="product-card-img-wrap">
@@ -839,10 +788,22 @@ document.addEventListener('keydown', function(e) {
                         </button>
                     </div>
                     <span class="product-badge-cat"><?= esc(ucfirst($pCat)) ?></span>
+                    <?php if ($pDisc > 0): ?>
+                    <span class="product-badge-disc"><?= $pDisc ?>% OFF</span>
+                    <?php endif; ?>
                 </div>
                 <div class="product-info">
                     <div class="product-name"><?= $pName ?></div>
                     <div class="product-price"><?= $pPrice ?></div>
+                    <?php if ($pDisc > 0): ?>
+                    <div class="product-disc-info">
+                        <i class="fas fa-tag" style="margin-right:4px;"></i>
+                        Diskon <strong><?= $pDisc ?>%</strong>
+                        <?php if ($pMinBuy > 0): ?>
+                        · Min. beli <strong>Rp <?= number_format($pMinBuy,0,',','.') ?></strong>
+                        <?php endif; ?>
+                    </div>
+                    <?php endif; ?>
                     <button class="btn-beli" onclick="handleBeli('<?= addslashes($p['name']) ?>','<?= addslashes($p['price']) ?>','<?= addslashes($p['image'] ?? $p['img'] ?? '') ?>')">
                         <i class="fas fa-shopping-bag me-1"></i> Beli Sekarang
                     </button>
@@ -872,10 +833,12 @@ document.addEventListener('keydown', function(e) {
 .btn-preview { background:rgba(255,255,255,0.92); color:#5A4A42; border:none; border-radius:50px; padding:9px 22px; font-size:13px; font-weight:600; font-family:'Poppins',sans-serif; cursor:pointer; transform:translateY(8px); transition:transform .3s,background .2s; box-shadow:0 4px 14px rgba(0,0,0,0.12); }
 .product-card:hover .btn-preview { transform:translateY(0); }
 .product-badge-cat { position:absolute; top:12px; left:12px; background:rgba(255,255,255,0.88); color:#5A4A42; font-size:10px; font-weight:700; font-family:'Poppins',sans-serif; letter-spacing:.8px; text-transform:uppercase; padding:4px 12px; border-radius:50px; backdrop-filter:blur(6px); border:1px solid rgba(255,255,255,0.6); }
+.product-badge-disc { position:absolute; top:12px; right:12px; background:linear-gradient(135deg,#e74c3c,#c0392b); color:#fff; font-size:10px; font-weight:800; font-family:'Poppins',sans-serif; letter-spacing:.5px; padding:4px 10px; border-radius:50px; box-shadow:0 3px 10px rgba(231,76,60,0.4); }
 .product-img { width:100%; height:260px; object-fit:cover; }
 .product-info { padding:16px; }
 .product-name { font-weight:600; font-family:'Poppins',sans-serif; font-size:14px; color:#2d1f17; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.product-price { color:#8B6F5E; font-weight:700; font-size:15px; margin-bottom:10px; }
+.product-price { color:#8B6F5E; font-weight:700; font-size:15px; margin-bottom:6px; }
+.product-disc-info { font-size:11px; color:#c0392b; margin-bottom:8px; padding:5px 9px; background:#fff5f5; border-radius:8px; border:1px dashed #f5b7b1; }
 .btn-beli { width:100%; padding:9px 0; background:linear-gradient(135deg,#8B6F5E,#D6C1A3); color:#fff; border:none; border-radius:12px; font-size:13px; font-weight:600; font-family:'Poppins',sans-serif; cursor:pointer; transition:all .25s; box-shadow:0 4px 14px rgba(139,111,94,0.25); }
 .btn-beli:hover { box-shadow:0 8px 24px rgba(139,111,94,0.40); transform:translateY(-1px); }
 @media(max-width:576px){ .product-grid { grid-template-columns:repeat(2,1fr); gap:14px; } .product-img { height:180px; } }
