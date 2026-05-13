@@ -137,6 +137,7 @@ if (!empty($pricesRows)) {
             'name'  => $pr['name'],
             'price' => $pr['price'],
             'desc'  => $pr['description'] ?? '',
+            'image' => $pr['image'] ?? '',
         ];
     }
 } else {
@@ -251,12 +252,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order']) && !empty($_
     if (!empty($errors)) {
         echo json_encode(['success'=>false,'message'=>implode('<br>', $errors)]);
     } elseif (!$conn) {
-        echo json_encode(['success'=>false,'message'=>'Koneksi database gagal.']);
+        echo json_encode(['success'=>false,'message'=>'Koneksi database gagal: '.mysqli_connect_error()]);
     } else {
         $stmt = mysqli_prepare($conn,
             "INSERT INTO orders (user_id,nama,whatsapp,alamat,product_name,product_price,qty,total,catatan)
              VALUES (?,?,?,?,?,?,?,?,?)"
         );
+        if (!$stmt) {
+            echo json_encode(['success'=>false,'message'=>'Prepare gagal: '.mysqli_error($conn)]);
+            exit;
+        }
         mysqli_stmt_bind_param($stmt, "isssssiss",
             $user_id,$nama,$whatsapp,$alamat,$product_name,$product_price,$qty,$total,$catatan
         );
@@ -294,6 +299,95 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
     <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css?v=5.0">
     <link rel="stylesheet" href="style.css">
+    <style>
+/* ══ CART CSS — Shopee Style ══ */
+#cart-fab{position:fixed;bottom:28px;right:28px;z-index:1200;width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,#8B6F5E,#D6C1A3);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 6px 24px rgba(139,111,94,0.45);transition:transform .25s,box-shadow .25s;}
+#cart-fab:hover{transform:translateY(-3px) scale(1.06);box-shadow:0 12px 32px rgba(139,111,94,0.5);}
+#cart-badge{position:absolute;top:-4px;right:-4px;background:#ee4d2d;color:#fff;font-size:10px;font-weight:700;font-family:'Poppins',sans-serif;min-width:18px;height:18px;border-radius:9px;display:none;align-items:center;justify-content:center;border:2px solid #fff;line-height:1;padding:0 3px;}
+#cart-overlay{display:none;position:fixed;inset:0;background:rgba(50,35,30,0.5);backdrop-filter:blur(3px);z-index:99998;opacity:0;transition:opacity .3s;}
+#cart-overlay.open{display:block;opacity:1;}
+#cart-sidebar{position:fixed;top:0;right:0;width:420px;max-width:100vw;height:100%;background:#f5f5f5;z-index:99999;display:flex;flex-direction:column;transform:translateX(110%);transition:transform .35s cubic-bezier(0.4,0,0.2,1);box-shadow:-8px 0 40px rgba(50,35,30,0.18);}
+#cart-sidebar.open{transform:translateX(0);}
+
+/* Cart Header */
+.cart-header{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid #f0e8df;background:#fff;flex-shrink:0;}
+.cart-header-title{font-family:'Poppins',sans-serif;font-size:16px;font-weight:700;color:#3a2a22;display:flex;align-items:center;gap:8px;}
+.cart-header-title i{color:#8B6F5E;}
+.cart-header-count{font-size:12px;color:#999;font-weight:400;margin-left:4px;}
+.cart-header-actions{display:flex;align-items:center;gap:8px;}
+#cart-close-btn{background:#f5ede6;border:none;border-radius:50%;width:32px;height:32px;font-size:16px;color:#8B6F5E;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;}
+#cart-close-btn:hover{background:#e8d8cc;}
+
+/* Select-all bar */
+.cart-select-bar{display:flex;align-items:center;gap:10px;padding:10px 18px;background:#fff;border-bottom:1px solid #f0e8df;flex-shrink:0;}
+.cart-select-bar label{font-family:'Poppins',sans-serif;font-size:13px;color:#555;cursor:pointer;display:flex;align-items:center;gap:8px;user-select:none;}
+.cart-select-bar input[type=checkbox]{width:17px;height:17px;accent-color:#8B6F5E;cursor:pointer;}
+#cart-clear-btn{margin-left:auto;background:none;border:none;color:#bbb;font-size:11px;font-family:'Poppins',sans-serif;cursor:pointer;padding:4px 8px;border-radius:6px;transition:all .2s;}
+#cart-clear-btn:hover{background:#fdf0e8;color:#e74c3c;}
+
+/* Cart Body */
+.cart-body{flex:1;overflow-y:auto;padding:10px;}
+.cart-body::-webkit-scrollbar{width:4px;}
+.cart-body::-webkit-scrollbar-track{background:#f5f5f5;}
+.cart-body::-webkit-scrollbar-thumb{background:#D6C1A3;border-radius:4px;}
+
+/* Empty state */
+#cart-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:280px;color:#ccc;font-family:'Poppins',sans-serif;gap:12px;}
+#cart-empty i{font-size:56px;color:#e8d8cc;}
+#cart-empty p{font-size:14px;color:#bbb;margin:0;}
+#cart-empty small{font-size:11px;color:#ccc;}
+
+/* Cart Item — Shopee card style */
+.cart-item{display:flex;align-items:flex-start;gap:12px;padding:14px;background:#fff;border-radius:12px;margin-bottom:8px;animation:cartItemIn .25s ease;border:1px solid #f0e8df;}
+@keyframes cartItemIn{from{opacity:0;transform:translateX(12px);}to{opacity:1;transform:none;}}
+.cart-item-check{flex-shrink:0;margin-top:4px;}
+.cart-item-check input[type=checkbox]{width:17px;height:17px;accent-color:#8B6F5E;cursor:pointer;}
+.cart-item-img{width:72px;height:72px;object-fit:cover;border-radius:10px;flex-shrink:0;border:1px solid #f0e8df;}
+.cart-item-img-placeholder{background:linear-gradient(135deg,#fdf0e8,#f5e6d8);display:flex;align-items:center;justify-content:center;color:#D6C1A3;font-size:26px;}
+.cart-item-info{flex:1;min-width:0;}
+.cart-item-name{font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;color:#2d1f17;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.cart-item-type{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#bbb;font-family:'Poppins',sans-serif;margin:3px 0 6px;background:#f5ede6;display:inline-block;padding:2px 8px;border-radius:20px;}
+.cart-item-price{font-size:14px;font-weight:800;color:#ee4d2d;font-family:'Poppins',sans-serif;}
+.cart-item-subtotal{font-size:11px;color:#aaa;font-family:'Poppins',sans-serif;margin-top:1px;}
+
+/* Qty controls */
+.cart-item-bottom{display:flex;align-items:center;justify-content:space-between;margin-top:8px;}
+.cart-qty-wrap{display:flex;align-items:center;border:1px solid #e8ddd4;border-radius:8px;overflow:hidden;}
+.cart-qty-btn{width:30px;height:30px;border:none;background:#fff;color:#8B6F5E;font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;line-height:1;}
+.cart-qty-btn:hover{background:#fdf0e8;}
+.cart-qty-val{font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;color:#3a2a22;min-width:34px;text-align:center;border-left:1px solid #f0e8df;border-right:1px solid #f0e8df;height:30px;display:flex;align-items:center;justify-content:center;}
+.cart-remove-btn{background:none;border:none;color:#ccc;cursor:pointer;font-size:12px;padding:5px 8px;transition:color .2s;font-family:'Poppins',sans-serif;display:flex;align-items:center;gap:4px;}
+.cart-remove-btn:hover{color:#e74c3c;}
+
+/* Cart Footer */
+#cart-footer{flex-shrink:0;border-top:1px solid #e8ddd4;background:#fff;display:none;}
+.cart-summary-box{padding:12px 18px;background:#fff8f5;border-bottom:1px solid #f0e8df;}
+.cart-summary-row{display:flex;justify-content:space-between;align-items:center;font-family:'Poppins',sans-serif;font-size:13px;color:#666;margin-bottom:4px;}
+.cart-summary-row:last-child{margin-bottom:0;}
+.cart-summary-row strong{color:#2d1f17;font-size:14px;}
+.cart-selected-info{font-size:11px;color:#8B6F5E;font-weight:600;}
+.cart-total-row{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;border-top:1px solid #f0e8df;}
+.cart-total-label{font-family:'Poppins',sans-serif;font-size:13px;color:#888;font-weight:500;}
+#cart-total{font-family:'Poppins',sans-serif;font-size:20px;font-weight:800;color:#8B6F5E;}
+.cart-checkout-wrap{padding:12px 18px 18px;}
+#cart-checkout-btn{width:100%;padding:13px 0;background:linear-gradient(135deg,#CBB89D,#D6C1A3);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;font-family:'Poppins',sans-serif;cursor:pointer;transition:all .25s;box-shadow:0 6px 20px rgba(203,184,157,0.4);display:flex;align-items:center;justify-content:center;gap:8px;}
+#cart-checkout-btn:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(203,184,157,0.5);background:linear-gradient(135deg,#b8a082,#CBB89D);}
+#cart-checkout-btn:disabled{background:#ccc;box-shadow:none;cursor:not-allowed;transform:none;}
+.cart-note{text-align:center;font-size:11px;color:#bbb;margin-top:8px;font-family:'Poppins',sans-serif;}
+
+/* Toast */
+.cart-toast{position:fixed;bottom:100px;right:28px;z-index:9999;background:#3a2a22;color:#fff;padding:11px 18px;border-radius:50px;font-size:13px;font-family:'Poppins',sans-serif;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,0.25);opacity:0;transform:translateY(16px);transition:opacity .3s,transform .3s;white-space:nowrap;display:flex;align-items:center;gap:8px;}
+.cart-toast.show{opacity:1;transform:translateY(0);}
+.cart-toast .toast-img{width:28px;height:28px;border-radius:6px;object-fit:cover;}
+
+/* Product buttons */
+.btn-add-cart{width:100%;padding:8px 0;background:#fff;color:#8B6F5E;border:2px solid #D6C1A3;border-radius:12px;font-size:12px;font-weight:600;font-family:'Poppins',sans-serif;cursor:pointer;transition:all .25s;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:5px;}
+.btn-add-cart:hover{background:linear-gradient(135deg,#8B6F5E,#D6C1A3);color:#fff;border-color:transparent;box-shadow:0 6px 18px rgba(139,111,94,0.3);}
+.btn-cart-price{display:inline-flex;align-items:center;gap:5px;background:linear-gradient(135deg,#8B6F5E,#D6C1A3);color:#fff;border:none;border-radius:50px;padding:4px 11px;font-size:10.5px;font-weight:600;font-family:'Poppins',sans-serif;cursor:pointer;transition:all .2s;box-shadow:0 3px 10px rgba(139,111,94,0.2);margin-top:5px;white-space:nowrap;}
+.btn-cart-price:hover{transform:translateY(-1px);box-shadow:0 5px 16px rgba(139,111,94,0.35);}
+
+@media(max-width:480px){#cart-sidebar{width:100vw;}#cart-fab{bottom:20px;right:18px;}.cart-toast{right:16px;bottom:90px;font-size:12px;max-width:calc(100vw - 32px);white-space:normal;}}
+    </style>
     <style>
         .btn-cream {
             background: #CBB89D; color: #fff; border: none; border-radius: 50px;
@@ -337,6 +431,60 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
     </style>
 </head>
 <body>
+
+<!-- ══ CART FAB ══ -->
+<button id="cart-fab" title="Keranjang Belanja" aria-label="Buka keranjang">
+    <i class="fas fa-shopping-cart"></i>
+    <span id="cart-badge">0</span>
+</button>
+<!-- ══ CART OVERLAY ══ -->
+<div id="cart-overlay"></div>
+<!-- ══ CART SIDEBAR ══ -->
+<div id="cart-sidebar" role="dialog" aria-modal="true" aria-label="Keranjang Belanja">
+    <div class="cart-header">
+        <div class="cart-header-title">
+            <i class="fas fa-shopping-cart"></i> Keranjang
+            <span class="cart-header-count" id="cart-count-label"></span>
+        </div>
+        <div class="cart-header-actions">
+            <button id="cart-close-btn" aria-label="Tutup"><i class="fas fa-times"></i></button>
+        </div>
+    </div>
+    <!-- Select All bar -->
+    <div class="cart-select-bar" id="cart-select-bar" style="display:none;">
+        <label>
+            <input type="checkbox" id="cart-select-all" onchange="NiswaCart.toggleSelectAll(this.checked)">
+            Pilih Semua
+        </label>
+        <button id="cart-clear-btn"><i class="fas fa-trash-alt"></i> Hapus Dipilih</button>
+    </div>
+    <div class="cart-body">
+        <div id="cart-empty">
+            <i class="fas fa-shopping-cart"></i>
+            <p>Keranjang masih kosong</p>
+            <small>Tambahkan produk atau layanan favorit kamu!</small>
+        </div>
+        <div id="cart-item-list"></div>
+    </div>
+    <div id="cart-footer">
+        <div class="cart-summary-box">
+            <div class="cart-summary-row">
+                <span class="cart-selected-info" id="cart-selected-info">0 item dipilih</span>
+                <span id="cart-selected-subtotal" style="font-family:'Poppins',sans-serif;font-size:13px;color:#8B6F5E;font-weight:700;"></span>
+            </div>
+        </div>
+        <div class="cart-total-row">
+            <span class="cart-total-label">Total Pembayaran</span>
+            <span id="cart-total">Rp 0</span>
+        </div>
+        <div class="cart-checkout-wrap">
+            <button id="cart-checkout-btn" disabled>
+                <i class="fas fa-credit-card"></i> Beli (<span id="cart-checkout-count">0</span>)
+            </button>
+            <p class="cart-note"><i class="fas fa-lock me-1"></i> Pesanan dikonfirmasi via WhatsApp</p>
+        </div>
+    </div>
+</div>
 
 <!-- Loading Screen -->
 <div id="loadingScreen">
@@ -536,10 +684,15 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
                             data-name="<?= htmlspecialchars($row['name'], ENT_QUOTES) ?>"
                             data-price="<?= htmlspecialchars($row['price'], ENT_QUOTES) ?>"
                             data-desc="<?= htmlspecialchars($row['desc'] ?? '', ENT_QUOTES) ?>"
+                            data-image="<?= htmlspecialchars($row['image'] ?? '', ENT_QUOTES) ?>"
                             data-cat="<?= htmlspecialchars($cat, ENT_QUOTES) ?>">
                             <td>
                                 <?= esc($row['name']) ?>
+                                <?php if (!empty($row['image'])): ?>
+                                <span class="price-row-hint"><i class="fa-solid fa-image"></i></span>
+                                <?php else: ?>
                                 <span class="price-row-hint"><i class="fa-solid fa-circle-info"></i></span>
+                                <?php endif; ?>
                             </td>
                             <td class="text-end price-cell"><?= esc($row['price']) ?></td>
                         </tr>
@@ -562,6 +715,7 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
     <div class="price-modal-box">
         <button class="price-modal-close" onclick="closePriceModal(null)"><i class="fa-solid fa-xmark"></i></button>
         <div class="price-modal-cat" id="pmCat"></div>
+        <img id="pmImg" src="" alt="" class="price-modal-img" style="display:none;">
         <div class="price-modal-name" id="pmName"></div>
         <div class="price-modal-price" id="pmPrice"></div>
         <div class="price-modal-divider"></div>
@@ -643,6 +797,11 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
     transition: all .2s; box-shadow: 0 4px 16px rgba(37,211,102,0.3);
 }
 .price-modal-wa:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(37,211,102,0.4); color:#fff; }
+.price-modal-img {
+    width: 100%; max-height: 200px; object-fit: cover;
+    border-radius: 14px; margin-bottom: 14px;
+    border: 1px solid #f0e8df;
+}
 </style>
 
 <script>
@@ -712,10 +871,19 @@ document.querySelectorAll('.price-row-clickable').forEach(function(row) {
         var price = this.dataset.price;
         var desc  = this.dataset.desc;
         var cat   = this.dataset.cat;
+        var img   = this.dataset.image || '';
         document.getElementById('pmCat').textContent   = cat;
         document.getElementById('pmName').textContent  = name;
         document.getElementById('pmPrice').textContent = price;
         document.getElementById('pmDesc').textContent  = desc || getDesc(name, cat);
+        var pmImg = document.getElementById('pmImg');
+        if (img) {
+            pmImg.src = img;
+            pmImg.style.display = 'block';
+        } else {
+            pmImg.src = '';
+            pmImg.style.display = 'none';
+        }
         var wa = '<?= $kontak["whatsapp"] ?? "62882006900" ?>';
         var msg = encodeURIComponent('Halo, saya ingin booking layanan *' + name + '* (' + price + '). Apakah tersedia?');
         document.getElementById('pmWa').href = 'https://wa.me/' + wa + '?text=' + msg;
@@ -804,8 +972,11 @@ document.addEventListener('keydown', function(e) {
                         <?php endif; ?>
                     </div>
                     <?php endif; ?>
-                    <button class="btn-beli" onclick="handleBeli('<?= addslashes($p['name']) ?>','<?= addslashes($p['price']) ?>','<?= addslashes($p['image'] ?? $p['img'] ?? '') ?>')">
+                    <button class="btn-beli" onclick="handleBeli('<?= addslashes($p['name']) ?>','<?= addslashes($p['price']) ?>','<?= addslashes($p['image'] ?? $p['img'] ?? '') ?>',<?= $pDisc ?>)">
                         <i class="fas fa-shopping-bag me-1"></i> Beli Sekarang
+                    </button>
+                    <button class="btn-add-cart" onclick="NiswaCart.add('<?= addslashes($p['name']) ?>','<?= addslashes($p['price']) ?>','<?= addslashes($p['image'] ?? $p['img'] ?? '') ?>','Produk',<?= $pDisc ?>)">
+                        <i class="fas fa-cart-plus"></i> + Keranjang
                     </button>
                 </div>
             </div>
@@ -1080,9 +1251,15 @@ document.addEventListener('keydown', function(e) {
         <div style="padding:0 24px 24px;">
             <div style="display:flex;align-items:center;gap:14px;background:#faf5f0;border-radius:14px;padding:14px;margin-bottom:18px;">
                 <img id="modalProductImg" src="" alt="" style="width:60px;height:60px;object-fit:cover;border-radius:10px;">
-                <div>
+                <div style="flex:1;">
                     <div id="modalProductNameInner" style="font-weight:600;font-size:14px;color:#2d1f17;font-family:'Poppins',sans-serif;"></div>
-                    <div id="modalProductPrice" style="color:#8B6F5E;font-weight:700;font-size:15px;font-family:'Poppins',sans-serif;"></div>
+                    <div style="display:flex;align-items:center;gap:8px;margin-top:3px;flex-wrap:wrap;">
+                        <div id="modalProductPrice" style="color:#8B6F5E;font-weight:700;font-size:15px;font-family:'Poppins',sans-serif;"></div>
+                        <div id="modalProductPriceOri" style="display:none;color:#bbb;font-weight:500;font-size:12px;font-family:'Poppins',sans-serif;text-decoration:line-through;"></div>
+                    </div>
+                    <div id="modalDiscBadge" style="display:none;margin-top:5px;background:#fff3e0;color:#c97000;font-size:11px;font-weight:700;font-family:'Poppins',sans-serif;padding:3px 10px;border-radius:20px;align-items:center;gap:4px;">
+                        <i class="fas fa-tag"></i> <span id="modalDiscText"></span>
+                    </div>
                 </div>
             </div>
             <form method="POST" id="orderForm">
@@ -1107,10 +1284,27 @@ document.addEventListener('keydown', function(e) {
                     <textarea name="alamat" required placeholder="Alamat lengkap..." rows="2"
                         style="width:100%;padding:10px 14px;border:1.5px solid #e8e0d8;border-radius:10px;font-size:13px;font-family:Poppins,sans-serif;outline:none;resize:none;"></textarea>
                 </div>
-                <div style="margin-bottom:14px;">
+                <div id="qtyField" style="margin-bottom:14px;">
                     <label style="font-size:13px;font-weight:500;margin-bottom:6px;display:block;">Jumlah</label>
-                    <input type="number" name="qty" min="1" max="10" value="1"
+                    <input type="number" name="qty" id="inputQty" min="1" max="10" value="1"
                         style="width:100%;padding:10px 14px;border:1.5px solid #e8e0d8;border-radius:10px;font-size:13px;font-family:Poppins,sans-serif;outline:none;">
+                    <div id="qtyCartInfo" style="display:none;background:#f0faf5;border:1.5px solid #a7d7c5;border-radius:10px;padding:10px 14px;font-size:13px;font-family:Poppins,sans-serif;color:#2d6a4f;font-weight:500;align-items:center;gap:8px;">
+                        <i class="fas fa-shopping-cart" style="color:#40916c;"></i>
+                        <span id="qtyCartText"></span>
+                    </div>
+                </div>
+                <!-- Ringkasan Pembayaran -->
+                <div id="orderSummaryBox" style="background:#faf5f0;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-family:'Poppins',sans-serif;font-size:13px;">
+                    <div style="display:flex;justify-content:space-between;color:#888;margin-bottom:6px;">
+                        <span>Subtotal</span><span id="summarySubtotal">-</span>
+                    </div>
+                    <div id="summaryDiscRow" style="display:none;justify-content:space-between;color:#c97000;margin-bottom:6px;">
+                        <span id="summaryDiscLabel">Diskon</span><span id="summaryDiscAmt">-</span>
+                    </div>
+                    <div style="border-top:1px dashed #e8ddd4;margin:8px 0;"></div>
+                    <div style="display:flex;justify-content:space-between;font-weight:700;color:#2d1f17;font-size:14px;">
+                        <span>Total Bayar</span><span id="summaryTotal" style="color:#8B6F5E;">-</span>
+                    </div>
                 </div>
                 <button type="submit"
                     style="width:100%;padding:12px;background:linear-gradient(135deg,#8B6F5E,#D6C1A3);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;font-family:Poppins,sans-serif;cursor:pointer;">
@@ -1183,37 +1377,97 @@ document.addEventListener('keydown', function(e) {
 
 <!-- Order Modal Script -->
 <script>
-function handleBeli(name,price,img){
+function parseRp(str){return parseInt((str||'0').replace(/[^0-9]/g,''))||0;}
+function fmtRp(n){return 'Rp '+n.toLocaleString('id-ID');}
+
+function updateOrderSummary(){
+    var modal=document.getElementById('orderModal');
+    if(modal&&modal.dataset.cartMode==='1')return; // cart checkout sudah isi summary sendiri
+    var qty=parseInt(document.querySelector('#orderForm [name="qty"]').value)||1;
+    var oriPrice=parseInt(modal.dataset.oriPrice)||0;
+    var disc=parseInt(modal.dataset.disc)||0;
+    var subtotal=oriPrice*qty;
+    var discAmt=Math.round(subtotal*disc/100);
+    var total=subtotal-discAmt;
+    document.getElementById('summarySubtotal').textContent=fmtRp(subtotal);
+    var discRow=document.getElementById('summaryDiscRow');
+    if(disc>0){
+        discRow.style.display='flex';
+        document.getElementById('summaryDiscLabel').textContent='Diskon '+disc+'%';
+        document.getElementById('summaryDiscAmt').textContent='- '+fmtRp(discAmt);
+    } else {
+        discRow.style.display='none';
+    }
+    document.getElementById('summaryTotal').textContent=fmtRp(total);
+    document.getElementById('inputProductPrice').value=fmtRp(total);
+}
+
+function handleBeli(name,price,img,disc){
+    disc=disc||0;
+    var oriNum=parseRp(price);
+    var discAmt=Math.round(oriNum*disc/100);
+    var finalNum=oriNum-discAmt;
+    var finalPrice=fmtRp(finalNum);
+
+    var modal=document.getElementById('orderModal');
+    modal.dataset.oriPrice=oriNum;
+    modal.dataset.disc=disc;
+    modal.dataset.cartMode='0';
+    // Tampilkan input qty normal, sembunyikan info cart
+    var qtyInputBox=document.querySelector('#qtyField input[type="number"]');
+    var qtyCartInfo=document.getElementById('qtyCartInfo');
+    if(qtyInputBox){qtyInputBox.style.display='';qtyInputBox.value=1;}
+    if(qtyCartInfo){qtyCartInfo.style.display='none';}
+
     document.getElementById('modalProductName').textContent=name;
     document.getElementById('modalProductNameInner').textContent=name;
-    document.getElementById('modalProductPrice').textContent=price;
     document.getElementById('modalProductImg').src=img;
     document.getElementById('orderForm').reset();
     document.getElementById('inputProductName').value=name;
-    document.getElementById('inputProductPrice').value=price;
+
+    // Tampilkan harga
+    var priceEl=document.getElementById('modalProductPrice');
+    var oriEl=document.getElementById('modalProductPriceOri');
+    var discBadge=document.getElementById('modalDiscBadge');
+    if(disc>0){
+        priceEl.textContent=finalPrice;
+        oriEl.textContent=price;
+        oriEl.style.display='block';
+        discBadge.style.display='inline-flex';
+        document.getElementById('modalDiscText').textContent='Hemat '+disc+'%';
+    } else {
+        priceEl.textContent=price;
+        oriEl.style.display='none';
+        discBadge.style.display='none';
+    }
+
     document.getElementById('orderError').style.display='none';
-    document.getElementById('orderModal').style.display='flex';
+    modal.style.display='flex';
+    updateOrderSummary();
 }
 function closeOrder(){document.getElementById('orderModal').style.display='none';}
 document.getElementById('orderModal').addEventListener('click',function(e){if(e.target===this)closeOrder();});
+document.querySelector('#orderForm [name="qty"]').addEventListener('input',updateOrderSummary);
 
 document.getElementById('orderForm').addEventListener('submit',function(e){
     e.preventDefault();
     var errBox=document.getElementById('orderError');errBox.style.display='none';
-    fetch(window.location.href,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'},body:new FormData(this)})
+    var cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
+    fetch(cleanUrl,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'},body:new FormData(this)})
     .then(res=>res.json())
     .then(data=>{
         if(data.success){closeOrder();document.getElementById('successOrder').style.display='flex';this.reset();}
-        else{errBox.innerHTML=data.message;errBox.style.display='block';}
+        else{errBox.innerHTML=data.message||'Terjadi kesalahan.';errBox.style.display='block';}
     })
-    .catch(()=>{errBox.innerHTML='Terjadi kesalahan. Silakan coba lagi.';errBox.style.display='block';});
+    .catch((err)=>{errBox.innerHTML='Terjadi kesalahan koneksi: '+err;errBox.style.display='block';});
 });
 
-function showProductPreview(name,price,img){
+function showProductPreview(name,price,img,disc){
+    disc=disc||0;
     document.getElementById('ppImg').src=img;
     document.getElementById('ppName').textContent=name;
     document.getElementById('ppPrice').textContent=price;
-    document.getElementById('ppBeli').onclick=function(){closeProductPreview();handleBeli(name,price,img);};
+    document.getElementById('ppBeli').onclick=function(){closeProductPreview();handleBeli(name,price,img,disc);};
     document.getElementById('productPreviewModal').style.display='flex';
 }
 function closeProductPreview(){document.getElementById('productPreviewModal').style.display='none';}
@@ -1254,6 +1508,192 @@ function closeProductPreview(){document.getElementById('productPreviewModal').st
     goTo(0);startAuto();
     window.addEventListener('resize',function(){perView=getPerView();totalSlides=Math.max(1,cards.length-perView+1);goTo(0);});
 })();
+</script>
+
+<!-- ══ CART SCRIPT — Shopee Style ══ -->
+<script>
+var NiswaCart=(function(){
+    var STORAGE_KEY='niswa_cart_v2';
+    var items=[];
+    function load(){try{items=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');}catch(e){items=[];}}
+    function save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(items));}catch(e){};}
+    function totalQty(){return items.reduce(function(s,i){return s+i.qty;},0);}
+    function selectedItems(){return items.filter(function(i){return i.selected;});}
+    function selectedTotal(){return selectedItems().reduce(function(s,i){return s+i.numPrice*i.qty;},0);}
+    function parsePrice(str){var nums=(str+'').match(/[\d.]+/g);if(!nums)return 0;return parseInt(nums[0].replace(/\./g,''),10)||0;}
+    function fmt(n){return 'Rp '+n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.');}
+    function escHtml(str){return(str+'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+    function add(name,price,img,type,disc){
+        disc=parseInt(disc)||0;
+        var oriNum=parsePrice(price);
+        var discAmt=Math.round(oriNum*disc/100);
+        var numPrice=oriNum-discAmt;
+        var finalPrice=disc>0?fmt(numPrice):price;
+        var existing=items.find(function(i){return i.name===name&&i.type===type;});
+        if(existing){existing.qty++;existing.selected=true;}
+        else{items.push({name:name,price:finalPrice,oriPrice:price,numPrice:numPrice,disc:disc,img:img||'',type:type||'Produk',qty:1,selected:true});}
+        save();render();showToast(name,img);openCart();
+    }
+    function setQty(idx,qty){
+        if(qty<1){if(confirm('Hapus "'+items[idx].name+'" dari keranjang?')){remove(idx);}return;}
+        items[idx].qty=qty;save();render();
+    }
+    function remove(idx){items.splice(idx,1);save();render();}
+    function removeSelected(){items=items.filter(function(i){return !i.selected;});save();render();}
+    function clear(){items=[];save();render();}
+    function toggleSelect(idx,val){items[idx].selected=val;save();render();}
+    function toggleSelectAll(val){items.forEach(function(i){i.selected=val;});save();render();}
+    function render(){
+        var badge=document.getElementById('cart-badge');
+        var qty=totalQty();
+        if(badge){badge.textContent=qty;badge.style.display=qty>0?'flex':'none';}
+        var listEl=document.getElementById('cart-item-list');
+        var emptyEl=document.getElementById('cart-empty');
+        var footerEl=document.getElementById('cart-footer');
+        var selectBar=document.getElementById('cart-select-bar');
+        var countLabel=document.getElementById('cart-count-label');
+        if(!listEl)return;
+        if(countLabel)countLabel.textContent=qty>0?'('+qty+')':'';
+        listEl.innerHTML='';
+        if(items.length===0){
+            if(emptyEl)emptyEl.style.display='flex';
+            if(footerEl)footerEl.style.display='none';
+            if(selectBar)selectBar.style.display='none';
+            return;
+        }
+        if(emptyEl)emptyEl.style.display='none';
+        if(footerEl)footerEl.style.display='block';
+        if(selectBar)selectBar.style.display='flex';
+        items.forEach(function(item,idx){
+            var div=document.createElement('div');div.className='cart-item';
+            var imgHtml=item.img?'<img src="'+escHtml(item.img)+'" class="cart-item-img" alt="">':'<div class="cart-item-img cart-item-img-placeholder"><i class="fas fa-spa"></i></div>';
+            div.innerHTML='<div class="cart-item-check"><input type="checkbox" '+(item.selected?'checked':'')+' onchange="NiswaCart.toggleSelect('+idx+',this.checked)"></div>'+
+                imgHtml+
+                '<div class="cart-item-info">'+
+                '<div class="cart-item-name">'+escHtml(item.name)+'</div>'+
+                '<span class="cart-item-type">'+escHtml(item.type)+'</span>'+
+                (item.disc>0?'<div style="display:flex;align-items:center;gap:6px;"><span class="cart-item-price">'+escHtml(item.price)+'</span><span style="font-size:11px;color:#bbb;text-decoration:line-through;font-family:Poppins,sans-serif;">'+escHtml(item.oriPrice||item.price)+'</span></div>':'<div class="cart-item-price">'+escHtml(item.price)+'</div>')+
+                (item.disc>0?'<span style="background:#fff3e0;color:#c97000;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;font-family:Poppins,sans-serif;display:inline-block;margin-bottom:4px;"><i class="fas fa-tag"></i> Hemat '+item.disc+'%</span>':'')+
+                '<div class="cart-item-bottom">'+
+                '<div class="cart-qty-wrap">'+
+                '<button class="cart-qty-btn" onclick="NiswaCart.setQty('+idx+','+(item.qty-1)+')">-</button>'+
+                '<span class="cart-qty-val">'+item.qty+'</span>'+
+                '<button class="cart-qty-btn" onclick="NiswaCart.setQty('+idx+','+(item.qty+1)+')">+</button>'+
+                '</div>'+
+                '<button class="cart-remove-btn" onclick="NiswaCart.remove('+idx+')"><i class="fas fa-trash-alt"></i></button>'+
+                '</div></div>';
+            listEl.appendChild(div);
+        });
+        var selAll=document.getElementById('cart-select-all');
+        if(selAll)selAll.checked=items.length>0&&items.every(function(i){return i.selected;});
+        var sel=selectedItems();var selTot=selectedTotal();
+        var selInfo=document.getElementById('cart-selected-info');
+        var selSub=document.getElementById('cart-selected-subtotal');
+        var totalEl=document.getElementById('cart-total');
+        var chkBtn=document.getElementById('cart-checkout-btn');
+        var chkCount=document.getElementById('cart-checkout-count');
+        if(selInfo)selInfo.textContent=sel.length+' item dipilih';
+        if(selSub)selSub.textContent=sel.length>0?fmt(selTot):'';
+        if(totalEl)totalEl.textContent=fmt(selTot);
+        if(chkCount)chkCount.textContent=sel.reduce(function(s,i){return s+i.qty;},0);
+        if(chkBtn)chkBtn.disabled=sel.length===0;
+    }
+    function checkout(){
+        var sel=selectedItems();if(sel.length===0)return;
+        var names=sel.map(function(i){return i.name+' x'+i.qty;}).join(', ');
+        var selTot=selectedTotal();
+        // Hitung total sebelum diskon dan total diskon
+        var oriTot=sel.reduce(function(s,i){return s+parsePrice(i.oriPrice||i.price)*i.qty;},0);
+        var totalDisc=oriTot-selTot;
+        var total=fmt(selTot);var firstImg=sel[0].img||'';
+        var pNameEl=document.getElementById('inputProductName');
+        var pPriceEl=document.getElementById('inputProductPrice');
+        var modalNameEl=document.getElementById('modalProductName');
+        var modalNameInEl=document.getElementById('modalProductNameInner');
+        var modalPriceEl=document.getElementById('modalProductPrice');
+        var modalOriEl=document.getElementById('modalProductPriceOri');
+        var modalDiscBadge=document.getElementById('modalDiscBadge');
+        var modalImgEl=document.getElementById('modalProductImg');
+        if(pNameEl)pNameEl.value=names;if(pPriceEl)pPriceEl.value=total;
+        if(modalNameEl)modalNameEl.textContent='Pesanan ('+sel.length+' item)';
+        if(modalNameInEl)modalNameInEl.textContent=names;
+        if(modalPriceEl)modalPriceEl.textContent=total;
+        if(modalOriEl){
+            if(totalDisc>0){modalOriEl.textContent=fmt(oriTot);modalOriEl.style.display='block';}
+            else{modalOriEl.style.display='none';}
+        }
+        if(modalDiscBadge){
+            if(totalDisc>0){
+                modalDiscBadge.style.display='inline-flex';
+                document.getElementById('modalDiscText').textContent='Hemat '+fmt(totalDisc);
+            } else {modalDiscBadge.style.display='none';}
+        }
+        if(modalImgEl&&firstImg)modalImgEl.src=firstImg;
+        var form=document.getElementById('orderForm');if(form)form.reset();
+        if(pNameEl)pNameEl.value=names;if(pPriceEl)pPriceEl.value=total;
+        // Set qty dari total item keranjang yang dipilih
+        var totalQtySelected=sel.reduce(function(s,i){return s+i.qty;},0);
+        var inputQtyEl=document.getElementById('inputQty');
+        var qtyInputBox=document.querySelector('#qtyField input[type="number"]');
+        var qtyCartInfo=document.getElementById('qtyCartInfo');
+        var qtyCartText=document.getElementById('qtyCartText');
+        if(inputQtyEl){inputQtyEl.value=totalQtySelected;}
+        if(qtyInputBox){qtyInputBox.style.display='none';}
+        if(qtyCartInfo){
+            qtyCartInfo.style.display='flex';
+            var itemLabel=sel.map(function(i){return i.name+(i.qty>1?' x'+i.qty:'');}).join(', ');
+            if(qtyCartText)qtyCartText.textContent=totalQtySelected+' item — '+itemLabel;
+        }
+        // Update summary box
+        var summarySubtotal=document.getElementById('summarySubtotal');
+        var summaryDiscRow=document.getElementById('summaryDiscRow');
+        var summaryDiscAmt=document.getElementById('summaryDiscAmt');
+        var summaryDiscLabel=document.getElementById('summaryDiscLabel');
+        var summaryTotal=document.getElementById('summaryTotal');
+        if(summarySubtotal)summarySubtotal.textContent=fmt(oriTot);
+        if(summaryDiscRow){
+            if(totalDisc>0){
+                summaryDiscRow.style.display='flex';
+                if(summaryDiscLabel)summaryDiscLabel.textContent='Total Diskon';
+                if(summaryDiscAmt)summaryDiscAmt.textContent='- '+fmt(totalDisc);
+            } else {summaryDiscRow.style.display='none';}
+        }
+        if(summaryTotal)summaryTotal.textContent=total;
+        // Set modal dataset untuk updateOrderSummary (nonaktifkan auto-update qty untuk cart)
+        var modal=document.getElementById('orderModal');
+        if(modal){modal.dataset.oriPrice=0;modal.dataset.disc=0;modal.dataset.cartMode='1';}
+        var errBox=document.getElementById('orderError');if(errBox)errBox.style.display='none';
+        closeCart();
+        var orderModal=document.getElementById('orderModal');if(orderModal)orderModal.style.display='flex';
+    }
+    function openCart(){var s=document.getElementById('cart-sidebar');var o=document.getElementById('cart-overlay');if(s)s.classList.add('open');if(o)o.classList.add('open');document.body.style.overflow='hidden';}
+    function closeCart(){var s=document.getElementById('cart-sidebar');var o=document.getElementById('cart-overlay');if(s)s.classList.remove('open');if(o)o.classList.remove('open');document.body.style.overflow='';}
+    function showToast(name,img){
+        var ex=document.getElementById('cart-toast');if(ex)ex.remove();
+        var t=document.createElement('div');t.id='cart-toast';t.className='cart-toast';
+        var imgTag=img?'<img src="'+escHtml(img)+'" class="toast-img">':'<i class="fas fa-shopping-cart"></i>';
+        t.innerHTML=imgTag+'<span>'+escHtml(name)+'</span><span style="color:#D6C1A3;font-size:11px;margin-left:4px;">+ Keranjang</span>';
+        document.body.appendChild(t);
+        setTimeout(function(){t.classList.add('show');},10);
+        setTimeout(function(){t.classList.remove('show');setTimeout(function(){t.remove();},400);},2800);
+    }
+    function init(){
+        load();render();
+        var fab=document.getElementById('cart-fab');if(fab)fab.addEventListener('click',openCart);
+        var overlay=document.getElementById('cart-overlay');if(overlay)overlay.addEventListener('click',closeCart);
+        var closeBtn=document.getElementById('cart-close-btn');if(closeBtn)closeBtn.addEventListener('click',closeCart);
+        var chkBtn=document.getElementById('cart-checkout-btn');if(chkBtn)chkBtn.addEventListener('click',checkout);
+        var clearBtn=document.getElementById('cart-clear-btn');if(clearBtn)clearBtn.addEventListener('click',function(){
+            var sel=selectedItems();
+            if(sel.length===0){alert('Pilih item yang ingin dihapus terlebih dahulu.');return;}
+            if(confirm('Hapus '+sel.length+' item yang dipilih?'))removeSelected();
+        });
+        var successOverlay=document.getElementById('successOrder');
+        if(successOverlay){var obs=new MutationObserver(function(){if(successOverlay.style.display==='flex'){items=items.filter(function(i){return !i.selected;});save();render();}});obs.observe(successOverlay,{attributes:true,attributeFilter:['style']});}
+    }
+    return{add:add,remove:remove,setQty:setQty,clear:clear,toggleSelect:toggleSelect,toggleSelectAll:toggleSelectAll,openCart:openCart,closeCart:closeCart,init:init};
+})();
+document.addEventListener('DOMContentLoaded',function(){NiswaCart.init();});
 </script>
 
 </body>

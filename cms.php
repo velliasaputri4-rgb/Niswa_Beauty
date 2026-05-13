@@ -144,48 +144,48 @@ if ($conn) {
     }
 
     $cntPrc = (int)(mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM cms_prices"))['c'] ?? 0);
+    // [category, name, price, description]  — deskripsi selaras dengan priceDescriptions di index.php
+    $defaultPrcSeed = [
+        ['Henna Series',       'Brow Henna',                      'Rp 25.000',             'Pewarnaan alis dengan henna alami yang tahan lama. Mengisi alis tipis dan memberikan tampilan tegas, natural, dan rapi.'],
+        ['Henna Series',       'Nail Henna Tangan',               'Rp 25.000',             'Motif henna indah di kuku & tangan menggunakan bahan alami. Cocok untuk acara formal maupun casual.'],
+        ['Henna Series',       'Nail Henna Kaki',                 'Rp 30.000',             'Desain henna elegan di area kuku dan kaki. Bahan aman, cocok untuk semua usia.'],
+        ['Henna Series',       'Bundling Meni-Henna',             'Rp 75.000',             'Paket hemat manicure lengkap + nail henna. Dua layanan kecantikan dalam satu sesi.'],
+        ['Henna Series',       'Henna Fun',                       'Rp 25.000 - 100.000',   'Henna dekoratif di tangan dengan berbagai motif pilihan. Semakin kompleks motif, semakin artistik hasilnya.'],
+        ['Treatment Spa',      'Bundling Manicure & Pedicure',    'Rp 100.000',            'Paket lengkap perawatan tangan & kaki: scrub, masker, pemotongan kuku, dan finishing oil.'],
+        ['Treatment Spa',      'Manicure / Pedicure',             'Rp 60.000',             'Perawatan kuku dan kulit tangan atau kaki dengan teknik profesional. Kulit lebih lembut, kuku lebih sehat.'],
+        ['Treatment Spa',      'Hand Spa',                        'Rp 80.000',             'Perawatan intensif tangan: scrub eksfoliasi, masker pelembap, dan pijat relaksasi. Tangan terasa lembut & cerah.'],
+        ['Treatment Spa',      'Foot Spa',                        'Rp 100.000',            'Terapi kaki lengkap mulai dari perendaman, scrub, masker, hingga pijat refleksi. Cocok setelah hari panjang.'],
+        ['Treatment Spa',      'Callus Treatment',                'Rp 70.000 - 150.000',   'Pengangkatan kapalan dan kulit keras di telapak kaki secara profesional. Makin tebal kalus, makin intensif perawatannya.'],
+        ['Brow & Lash',        'Brow Bomb',                       'Rp 100.000',            'Perawatan alis all-in-one: lifting, tinting, dan setting. Alis tampak tebal, tegas, dan terbentuk sempurna tanpa makeup.'],
+        ['Brow & Lash',        'Lashlift',                        'Rp 70.000',             'Keriting bulu mata permanen tanpa sambungan. Mata terlihat lebih besar dan terbuka secara alami hingga 6–8 minggu.'],
+        ['Brow & Lash',        'Lashlift Tint',                   'Rp 90.000',             'Lashlift plus pewarnaan bulu mata agar lebih gelap dan dramatis. Tanpa maskara pun sudah memukau.'],
+        ['Rambut',             'Creambath',                       'Rp 75.000',             'Perawatan rambut dengan krim nutrisi, pijat kepala, dan uap hangat. Rambut lebih lebat, lembut, dan berkilau.'],
+        ['Rambut',             'Hair Mask',                       'Rp 45.000 - 90.000',    'Masker rambut intensif sesuai jenis rambut. Menutrisi dari dalam, mengurangi frizz, dan mengembalikan kilau alami.'],
+        ['Rambut',             'Hair Spa',                        'Rp 100.000',            'Spa rambut lengkap: shampo, kondisioner, masker, uap, dan pijat. Solusi untuk rambut rusak & kering.'],
+        ['Rambut',             'Cuci,Catok,Blow',                 'Rp 25.000 - 50.000',    'Cuci rambut + blow dry atau catok sesuai selera. Rambut bersih, rapi, dan siap tampil.'],
+        ['Rambut',             'Bleaching S',                     'Rp 40.000',             'Bleaching parsial (highlight/poni) untuk mencerahkan area tertentu. Cocok untuk warna pastel atau ombre.'],
+        ['Rambut',             'Coloring Full',                   'Rp 120.000 - 300.000',  'Pewarnaan rambut penuh dari akar hingga ujung. Pilihan warna beragam, hasil merata dan tahan lama.'],
+        ['Rambut',             'Bleaching',                       'Rp 200.000 - 1.200.000','Bleaching full atau intensif untuk mengangkat pigmen rambut. Harga tergantung panjang dan ketebalan rambut.'],
+        ['Rambut',             'Balayage',                        'Rp 250.000 - 700.000',  'Teknik pewarnaan gradasi tangan bebas yang menghasilkan tampilan natural sun-kissed. Setiap hasil unik dan personal.'],
+        ['Rambut',             'Down Peim Poni',                  'Rp 100.000 - 300.000',  'Pelurus poni dengan teknik perm down. Poni turun rapi tahan lama tanpa perlu di-styling setiap hari.'],
+        ['Rambut',             'Keriting Klasik',                 'Rp 300.000 - 700.000',  'Keriting permanen dengan batang spiral klasik. Cocok untuk tampilan volume dan berkarakter.'],
+        ['Rambut',             'Keriting Digital',                'Rp 450.000 - 1.700.000','Keriting digital dengan alat pemanas modern. Hasil lebih bergelombang lembut, tahan lama, dan terlihat natural.'],
+        ['Rambut',             'Keratin Treatment',               'Rp 200.000',            'Perawatan keratin untuk melembutkan dan meluruskan rambut secara alami. Mengurangi frizz & mudah diatur.'],
+        ['Rambut',             'Smoothing',                       'Rp 200.000 - 400.000',  'Pelurusan rambut semi-permanen yang membuat rambut lurus, halus, dan mudah di-styling. Tahan 3–6 bulan.'],
+        ['Nail Art & Services','Press On Nail Basic',             'Rp 50.000',             'Press on nail siap pakai dengan desain simpel dan elegan. Mudah dipasang sendiri, tahan beberapa hari.'],
+        ['Nail Art & Services','Press On Nail Motif',             'Rp 75.000',             'Press on nail dengan motif artistik dan detail lebih kompleks. Cocok untuk event spesial.'],
+        ['Nail Art & Services','Kids Basic Gel',                  'Rp 40.000',             'Gel kuku aman khusus anak-anak. Warna solid lembut yang tahan lama dan tidak berbau menyengat.'],
+        ['Nail Art & Services','Kids Gel + 4 Sticker',            'Rp 50.000',             'Gel warna + 4 stiker kuku pilihan anak. Tampilan lucu dan menggemaskan.'],
+        ['Nail Art & Services','Kids Gel + Full Sticker',         'Rp 55.000',             'Gel warna + stiker kuku penuh di semua jari. Seru untuk tampilan spesial si kecil.'],
+        ['Nail Art & Services','Gel Basic Tangan / Kaki',         'Rp 85.000',             'Gel warna solid untuk tangan atau kaki dengan hasil rapi dan tahan lama. Cocok untuk tampilan sehari-hari maupun acara spesial.'],
+        ['Nail Art & Services','Extension',                       'Rp 50.000',             'Perpanjangan kuku menggunakan bahan gel berkualitas. Kuku tampak lebih panjang dan elegan secara instan.'],
+        ['Nail Art & Services','Gel French / Cat Eyes',           'Rp 105.000',            'Gel dengan desain French classic atau efek cat eye yang memukau. Hasil bersih, presisi, dan tahan lama.'],
+        ['Nail Art & Services','Remove Gel',                      'Rp 50.000',             'Pembersihan gel kuku secara aman tanpa merusak kuku asli. Proses cepat dan nyaman menggunakan teknik profesional.'],
+        ['Nail Art & Services','Gel Ombre / Blush On',            'Rp 135.000',            'Gradasi warna lembut ombre atau efek blush on di kuku. Tampilan feminin, romantis, dan cocok untuk berbagai kesempatan.'],
+        ['Nail Art & Services','Remove Extension',                'Rp 65.000',             'Pelepasan extension kuku secara aman dan menyeluruh. Kuku asli tetap terjaga kesehatannya setelah proses pengangkatan.'],
+        ['Nail Art & Services','Bundling Nail Art + Extension',   'Rp 150.000',            'Paket hemat: extension kuku plus nail art desain pilihan. Dua layanan premium dalam satu sesi yang efisien.'],
+    ];
     if ($cntPrc === 0) {
-        // [category, name, price, description]  — deskripsi selaras dengan priceDescriptions di index.php
-        $defaultPrcSeed = [
-            ['Henna Series',       'Brow Henna',                      'Rp 25.000',             'Pewarnaan alis dengan henna alami yang tahan lama. Mengisi alis tipis dan memberikan tampilan tegas, natural, dan rapi.'],
-            ['Henna Series',       'Nail Henna Tangan',               'Rp 25.000',             'Motif henna indah di kuku & tangan menggunakan bahan alami. Cocok untuk acara formal maupun casual.'],
-            ['Henna Series',       'Nail Henna Kaki',                 'Rp 30.000',             'Desain henna elegan di area kuku dan kaki. Bahan aman, cocok untuk semua usia.'],
-            ['Henna Series',       'Bundling Meni-Henna',             'Rp 75.000',             'Paket hemat manicure lengkap + nail henna. Dua layanan kecantikan dalam satu sesi.'],
-            ['Henna Series',       'Henna Fun',                       'Rp 25.000 - 100.000',   'Henna dekoratif di tangan dengan berbagai motif pilihan. Semakin kompleks motif, semakin artistik hasilnya.'],
-            ['Treatment Spa',      'Bundling Manicure & Pedicure',    'Rp 100.000',            'Paket lengkap perawatan tangan & kaki: scrub, masker, pemotongan kuku, dan finishing oil.'],
-            ['Treatment Spa',      'Manicure / Pedicure',             'Rp 60.000',             'Perawatan kuku dan kulit tangan atau kaki dengan teknik profesional. Kulit lebih lembut, kuku lebih sehat.'],
-            ['Treatment Spa',      'Hand Spa',                        'Rp 80.000',             'Perawatan intensif tangan: scrub eksfoliasi, masker pelembap, dan pijat relaksasi. Tangan terasa lembut & cerah.'],
-            ['Treatment Spa',      'Foot Spa',                        'Rp 100.000',            'Terapi kaki lengkap mulai dari perendaman, scrub, masker, hingga pijat refleksi. Cocok setelah hari panjang.'],
-            ['Treatment Spa',      'Callus Treatment',                'Rp 70.000 - 150.000',   'Pengangkatan kapalan dan kulit keras di telapak kaki secara profesional. Makin tebal kalus, makin intensif perawatannya.'],
-            ['Brow & Lash',        'Brow Bomb',                       'Rp 100.000',            'Perawatan alis all-in-one: lifting, tinting, dan setting. Alis tampak tebal, tegas, dan terbentuk sempurna tanpa makeup.'],
-            ['Brow & Lash',        'Lashlift',                        'Rp 70.000',             'Keriting bulu mata permanen tanpa sambungan. Mata terlihat lebih besar dan terbuka secara alami hingga 6–8 minggu.'],
-            ['Brow & Lash',        'Lashlift Tint',                   'Rp 90.000',             'Lashlift plus pewarnaan bulu mata agar lebih gelap dan dramatis. Tanpa maskara pun sudah memukau.'],
-            ['Rambut',             'Creambath',                       'Rp 75.000',             'Perawatan rambut dengan krim nutrisi, pijat kepala, dan uap hangat. Rambut lebih lebat, lembut, dan berkilau.'],
-            ['Rambut',             'Hair Mask',                       'Rp 45.000 - 90.000',    'Masker rambut intensif sesuai jenis rambut. Menutrisi dari dalam, mengurangi frizz, dan mengembalikan kilau alami.'],
-            ['Rambut',             'Hair Spa',                        'Rp 100.000',            'Spa rambut lengkap: shampo, kondisioner, masker, uap, dan pijat. Solusi untuk rambut rusak & kering.'],
-            ['Rambut',             'Cuci,Catok,Blow',                 'Rp 25.000 - 50.000',    'Cuci rambut + blow dry atau catok sesuai selera. Rambut bersih, rapi, dan siap tampil.'],
-            ['Rambut',             'Bleaching S',                     'Rp 40.000',             'Bleaching parsial (highlight/poni) untuk mencerahkan area tertentu. Cocok untuk warna pastel atau ombre.'],
-            ['Rambut',             'Coloring Full',                   'Rp 120.000 - 300.000',  'Pewarnaan rambut penuh dari akar hingga ujung. Pilihan warna beragam, hasil merata dan tahan lama.'],
-            ['Rambut',             'Bleaching',                       'Rp 200.000 - 1.200.000','Bleaching full atau intensif untuk mengangkat pigmen rambut. Harga tergantung panjang dan ketebalan rambut.'],
-            ['Rambut',             'Balayage',                        'Rp 250.000 - 700.000',  'Teknik pewarnaan gradasi tangan bebas yang menghasilkan tampilan natural sun-kissed. Setiap hasil unik dan personal.'],
-            ['Rambut',             'Down Peim Poni',                  'Rp 100.000 - 300.000',  'Pelurus poni dengan teknik perm down. Poni turun rapi tahan lama tanpa perlu di-styling setiap hari.'],
-            ['Rambut',             'Keriting Klasik',                 'Rp 300.000 - 700.000',  'Keriting permanen dengan batang spiral klasik. Cocok untuk tampilan volume dan berkarakter.'],
-            ['Rambut',             'Keriting Digital',                'Rp 450.000 - 1.700.000','Keriting digital dengan alat pemanas modern. Hasil lebih bergelombang lembut, tahan lama, dan terlihat natural.'],
-            ['Rambut',             'Keratin Treatment',               'Rp 200.000',            'Perawatan keratin untuk melembutkan dan meluruskan rambut secara alami. Mengurangi frizz & mudah diatur.'],
-            ['Rambut',             'Smoothing',                       'Rp 200.000 - 400.000',  'Pelurusan rambut semi-permanen yang membuat rambut lurus, halus, dan mudah di-styling. Tahan 3–6 bulan.'],
-            ['Nail Art & Services','Press On Nail Basic',             'Rp 50.000',             'Press on nail siap pakai dengan desain simpel dan elegan. Mudah dipasang sendiri, tahan beberapa hari.'],
-            ['Nail Art & Services','Press On Nail Motif',             'Rp 75.000',             'Press on nail dengan motif artistik dan detail lebih kompleks. Cocok untuk event spesial.'],
-            ['Nail Art & Services','Kids Basic Gel',                  'Rp 40.000',             'Gel kuku aman khusus anak-anak. Warna solid lembut yang tahan lama dan tidak berbau menyengat.'],
-            ['Nail Art & Services','Kids Gel + 4 Sticker',            'Rp 50.000',             'Gel warna + 4 stiker kuku pilihan anak. Tampilan lucu dan menggemaskan.'],
-            ['Nail Art & Services','Kids Gel + Full Sticker',         'Rp 55.000',             'Gel warna + stiker kuku penuh di semua jari. Seru untuk tampilan spesial si kecil.'],
-            ['Nail Art & Services','Gel Basic Tangan / Kaki',         'Rp 85.000',             'Gel warna solid untuk tangan atau kaki dengan hasil rapi dan tahan lama. Cocok untuk tampilan sehari-hari maupun acara spesial.'],
-            ['Nail Art & Services','Extension',                       'Rp 50.000',             'Perpanjangan kuku menggunakan bahan gel berkualitas. Kuku tampak lebih panjang dan elegan secara instan.'],
-            ['Nail Art & Services','Gel French / Cat Eyes',           'Rp 105.000',            'Gel dengan desain French classic atau efek cat eye yang memukau. Hasil bersih, presisi, dan tahan lama.'],
-            ['Nail Art & Services','Remove Gel',                      'Rp 50.000',             'Pembersihan gel kuku secara aman tanpa merusak kuku asli. Proses cepat dan nyaman menggunakan teknik profesional.'],
-            ['Nail Art & Services','Gel Ombre / Blush On',            'Rp 135.000',            'Gradasi warna lembut ombre atau efek blush on di kuku. Tampilan feminin, romantis, dan cocok untuk berbagai kesempatan.'],
-            ['Nail Art & Services','Remove Extension',                'Rp 65.000',             'Pelepasan extension kuku secara aman dan menyeluruh. Kuku asli tetap terjaga kesehatannya setelah proses pengangkatan.'],
-            ['Nail Art & Services','Bundling Nail Art + Extension',   'Rp 150.000',            'Paket hemat: extension kuku plus nail art desain pilihan. Dua layanan premium dalam satu sesi yang efisien.'],
-        ];
         $so = 1;
         foreach ($defaultPrcSeed as [$cat,$nm,$pr,$desc]) {
             $cat=mysqli_real_escape_string($conn,$cat); $nm=mysqli_real_escape_string($conn,$nm);
@@ -653,6 +653,8 @@ $testiRows     = $conn ? mysqli_query($conn, "SELECT * FROM cms_testimonials ORD
 // Stats
 $totalProducts = $conn ? (int)(mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM cms_products"))['c'] ?? 0) : 0;
 $totalServices = $conn ? (int)(mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM cms_services"))['c'] ?? 0) : 0;
+$totalOrders   = $conn ? (int)(mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM orders"))['c'] ?? 0) : 0;
+$newOrders     = $conn ? (int)(mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM orders WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)"))['c'] ?? 0) : 0;
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -1174,6 +1176,7 @@ input[type=file]{display:none;}
         <li><a href="cms.php?tab=navbar"       onclick="closeDrawer()"><i class="fa-solid fa-bars"></i> Navbar</a></li>
         <li><a href="cms.php?tab=footer"       onclick="closeDrawer()"><i class="fa-solid fa-grip-lines"></i> Footer</a></li>
         <li><a href="cms.php?tab=booking_page" onclick="closeDrawer()"><i class="fa-solid fa-calendar-alt"></i> Halaman Booking</a></li>
+        <li><a href="cms.php?tab=orders" onclick="closeDrawer()"><i class="fa-solid fa-receipt"></i> Pesanan Masuk</a></li>
     </ul>
     <div class="mobile-drawer-user">
         <div class="av"><?= strtoupper(substr($_SESSION['user'], 0, 1)) ?></div>
@@ -1202,6 +1205,7 @@ input[type=file]{display:none;}
         <li><a href="cms.php?tab=navbar"       class="<?= $activeTab==='navbar'       ? 'active':'' ?>"><i class="fa-solid fa-bars"></i> Navbar</a></li>
         <li><a href="cms.php?tab=footer"       class="<?= $activeTab==='footer'       ? 'active':'' ?>"><i class="fa-solid fa-grip-lines"></i> Footer</a></li>
         <li><a href="cms.php?tab=booking_page" class="<?= $activeTab==='booking_page' ? 'active':'' ?>"><i class="fa-solid fa-calendar-alt"></i> Halaman Booking</a></li>
+        <li><a href="cms.php?tab=orders"         class="<?= $activeTab==='orders'         ? 'active':'' ?>"><i class="fa-solid fa-receipt"></i> Pesanan Masuk</a></li>
     </ul>
     </div><!-- /.sidebar-nav-wrap -->
     <div class="sidebar-user">
@@ -1270,6 +1274,7 @@ input[type=file]{display:none;}
             <a href="cms.php?tab=navbar"       class="<?= $activeTab==='navbar'       ? 'active':'' ?>"><i class="fa-solid fa-bars"></i> Navbar</a>
             <a href="cms.php?tab=footer"       class="<?= $activeTab==='footer'       ? 'active':'' ?>"><i class="fa-solid fa-grip-lines"></i> Footer</a>
             <a href="cms.php?tab=booking_page" class="<?= $activeTab==='booking_page' ? 'active':'' ?>"><i class="fa-solid fa-calendar-alt"></i> Booking</a>
+            <a href="cms.php?tab=orders"       class="<?= $activeTab==='orders'       ? 'active':'' ?>"><i class="fa-solid fa-receipt"></i> Pesanan</a>
         </div>
 
 <?php /* ════════ TAB: HERO ════════ */ ?>
@@ -2639,9 +2644,109 @@ input[type=file]{display:none;}
             </div>
         </div>
 
-<?php endif; ?>
+<?php /* ════════ TAB: ORDERS ════════ */ ?>
+<?php elseif ($activeTab === 'orders'): ?>
 
-    </div><!-- /.content -->
+<?php
+// Handle delete order
+if (isset($_GET['action']) && $_GET['action'] === 'delete_order' && isset($_GET['id'])) {
+    mysqli_query($conn, "DELETE FROM orders WHERE id=".(int)$_GET['id']);
+    header('Location: cms.php?tab=orders&saved=1'); exit;
+}
+// Load orders
+$ordersRows = $conn ? mysqli_query($conn, "SELECT * FROM orders ORDER BY created_at DESC") : null;
+$totalOrdersCount = $ordersRows ? mysqli_num_rows($ordersRows) : 0;
+?>
+
+        <div class="cms-card">
+            <div class="cms-card-header">
+                <i class="fa-solid fa-receipt"></i>
+                <h3>Pesanan Masuk</h3>
+                <div class="ms-auto" style="display:flex;gap:8px;align-items:center;">
+                    <span style="font-size:12px;color:var(--text-lt);">Total: <strong style="color:var(--primary);"><?= $totalOrdersCount ?> pesanan</strong></span>
+                </div>
+            </div>
+            <!-- Search Orders -->
+            <div style="padding:12px 16px;border-bottom:1px solid var(--border);background:var(--cream);display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                <div style="position:relative;flex:1;min-width:200px;">
+                    <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-lt);font-size:13px;"></i>
+                    <input type="text" id="searchOrders" placeholder="Cari nama, WA, produk..." oninput="filterTable('searchOrders','ordersTable')"
+                        style="width:100%;padding:7px 10px 7px 32px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:#fff;outline:none;box-sizing:border-box;">
+                </div>
+            </div>
+            <div class="cms-card-body" style="padding:0;">
+                <?php if ($ordersRows && mysqli_num_rows($ordersRows) > 0): ?>
+                <div style="overflow-x:auto;">
+                <table class="cms-table" id="ordersTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Waktu</th>
+                            <th>Nama</th>
+                            <th>WhatsApp</th>
+                            <th>Produk / Layanan</th>
+                            <th>Qty</th>
+                            <th>Total</th>
+                            <th>Alamat</th>
+                            <th>Catatan</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <?php $no=1; while ($row = mysqli_fetch_assoc($ordersRows)): ?>
+                    <tr>
+                        <td><?= $no++ ?></td>
+                        <td style="font-size:11px;color:var(--text-lt);white-space:nowrap;">
+                            <?= date('d M Y', strtotime($row['created_at'])) ?><br>
+                            <span style="color:#aaa;"><?= date('H:i', strtotime($row['created_at'])) ?></span>
+                        </td>
+                        <td><strong><?= htmlspecialchars($row['nama']) ?></strong></td>
+                        <td>
+                            <a href="https://wa.me/<?= preg_replace('/[^0-9]/','',$row['whatsapp']) ?>" target="_blank"
+                               style="color:#25d366;font-weight:600;font-size:12px;text-decoration:none;display:flex;align-items:center;gap:4px;">
+                                <i class="fa-brands fa-whatsapp"></i> <?= htmlspecialchars($row['whatsapp']) ?>
+                            </a>
+                        </td>
+                        <td style="max-width:180px;font-size:12px;">
+                            <?= htmlspecialchars(substr($row['product_name'],0,60)) ?><?= strlen($row['product_name'])>60?'…':'' ?>
+                            <div style="font-size:11px;color:var(--text-lt);margin-top:2px;"><?= htmlspecialchars($row['product_price']) ?></div>
+                        </td>
+                        <td style="text-align:center;font-weight:700;color:var(--primary);"><?= (int)($row['qty']??1) ?></td>
+                        <td style="color:#ee4d2d;font-weight:800;font-size:13px;white-space:nowrap;">
+                            <?= htmlspecialchars($row['total'] ?: $row['product_price']) ?>
+                        </td>
+                        <td style="max-width:140px;font-size:12px;color:var(--text-mid);">
+                            <?= htmlspecialchars(substr($row['alamat'],0,60)) ?><?= strlen($row['alamat'])>60?'…':'' ?>
+                        </td>
+                        <td style="max-width:120px;font-size:12px;color:var(--text-lt);">
+                            <?= !empty($row['catatan']) ? htmlspecialchars(substr($row['catatan'],0,40)) : '—' ?>
+                        </td>
+                        <td>
+                            <div class="actions-cell" style="flex-wrap:nowrap;">
+                                <a href="https://wa.me/<?= preg_replace('/[^0-9]/','',$row['whatsapp']) ?>?text=<?= urlencode('Halo '.$row['nama'].', pesanan Anda ('.$row['product_name'].' x'.($row['qty']??1).') sudah kami terima. Total: '.($row['total']?:$row['product_price']).'. Terima kasih sudah memesan di NISWÀ BEAUTY! 💕') ?>"
+                                   target="_blank" class="btn-edit-cms" title="Konfirmasi via WA">
+                                    <i class="fa-brands fa-whatsapp" style="color:#25d366;"></i>
+                                </a>
+                                <a href="cms.php?tab=orders&action=delete_order&id=<?= $row['id'] ?>" class="btn-danger-cms" onclick="return confirm('Hapus pesanan ini?')">
+                                    <i class="fa-solid fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php endwhile; ?>
+                    </tbody>
+                </table>
+                </div>
+                <?php else: ?>
+                <div class="empty-cms">
+                    <i class="fa-solid fa-receipt"></i>
+                    <p>Belum ada pesanan masuk.</p>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+
+<?php endif; ?>
 </div><!-- /.main-wrap -->
 
 <script>
