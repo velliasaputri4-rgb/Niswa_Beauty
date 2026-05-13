@@ -1827,32 +1827,33 @@ input[type=file]{display:none;}
                             </div>
                         </div>
                         <!-- ── FITUR DISKON ── -->
-                        <div style="background:linear-gradient(135deg,#fff5f5,#fff0f0);border:1.5px solid #f5c6c6;border-radius:10px;padding:14px 16px;margin-bottom:12px;">
+                        <div style="background:linear-gradient(135deg,#fff5f5,#fff0f0);border:1.5px solid #f5c6c6;border-radius:10px;padding:14px 16px;margin-bottom:12px;box-sizing:border-box;width:100%;overflow:hidden;">
                             <div style="font-size:12px;font-weight:700;color:#c0392b;margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;">
                                 <i class="fa-solid fa-tag" style="margin-right:5px;"></i>Pengaturan Diskon
                             </div>
-                            <div class="grid-2">
-                                <div class="form-group" style="margin-bottom:0;">
-                                    <label style="font-size:12px;">Diskon (%)</label>
-                                    <div style="position:relative;">
-                                        <input type="number" name="prod_discount_pct" id="prodDiscountPct"
-                                            min="0" max="100" step="1" value="0" placeholder="0"
-                                            style="padding-right:36px;"
-                                            oninput="updateDiscountPreview()">
-                                        <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--text-lt);font-size:14px;font-weight:700;">%</span>
-                                    </div>
-                                    <small style="color:var(--text-lt);">Isi 0 jika tidak ada diskon</small>
-                                </div>
-                                <div class="form-group" style="margin-bottom:0;">
-                                    <label style="font-size:12px;">Minimal Pembelian (Rp)</label>
-                                    <div style="position:relative;">
+                            <table style="width:100%;border-collapse:separate;border-spacing:10px 0;table-layout:fixed;">
+                                <tr>
+                                    <td style="width:40%;padding:0;vertical-align:top;">
+                                        <label style="font-size:12px;font-weight:600;color:#7c5c50;display:block;margin-bottom:5px;">Diskon (%)</label>
+                                        <div style="display:flex;align-items:center;border:1.5px solid #e0d5cf;border-radius:8px;background:#fff;overflow:hidden;">
+                                            <input type="number" name="prod_discount_pct" id="prodDiscountPct"
+                                                min="0" max="100" step="1" value="0" placeholder="0"
+                                                style="flex:1;min-width:0;border:none;outline:none;padding:8px 6px 8px 10px;font-size:14px;font-family:inherit;background:transparent;"
+                                                oninput="updateDiscountPreview()">
+                                            <span style="padding:0 10px;color:#aaa;font-size:13px;font-weight:700;flex-shrink:0;">%</span>
+                                        </div>
+                                        <small style="color:#aaa;font-size:11px;">0 = tidak ada diskon</small>
+                                    </td>
+                                    <td style="width:60%;padding:0;vertical-align:top;">
+                                        <label style="font-size:12px;font-weight:600;color:#7c5c50;display:block;margin-bottom:5px;">Minimal Pembelian (Rp)</label>
                                         <input type="number" name="prod_min_purchase" id="prodMinPurchase"
                                             min="0" step="1000" value="0" placeholder="0"
+                                            style="width:100%;box-sizing:border-box;border:1.5px solid #e0d5cf;border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;outline:none;background:#fff;"
                                             oninput="updateDiscountPreview()">
-                                    </div>
-                                    <small style="color:var(--text-lt);">Isi 0 jika tanpa syarat</small>
-                                </div>
-                            </div>
+                                        <small style="color:#aaa;font-size:11px;">0 = tanpa syarat minimum</small>
+                                    </td>
+                                </tr>
+                            </table>
                             <div id="discountPreview" style="display:none;margin-top:10px;padding:8px 12px;background:#fff;border-radius:8px;border:1px dashed #e74c3c;font-size:12px;color:#c0392b;"></div>
                         </div>
                         <div class="form-group">

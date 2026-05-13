@@ -92,6 +92,23 @@ function getProductImage($name, $price, $productImageMap, $productImageByName, $
     return null;
 }
 
+// Fungsi bantu: kembalikan JSON array gambar dari kolom product_image atau fallback
+// product_image bisa: JSON array ["a.jpg","b.jpg"], string biasa "a.jpg", atau NULL
+function getProductImagesJson($row, $productImageMap, $productImageByName, $fallback) {
+    $stored = $row['product_image'] ?? '';
+    if (!empty($stored)) {
+        $decoded = json_decode($stored, true);
+        if (is_array($decoded) && count($decoded) > 0) {
+            return json_encode(array_values(array_unique($decoded)));
+        }
+        // String biasa (order lama)
+        return json_encode([$stored]);
+    }
+    // Fallback dari CMS / hardcoded
+    $img = getProductImage($row['product_name'], $row['product_price'], $productImageMap, $productImageByName, $fallback);
+    return $img ? json_encode([$img]) : null;
+}
+
 // Tetap sediakan $productImages untuk kompatibilitas (dipakai di beberapa tempat)
 $productImages = $productImageByName + $_fallbackImages;
 
@@ -773,10 +790,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_order_id'])) {
                     </div>
                 </td>
                 <td><?= htmlspecialchars($row['whatsapp']) ?></td>
-                <?php $pname=$row['product_name']; $pimg=(!empty($row['product_image'])) ? $row['product_image'] : getProductImage($pname,$row['product_price'],$productImageMap,$productImageByName,$_fallbackImages); ?>
+                <?php $pname=$row['product_name']; $pimgsJson=getProductImagesJson($row,$productImageMap,$productImageByName,$_fallbackImages); $pimgFirst=($pimgsJson ? json_decode($pimgsJson,true)[0] : null); ?>
                 <td>
-                    <?php if($pimg): ?>
-                    <span class="badge-svc" style="cursor:pointer;border-bottom:1px dashed #8B6F5E;" onclick="showProdPreview('<?= addslashes(htmlspecialchars($pname)) ?>','<?= addslashes($pimg) ?>','<?= addslashes(htmlspecialchars($row['product_price'])) ?>')">
+                    <?php if($pimgsJson): ?>
+                    <span class="badge-svc prod-preview-btn" style="cursor:pointer;border-bottom:1px dashed #8B6F5E;"
+                          data-name="<?= htmlspecialchars($pname, ENT_QUOTES) ?>"
+                          data-imgs="<?= htmlspecialchars($pimgsJson, ENT_QUOTES) ?>"
+                          data-price="<?= htmlspecialchars($row['product_price'], ENT_QUOTES) ?>">
                         <i class="fas fa-image me-1" style="font-size:10px;opacity:0.7;"></i><?= htmlspecialchars($pname) ?>
                     </span>
                     <?php else: ?>
@@ -791,7 +811,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_order_id'])) {
                 <td style="font-size:12px;color:var(--text-light);white-space:nowrap;"><?= date('d M Y H:i', strtotime($row['created_at'])) ?></td>
                 <td>
                     <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                    <a href="#" onclick="openEditOrder(<?= $row['id'] ?>,'<?= addslashes(htmlspecialchars($row['nama'])) ?>','<?= addslashes(htmlspecialchars($row['whatsapp'])) ?>','<?= addslashes(htmlspecialchars($row['alamat'])) ?>','<?= addslashes(htmlspecialchars($row['product_name'])) ?>','<?= addslashes(htmlspecialchars($row['product_price'])) ?>',<?= (int)$row['qty'] ?>,'<?= addslashes(htmlspecialchars($row['total'])) ?>','<?= addslashes(htmlspecialchars($row['catatan'])) ?>','<?= addslashes($pimg ?? '') ?>');return false;"
+                    <a href="#" onclick="openEditOrder(<?= $row['id'] ?>,'<?= addslashes(htmlspecialchars($row['nama'])) ?>','<?= addslashes(htmlspecialchars($row['whatsapp'])) ?>','<?= addslashes(htmlspecialchars($row['alamat'])) ?>','<?= addslashes(htmlspecialchars($row['product_name'])) ?>','<?= addslashes(htmlspecialchars($row['product_price'])) ?>',<?= (int)$row['qty'] ?>,'<?= addslashes(htmlspecialchars($row['total'])) ?>','<?= addslashes(htmlspecialchars($row['catatan'])) ?>','<?= addslashes($pimgFirst ?? '') ?>');return false;"
                        class="btn-edit">
                         <i class="fas fa-pen"></i>
                     </a>
@@ -811,7 +831,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_order_id'])) {
         <!-- MOBILE CARD VIEW: ORDERS -->
         <div class="mobile-cards">
         <?php $no=1; mysqli_data_seek($ordersResult,0); while ($row = mysqli_fetch_assoc($ordersResult)): ?>
-        <?php $pname=$row['product_name']; $pimg=(!empty($row['product_image'])) ? $row['product_image'] : getProductImage($pname,$row['product_price'],$productImageMap,$productImageByName,$_fallbackImages); ?>
+        <?php $pname=$row['product_name']; $pimgsJson=getProductImagesJson($row,$productImageMap,$productImageByName,$_fallbackImages); $pimgFirst=($pimgsJson ? json_decode($pimgsJson,true)[0] : null); ?>
         <div class="m-card">
             <div class="m-card-header">
                 <div class="avatar-cell"><?= strtoupper(substr($row['nama'],0,1)) ?></div>
@@ -819,9 +839,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_order_id'])) {
                     <div class="m-name"><?= htmlspecialchars($row['nama']) ?></div>
                     <span class="badge-svc" style="font-size:11px;"><?= htmlspecialchars($pname) ?></span>
                 </div>
-                <?php if($pimg): ?>
-                <img src="<?= htmlspecialchars($pimg) ?>" class="m-product-thumb"
-                     onclick="showProdPreview('<?= addslashes(htmlspecialchars($pname)) ?>','<?= addslashes($pimg) ?>','<?= addslashes(htmlspecialchars($row['product_price'])) ?>')"
+                <?php if($pimgFirst): ?>
+                <img src="<?= htmlspecialchars($pimgFirst) ?>" class="m-product-thumb prod-preview-btn"
+                     data-name="<?= htmlspecialchars($pname, ENT_QUOTES) ?>"
+                     data-imgs="<?= htmlspecialchars($pimgsJson, ENT_QUOTES) ?>"
+                     data-price="<?= htmlspecialchars($row['product_price'], ENT_QUOTES) ?>"
                      alt="<?= htmlspecialchars($pname) ?>">
                 <?php endif; ?>
                 <span class="num-badge">#<?= $no++ ?></span>
@@ -838,7 +860,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_order_id'])) {
                 <div class="m-card-row"><span class="lbl">Tanggal</span><span class="val" style="font-size:12px;color:var(--text-light);"><?= date('d M Y H:i', strtotime($row['created_at'])) ?></span></div>
             </div>
             <div class="m-card-footer">
-                <a href="#" onclick="openEditOrder(<?= $row['id'] ?>,'<?= addslashes(htmlspecialchars($row['nama'])) ?>','<?= addslashes(htmlspecialchars($row['whatsapp'])) ?>','<?= addslashes(htmlspecialchars($row['alamat'])) ?>','<?= addslashes(htmlspecialchars($row['product_name'])) ?>','<?= addslashes(htmlspecialchars($row['product_price'])) ?>',<?= (int)$row['qty'] ?>,'<?= addslashes(htmlspecialchars($row['total'])) ?>','<?= addslashes(htmlspecialchars($row['catatan'])) ?>','<?= addslashes($pimg ?? '') ?>');return false;" class="btn-edit">
+                <a href="#" onclick="openEditOrder(<?= $row['id'] ?>,'<?= addslashes(htmlspecialchars($row['nama'])) ?>','<?= addslashes(htmlspecialchars($row['whatsapp'])) ?>','<?= addslashes(htmlspecialchars($row['alamat'])) ?>','<?= addslashes(htmlspecialchars($row['product_name'])) ?>','<?= addslashes(htmlspecialchars($row['product_price'])) ?>',<?= (int)$row['qty'] ?>,'<?= addslashes(htmlspecialchars($row['total'])) ?>','<?= addslashes(htmlspecialchars($row['catatan'])) ?>','<?= addslashes($pimgFirst ?? '') ?>');return false;" class="btn-edit">
                     <i class="fas fa-pen"></i>
                 </a>
                 <a href="dashboard.php?delete_order=<?= $row['id'] ?>" onclick="return confirm('Hapus data pembelian ini?')" class="btn-del">
@@ -860,12 +882,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_order_id'])) {
 
 <!-- PRODUCT PREVIEW MODAL -->
 <div id="adminProdModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);align-items:center;justify-content:center;" onclick="if(event.target===this)closeProdPreview()">
-    <div style="background:#fff;border-radius:22px;width:92%;max-width:360px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,0.3);animation:ppIn .22s ease;">
-        <div style="position:relative;">
-            <img id="apmImg" src="" alt="" style="width:100%;height:260px;object-fit:cover;display:block;">
-            <button onclick="closeProdPreview()" style="position:absolute;top:12px;right:12px;background:rgba(0,0,0,0.5);border:none;color:#fff;width:30px;height:30px;border-radius:50%;font-size:16px;cursor:pointer;line-height:1;">&times;</button>
+    <div style="background:#fff;border-radius:22px;width:92%;max-width:380px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,0.3);animation:ppIn .22s ease;">
+        <!-- Slideshow wrapper -->
+        <div style="position:relative;background:#111;overflow:hidden;" id="apmSlideWrap">
+            <div id="apmSlideTrack" style="display:flex;transition:transform .35s cubic-bezier(0.4,0,0.2,1);"></div>
+            <!-- Prev/Next -->
+            <button id="apmPrev" onclick="apmSlide(-1)" style="display:none;position:absolute;left:10px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.45);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:15px;cursor:pointer;z-index:2;line-height:1;">&#8249;</button>
+            <button id="apmNext" onclick="apmSlide(1)"  style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.45);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:15px;cursor:pointer;z-index:2;line-height:1;">&#8250;</button>
+            <!-- Dots -->
+            <div id="apmDots" style="position:absolute;bottom:10px;left:0;right:0;display:flex;justify-content:center;gap:5px;"></div>
+            <!-- Counter badge -->
+            <div id="apmCounter" style="display:none;position:absolute;top:10px;left:10px;background:rgba(0,0,0,0.5);color:#fff;font-size:11px;font-family:'Poppins',sans-serif;font-weight:600;padding:3px 9px;border-radius:20px;"></div>
+            <button onclick="closeProdPreview()" style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.5);border:none;color:#fff;width:30px;height:30px;border-radius:50%;font-size:16px;cursor:pointer;line-height:1;z-index:3;">&times;</button>
         </div>
-        <div style="padding:18px 20px 20px;">
+        <div style="padding:16px 20px 18px;">
             <div id="apmName" style="font-family:'Poppins',sans-serif;font-weight:700;font-size:15px;color:#2d1f17;margin-bottom:4px;"></div>
             <div id="apmPrice" style="font-family:'Poppins',sans-serif;font-weight:700;font-size:17px;color:#8B6F5E;"></div>
         </div>
@@ -873,6 +903,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_order_id'])) {
 </div>
 <style>
 @keyframes ppIn { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+.apm-dot { width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.45);cursor:pointer;transition:background .2s; }
+.apm-dot.active { background:#fff; }
 </style>
 
 <script>
@@ -889,15 +921,70 @@ function closeDrawer() {
 </script>
 
 <script>
-function showProdPreview(name, img, price) {
-    document.getElementById('apmImg').src = img;
-    document.getElementById('apmName').textContent = name;
-    document.getElementById('apmPrice').textContent = price;
-    document.getElementById('adminProdModal').style.display = 'flex';
+var _apmImgs=[], _apmIdx=0;
+function apmRender(){
+    var track=document.getElementById('apmSlideTrack');
+    var wrap=document.getElementById('apmSlideWrap');
+    var dotsEl=document.getElementById('apmDots');
+    var counter=document.getElementById('apmCounter');
+    var prev=document.getElementById('apmPrev');
+    var next=document.getElementById('apmNext');
+    var n=_apmImgs.length;
+    track.innerHTML='';
+    _apmImgs.forEach(function(src){
+        var slide=document.createElement('div');
+        slide.style.cssText='flex:0 0 100%;width:100%;height:260px;';
+        var img=document.createElement('img');
+        img.src=src; img.alt='';
+        img.style.cssText='width:100%;height:260px;object-fit:cover;display:block;';
+        slide.appendChild(img);
+        track.appendChild(slide);
+    });
+    if(n>1){ prev.style.display='block'; next.style.display='block'; counter.style.display='block'; }
+    else    { prev.style.display='none';  next.style.display='none';  counter.style.display='none'; }
+    dotsEl.innerHTML='';
+    if(n>1){
+        _apmImgs.forEach(function(_,i){
+            var d=document.createElement('span');
+            d.className='apm-dot'+(i===0?' active':'');
+            d.onclick=function(){apmGoTo(i);};
+            dotsEl.appendChild(d);
+        });
+    }
+    apmGoTo(0);
+}
+function apmGoTo(idx){
+    var n=_apmImgs.length;
+    _apmIdx=(idx+n)%n;
+    document.getElementById('apmSlideTrack').style.transform='translateX(-'+(_apmIdx*100)+'%)';
+    document.querySelectorAll('.apm-dot').forEach(function(d,i){d.classList.toggle('active',i===_apmIdx);});
+    var counter=document.getElementById('apmCounter');
+    if(counter)counter.textContent=(_apmIdx+1)+' / '+n;
+}
+function apmSlide(dir){ apmGoTo(_apmIdx+dir); }
+
+function showProdPreview(name, imgsJson, price) {
+    try { var parsed=JSON.parse(imgsJson); _apmImgs=Array.isArray(parsed)?parsed:[parsed]; }
+    catch(e){ _apmImgs=imgsJson?[imgsJson]:[]; }
+    _apmImgs=_apmImgs.filter(function(x){return x&&x!='';});
+    if(_apmImgs.length===0) return;
+    document.getElementById('apmName').textContent=name;
+    document.getElementById('apmPrice').textContent=price;
+    apmRender();
+    document.getElementById('adminProdModal').style.display='flex';
 }
 function closeProdPreview() {
-    document.getElementById('adminProdModal').style.display = 'none';
+    document.getElementById('adminProdModal').style.display='none';
 }
+
+// Event delegation — handles both badge-svc and img thumbnail
+document.addEventListener('click', function(e){
+    var el=e.target.closest('.prod-preview-btn');
+    if(el){
+        e.preventDefault();
+        showProdPreview(el.dataset.name, el.dataset.imgs, el.dataset.price);
+    }
+});
 </script>
 
 <script>

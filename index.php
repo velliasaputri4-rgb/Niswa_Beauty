@@ -239,6 +239,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order']) && !empty($_
     $product_price = trim($_POST['product_price'] ?? '');
     $qty           = max(1, (int)($_POST['qty']   ?? 1));
     $catatan       = trim($_POST['catatan']       ?? '');
+    $product_image = trim($_POST['product_image'] ?? '');
     $user_id       = $_SESSION['user_id']         ?? null;
 
     $harga_num = (int) preg_replace('/[^0-9]/', '', $product_price);
@@ -255,15 +256,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order']) && !empty($_
         echo json_encode(['success'=>false,'message'=>'Koneksi database gagal: '.mysqli_connect_error()]);
     } else {
         $stmt = mysqli_prepare($conn,
-            "INSERT INTO orders (user_id,nama,whatsapp,alamat,product_name,product_price,qty,total,catatan)
-             VALUES (?,?,?,?,?,?,?,?,?)"
+            "INSERT INTO orders (user_id,nama,whatsapp,alamat,product_name,product_price,qty,total,catatan,product_image)
+             VALUES (?,?,?,?,?,?,?,?,?,?)"
         );
         if (!$stmt) {
             echo json_encode(['success'=>false,'message'=>'Prepare gagal: '.mysqli_error($conn)]);
             exit;
         }
-        mysqli_stmt_bind_param($stmt, "isssssiss",
-            $user_id,$nama,$whatsapp,$alamat,$product_name,$product_price,$qty,$total,$catatan
+        mysqli_stmt_bind_param($stmt, "isssssisss",
+            $user_id,$nama,$whatsapp,$alamat,$product_name,$product_price,$qty,$total,$catatan,$product_image
         );
         if (mysqli_stmt_execute($stmt)) {
             echo json_encode(['success'=>true]);
@@ -972,10 +973,10 @@ document.addEventListener('keydown', function(e) {
                         <?php endif; ?>
                     </div>
                     <?php endif; ?>
-                    <button class="btn-beli" onclick="handleBeli('<?= addslashes($p['name']) ?>','<?= addslashes($p['price']) ?>','<?= addslashes($p['image'] ?? $p['img'] ?? '') ?>',<?= $pDisc ?>)">
+                    <button class="btn-beli" onclick="handleBeli('<?= addslashes($p['name']) ?>','<?= addslashes($p['price']) ?>','<?= addslashes($p['image'] ?? $p['img'] ?? '') ?>',<?= $pDisc ?>,<?= $pMinBuy ?>)">
                         <i class="fas fa-shopping-bag me-1"></i> Beli Sekarang
                     </button>
-                    <button class="btn-add-cart" onclick="NiswaCart.add('<?= addslashes($p['name']) ?>','<?= addslashes($p['price']) ?>','<?= addslashes($p['image'] ?? $p['img'] ?? '') ?>','Produk',<?= $pDisc ?>)">
+                    <button class="btn-add-cart" onclick="NiswaCart.add('<?= addslashes($p['name']) ?>','<?= addslashes($p['price']) ?>','<?= addslashes($p['image'] ?? $p['img'] ?? '') ?>','Produk',<?= $pDisc ?>,<?= $pMinBuy ?>)">
                         <i class="fas fa-cart-plus"></i> + Keranjang
                     </button>
                 </div>
@@ -1266,6 +1267,7 @@ document.addEventListener('keydown', function(e) {
                 <input type="hidden" name="order" value="1">
                 <input type="hidden" name="product_name" id="inputProductName">
                 <input type="hidden" name="product_price" id="inputProductPrice">
+                <input type="hidden" name="product_image" id="inputProductImage">
                 <div id="orderError" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:10px 14px;font-size:13px;color:#dc2626;margin-bottom:14px;"></div>
                 <?php
                 $fields = [
@@ -1300,6 +1302,10 @@ document.addEventListener('keydown', function(e) {
                     </div>
                     <div id="summaryDiscRow" style="display:none;justify-content:space-between;color:#c97000;margin-bottom:6px;">
                         <span id="summaryDiscLabel">Diskon</span><span id="summaryDiscAmt">-</span>
+                    </div>
+                    <div id="summaryMinBuyRow" style="display:none;align-items:center;gap:6px;color:#e74c3c;margin-bottom:6px;font-size:12px;background:#fff5f5;border:1px dashed #f5b7b1;border-radius:8px;padding:6px 10px;">
+                        <i class="fas fa-lock" style="flex-shrink:0;font-size:11px;"></i>
+                        <span id="summaryMinBuyText"></span>
                     </div>
                     <div style="border-top:1px dashed #e8ddd4;margin:8px 0;"></div>
                     <div style="display:flex;justify-content:space-between;font-weight:700;color:#2d1f17;font-size:14px;">
@@ -1382,38 +1388,54 @@ function fmtRp(n){return 'Rp '+n.toLocaleString('id-ID');}
 
 function updateOrderSummary(){
     var modal=document.getElementById('orderModal');
-    if(modal&&modal.dataset.cartMode==='1')return; // cart checkout sudah isi summary sendiri
+    if(modal&&modal.dataset.cartMode==='1')return;
     var qty=parseInt(document.querySelector('#orderForm [name="qty"]').value)||1;
     var oriPrice=parseInt(modal.dataset.oriPrice)||0;
     var disc=parseInt(modal.dataset.disc)||0;
+    var minBuy=parseInt(modal.dataset.minBuy)||0;
     var subtotal=oriPrice*qty;
-    var discAmt=Math.round(subtotal*disc/100);
+    // Diskon hanya aktif jika subtotal >= minBuy (atau minBuy=0)
+    var discActive=disc>0&&(minBuy===0||subtotal>=minBuy);
+    var discAmt=discActive?Math.round(subtotal*disc/100):0;
     var total=subtotal-discAmt;
     document.getElementById('summarySubtotal').textContent=fmtRp(subtotal);
     var discRow=document.getElementById('summaryDiscRow');
-    if(disc>0){
+    var minBuyRow=document.getElementById('summaryMinBuyRow');
+    if(discActive){
         discRow.style.display='flex';
         document.getElementById('summaryDiscLabel').textContent='Diskon '+disc+'%';
         document.getElementById('summaryDiscAmt').textContent='- '+fmtRp(discAmt);
+        if(minBuyRow)minBuyRow.style.display='none';
+    } else if(disc>0&&minBuy>0&&subtotal<minBuy){
+        discRow.style.display='none';
+        if(minBuyRow){
+            minBuyRow.style.display='flex';
+            var kurang=minBuy-subtotal;
+            document.getElementById('summaryMinBuyText').textContent='Tambah Rp '+kurang.toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.')+' lagi untuk diskon '+disc+'%';
+        }
     } else {
         discRow.style.display='none';
+        if(minBuyRow)minBuyRow.style.display='none';
     }
     document.getElementById('summaryTotal').textContent=fmtRp(total);
     document.getElementById('inputProductPrice').value=fmtRp(total);
 }
 
-function handleBeli(name,price,img,disc){
+function handleBeli(name,price,img,disc,minBuy){
     disc=disc||0;
+    minBuy=minBuy||0;
     var oriNum=parseRp(price);
-    var discAmt=Math.round(oriNum*disc/100);
+    // Harga awal tampil tanpa diskon dulu (qty=1, cek apakah langsung memenuhi minimum)
+    var meetsMin=(minBuy===0||(oriNum>=minBuy));
+    var discAmt=meetsMin?Math.round(oriNum*disc/100):0;
     var finalNum=oriNum-discAmt;
     var finalPrice=fmtRp(finalNum);
 
     var modal=document.getElementById('orderModal');
     modal.dataset.oriPrice=oriNum;
     modal.dataset.disc=disc;
+    modal.dataset.minBuy=minBuy;
     modal.dataset.cartMode='0';
-    // Tampilkan input qty normal, sembunyikan info cart
     var qtyInputBox=document.querySelector('#qtyField input[type="number"]');
     var qtyCartInfo=document.getElementById('qtyCartInfo');
     if(qtyInputBox){qtyInputBox.style.display='';qtyInputBox.value=1;}
@@ -1424,12 +1446,12 @@ function handleBeli(name,price,img,disc){
     document.getElementById('modalProductImg').src=img;
     document.getElementById('orderForm').reset();
     document.getElementById('inputProductName').value=name;
+    document.getElementById('inputProductImage').value=img||'';
 
-    // Tampilkan harga
     var priceEl=document.getElementById('modalProductPrice');
     var oriEl=document.getElementById('modalProductPriceOri');
     var discBadge=document.getElementById('modalDiscBadge');
-    if(disc>0){
+    if(disc>0&&meetsMin){
         priceEl.textContent=finalPrice;
         oriEl.textContent=price;
         oriEl.style.display='block';
@@ -1519,19 +1541,31 @@ var NiswaCart=(function(){
     function save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(items));}catch(e){};}
     function totalQty(){return items.reduce(function(s,i){return s+i.qty;},0);}
     function selectedItems(){return items.filter(function(i){return i.selected;});}
-    function selectedTotal(){return selectedItems().reduce(function(s,i){return s+i.numPrice*i.qty;},0);}
+    function selectedTotal(){
+        return selectedItems().reduce(function(s,i){
+            var oriNum=i.oriNum||parsePrice(i.oriPrice||i.price);
+            var minBuy=i.minBuy||0;
+            var subtotalItem=oriNum*i.qty;
+            var discActive=i.disc>0&&(minBuy===0||subtotalItem>=minBuy);
+            var discAmt=discActive?Math.round(subtotalItem*i.disc/100):0;
+            return s+(subtotalItem-discAmt);
+        },0);
+    }
     function parsePrice(str){var nums=(str+'').match(/[\d.]+/g);if(!nums)return 0;return parseInt(nums[0].replace(/\./g,''),10)||0;}
     function fmt(n){return 'Rp '+n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.');}
     function escHtml(str){return(str+'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-    function add(name,price,img,type,disc){
+    function add(name,price,img,type,disc,minBuy){
         disc=parseInt(disc)||0;
+        minBuy=parseInt(minBuy)||0;
         var oriNum=parsePrice(price);
-        var discAmt=Math.round(oriNum*disc/100);
+        // Diskon aktif hanya jika memenuhi minimum (cek per 1 item dulu, akan di-recheck saat qty berubah)
+        var meetsMin=(minBuy===0||(oriNum>=minBuy));
+        var discAmt=meetsMin?Math.round(oriNum*disc/100):0;
         var numPrice=oriNum-discAmt;
-        var finalPrice=disc>0?fmt(numPrice):price;
+        var finalPrice=(disc>0&&meetsMin)?fmt(numPrice):price;
         var existing=items.find(function(i){return i.name===name&&i.type===type;});
         if(existing){existing.qty++;existing.selected=true;}
-        else{items.push({name:name,price:finalPrice,oriPrice:price,numPrice:numPrice,disc:disc,img:img||'',type:type||'Produk',qty:1,selected:true});}
+        else{items.push({name:name,price:finalPrice,oriPrice:price,numPrice:numPrice,oriNum:oriNum,disc:disc,minBuy:minBuy,img:img||'',type:type||'Produk',qty:1,selected:true});}
         save();render();showToast(name,img);openCart();
     }
     function setQty(idx,qty){
@@ -1567,13 +1601,32 @@ var NiswaCart=(function(){
         items.forEach(function(item,idx){
             var div=document.createElement('div');div.className='cart-item';
             var imgHtml=item.img?'<img src="'+escHtml(item.img)+'" class="cart-item-img" alt="">':'<div class="cart-item-img cart-item-img-placeholder"><i class="fas fa-spa"></i></div>';
+            var oriNum=item.oriNum||parsePrice(item.oriPrice||item.price);
+            var minBuy=item.minBuy||0;
+            var subtotalItem=oriNum*item.qty;
+            var discActive=item.disc>0&&(minBuy===0||subtotalItem>=minBuy);
+            var discAmt=discActive?Math.round(subtotalItem*item.disc/100):0;
+            var displayPrice=discActive?fmt(oriNum-Math.round(oriNum*item.disc/100)):fmt(oriNum);
+            // Badge diskon
+            var discBadge='';
+            if(item.disc>0){
+                if(discActive){
+                    discBadge='<span style="background:#fff3e0;color:#c97000;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;font-family:Poppins,sans-serif;display:inline-block;margin-bottom:4px;"><i class="fas fa-tag"></i> Hemat '+item.disc+'%</span>';
+                } else {
+                    var kurang=minBuy-subtotalItem;
+                    discBadge='<span style="background:#fff5f5;color:#e74c3c;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;font-family:Poppins,sans-serif;display:inline-block;margin-bottom:4px;border:1px dashed #f5b7b1;"><i class="fas fa-lock"></i> Tambah Rp '+kurang.toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.')+' untuk diskon '+item.disc+'%</span>';
+                }
+            }
+            var priceHtml=item.disc>0
+                ?'<div style="display:flex;align-items:center;gap:6px;"><span class="cart-item-price">'+escHtml(displayPrice)+'</span>'+(discActive?'<span style="font-size:11px;color:#bbb;text-decoration:line-through;font-family:Poppins,sans-serif;">'+escHtml(fmt(oriNum))+'</span>':'')+'</div>'
+                :'<div class="cart-item-price">'+escHtml(displayPrice)+'</div>';
             div.innerHTML='<div class="cart-item-check"><input type="checkbox" '+(item.selected?'checked':'')+' onchange="NiswaCart.toggleSelect('+idx+',this.checked)"></div>'+
                 imgHtml+
                 '<div class="cart-item-info">'+
                 '<div class="cart-item-name">'+escHtml(item.name)+'</div>'+
                 '<span class="cart-item-type">'+escHtml(item.type)+'</span>'+
-                (item.disc>0?'<div style="display:flex;align-items:center;gap:6px;"><span class="cart-item-price">'+escHtml(item.price)+'</span><span style="font-size:11px;color:#bbb;text-decoration:line-through;font-family:Poppins,sans-serif;">'+escHtml(item.oriPrice||item.price)+'</span></div>':'<div class="cart-item-price">'+escHtml(item.price)+'</div>')+
-                (item.disc>0?'<span style="background:#fff3e0;color:#c97000;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;font-family:Poppins,sans-serif;display:inline-block;margin-bottom:4px;"><i class="fas fa-tag"></i> Hemat '+item.disc+'%</span>':'')+
+                priceHtml+
+                discBadge+
                 '<div class="cart-item-bottom">'+
                 '<div class="cart-qty-wrap">'+
                 '<button class="cart-qty-btn" onclick="NiswaCart.setQty('+idx+','+(item.qty-1)+')">-</button>'+
@@ -1631,6 +1684,12 @@ var NiswaCart=(function(){
         if(modalImgEl&&firstImg)modalImgEl.src=firstImg;
         var form=document.getElementById('orderForm');if(form)form.reset();
         if(pNameEl)pNameEl.value=names;if(pPriceEl)pPriceEl.value=total;
+        var imgInputEl=document.getElementById('inputProductImage');
+        if(imgInputEl){
+            var allImgs=sel.map(function(i){return i.img||'';}).filter(function(x){return x!='';});
+            var uniqueImgs=allImgs.filter(function(v,i,a){return a.indexOf(v)===i;});
+            imgInputEl.value=uniqueImgs.length>0?JSON.stringify(uniqueImgs):'';
+        }
         // Set qty dari total item keranjang yang dipilih
         var totalQtySelected=sel.reduce(function(s,i){return s+i.qty;},0);
         var inputQtyEl=document.getElementById('inputQty');
