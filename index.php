@@ -1169,7 +1169,7 @@ document.addEventListener('keydown', function(e) {
 
 <!-- ══ SECTION TESTIMONI ══ -->
 <style>
-/* ── Testimoni: slide per grup, tanpa tombol navigasi ── */
+/* ── Testimoni: slide per grup, responsif mobile ── */
 .testimoni-carousel-wrapper {
     overflow: hidden;
     position: relative;
@@ -1184,9 +1184,10 @@ document.addEventListener('keydown', function(e) {
 .testimoni-group {
     display: flex;
     flex-shrink: 0;
-    gap: 22px;
+    gap: 16px;
     box-sizing: border-box;
     align-items: stretch;
+    padding: 4px 2px 8px;
 }
 .testimoni-group .testimoni-card {
     flex: 1;
@@ -1197,6 +1198,43 @@ document.addEventListener('keydown', function(e) {
 }
 .testimoni-group .testimoni-text {
     flex: 1;
+}
+/* Mobile: satu card penuh, padding horizontal */
+@media (max-width: 599px) {
+    .testimoni-group {
+        gap: 0;
+        padding: 4px 8px 8px;
+    }
+    /* Rating badge responsif */
+    .testimoni-rating-badge {
+        border-radius: 16px !important;
+        padding: 10px 16px !important;
+        gap: 8px !important;
+    }
+    .testimoni-score {
+        font-size: 22px !important;
+    }
+    .review-write-btn {
+        margin-left: 0 !important;
+    }
+    /* Testimoni section padding */
+    .testimoni-section {
+        padding-left: 0;
+        padding-right: 0;
+    }
+    .testimoni-section .container {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+    /* Footer card: service tag ke baris baru */
+    .testimoni-footer {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    .testimoni-service-tag {
+        width: 100%;
+        text-align: center;
+    }
 }
 /* Dots */
 .testimoni-dots {
@@ -1640,6 +1678,23 @@ function closeProductPreview(){document.getElementById('productPreviewModal').st
             stopAuto(); buildGroups(); startAuto();
         },200);
     });
+
+    /* ── Touch / Swipe Support ── */
+    var touchStartX=0, touchEndX=0;
+    track.addEventListener('touchstart',function(e){
+        touchStartX=e.changedTouches[0].screenX;
+        stopAuto();
+    },{passive:true});
+    track.addEventListener('touchend',function(e){
+        touchEndX=e.changedTouches[0].screenX;
+        var diff=touchStartX-touchEndX;
+        if(Math.abs(diff)>40){
+            var total=track.querySelectorAll('.testimoni-group').length;
+            if(diff>0){ goTo((current+1)%total); }
+            else { goTo((current-1+total)%total); }
+        }
+        startAuto();
+    },{passive:true});
 })();
 </script>
 
