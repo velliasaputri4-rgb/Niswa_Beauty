@@ -1168,6 +1168,59 @@ document.addEventListener('keydown', function(e) {
 </style>
 
 <!-- ══ SECTION TESTIMONI ══ -->
+<style>
+/* ── Testimoni: slide per grup, tanpa tombol navigasi ── */
+.testimoni-carousel-wrapper {
+    overflow: hidden;
+    position: relative;
+    padding: 6px 0 20px;
+}
+.testimoni-track {
+    display: flex;
+    transition: transform 0.5s cubic-bezier(0.4,0,0.2,1);
+    will-change: transform;
+    align-items: stretch;
+}
+.testimoni-group {
+    display: flex;
+    flex-shrink: 0;
+    gap: 22px;
+    box-sizing: border-box;
+    align-items: stretch;
+}
+.testimoni-group .testimoni-card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    min-width: 0;
+}
+.testimoni-group .testimoni-text {
+    flex: 1;
+}
+/* Dots */
+.testimoni-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 24px;
+}
+.testimoni-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e0d3c8;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.3s, width 0.3s;
+    display: inline-block;
+}
+.testimoni-dot.active {
+    background: #8B6F5E;
+    width: 24px;
+    border-radius: 4px;
+    transform: none;
+}
+</style>
 <section id="testimoni" class="testimoni-section py-5">
     <div class="container">
         <div class="row justify-content-center mb-5">
@@ -1210,8 +1263,6 @@ document.addEventListener('keydown', function(e) {
                 </div>
                 <?php endforeach; ?>
             </div>
-            <button class="testimoni-nav testimoni-prev" id="testimoniPrev" aria-label="Sebelumnya"><i class="fas fa-chevron-left"></i></button>
-            <button class="testimoni-nav testimoni-next" id="testimoniNext" aria-label="Berikutnya"><i class="fas fa-chevron-right"></i></button>
         </div>
         <div class="testimoni-dots" id="testimoniDots"></div>
     </div>
@@ -1499,36 +1550,96 @@ function closeProductPreview(){document.getElementById('productPreviewModal').st
 <script>
 (function(){
     var track=document.getElementById('testimoniTrack');
-    var prevBtn=document.getElementById('testimoniPrev');
-    var nextBtn=document.getElementById('testimoniNext');
     var dotsWrap=document.getElementById('testimoniDots');
     if(!track)return;
-    var cards=Array.from(track.querySelectorAll('.testimoni-card'));
-    var current=0;var autoTimer=null;
-    function getPerView(){return window.innerWidth>=992?3:window.innerWidth>=600?2:1;}
-    var perView=getPerView();
-    var totalSlides=Math.max(1,cards.length-perView+1);
-    dotsWrap.innerHTML='';
-    for(var i=0;i<totalSlides;i++){
-        var dot=document.createElement('span');
-        dot.className='testimoni-dot'+(i===0?' active':'');
-        dot.dataset.i=i;
-        dot.addEventListener('click',function(){goTo(+this.dataset.i);});
-        dotsWrap.appendChild(dot);
+
+    var origCards=Array.from(track.querySelectorAll('.testimoni-card'));
+    var current=0;
+    var autoTimer=null;
+
+    function getPerView(){
+        return window.innerWidth>=992?3:window.innerWidth>=600?2:1;
     }
+
+    function buildGroups(){
+        var pv=getPerView();
+        track.innerHTML='';
+        dotsWrap.innerHTML='';
+
+        // Bagi card ke grup
+        var groups=[];
+        for(var i=0;i<origCards.length;i+=pv){
+            groups.push(origCards.slice(i,i+pv));
+        }
+        var total=groups.length;
+
+        // Set lebar track = total grup × 100%
+        track.style.width=(total*100)+'%';
+
+        groups.forEach(function(grp,gi){
+            var g=document.createElement('div');
+            g.className='testimoni-group';
+            g.style.width=(100/total)+'%';
+            // Isi card — jika grup terakhir kurang, tambah placeholder agar rata
+            grp.forEach(function(c){ g.appendChild(c.cloneNode(true)); });
+            var missing=pv-grp.length;
+            for(var m=0;m<missing;m++){
+                var ph=document.createElement('div');
+                ph.className='testimoni-card';
+                ph.style.visibility='hidden';
+                g.appendChild(ph);
+            }
+            track.appendChild(g);
+
+            // Buat dot
+            var dot=document.createElement('span');
+            dot.className='testimoni-dot'+(gi===0?' active':'');
+            dot.dataset.i=gi;
+            dot.addEventListener('click',function(){
+                stopAuto();
+                goTo(+this.dataset.i);
+                startAuto();
+            });
+            dotsWrap.appendChild(dot);
+        });
+
+        current=0;
+        track.style.transform='translateX(0)';
+    }
+
     function goTo(idx){
-        current=Math.max(0,Math.min(idx,totalSlides-1));
-        var pct=current*(100/perView);
-        track.style.transform='translateX(-'+pct+'%)';
-        dotsWrap.querySelectorAll('.testimoni-dot').forEach(function(d,i){d.classList.toggle('active',i===current);});
-        cards.forEach(function(c,i){c.classList.toggle('is-active',i>=current&&i<current+perView);});
+        var total=track.querySelectorAll('.testimoni-group').length;
+        current=((idx%total)+total)%total;
+        track.style.transform='translateX(-'+(current*(100/total))+'%)';
+        dotsWrap.querySelectorAll('.testimoni-dot').forEach(function(d,i){
+            d.classList.toggle('active',i===current);
+        });
     }
-    function startAuto(){autoTimer=setInterval(function(){goTo(current+1<totalSlides?current+1:0);},4000);}
-    function stopAuto(){clearInterval(autoTimer);}
-    if(prevBtn)prevBtn.addEventListener('click',function(){stopAuto();goTo(current>0?current-1:totalSlides-1);startAuto();});
-    if(nextBtn)nextBtn.addEventListener('click',function(){stopAuto();goTo(current+1<totalSlides?current+1:0);startAuto();});
-    goTo(0);startAuto();
-    window.addEventListener('resize',function(){perView=getPerView();totalSlides=Math.max(1,cards.length-perView+1);goTo(0);});
+
+    function startAuto(){
+        clearInterval(autoTimer);
+        autoTimer=setInterval(function(){
+            var total=track.querySelectorAll('.testimoni-group').length;
+            goTo((current+1)%total);
+        },4000);
+    }
+    function stopAuto(){ clearInterval(autoTimer); }
+
+    function init(){
+        buildGroups();
+        startAuto();
+    }
+
+    if(document.readyState==='complete'){ init(); }
+    else{ window.addEventListener('load', init); }
+
+    var resizeTimer;
+    window.addEventListener('resize',function(){
+        clearTimeout(resizeTimer);
+        resizeTimer=setTimeout(function(){
+            stopAuto(); buildGroups(); startAuto();
+        },200);
+    });
 })();
 </script>
 
