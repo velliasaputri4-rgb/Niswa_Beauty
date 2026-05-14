@@ -382,10 +382,14 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
 .cart-toast .toast-img{width:28px;height:28px;border-radius:6px;object-fit:cover;}
 
 /* Product buttons */
-.btn-add-cart{width:100%;padding:8px 0;background:#fff;color:#8B6F5E;border:2px solid #D6C1A3;border-radius:12px;font-size:12px;font-weight:600;font-family:'Poppins',sans-serif;cursor:pointer;transition:all .25s;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:5px;}
-.btn-add-cart:hover{background:linear-gradient(135deg,#8B6F5E,#D6C1A3);color:#fff;border-color:transparent;box-shadow:0 6px 18px rgba(139,111,94,0.3);}
+.btn-add-cart{position:relative;overflow:hidden;width:100%;padding:8px 0;background:#fff;color:#8B6F5E;border:2px solid #D6C1A3;border-radius:12px;font-size:12px;font-weight:600;font-family:'Poppins',sans-serif;cursor:pointer;transition:color .25s,border-color .25s,box-shadow .25s,transform .2s;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:5px;}
+.btn-add-cart::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,#8B6F5E,#D6C1A3);opacity:0;transition:opacity .25s;border-radius:10px;z-index:-1;}
+.btn-add-cart:hover::before{opacity:1;}
+.btn-add-cart:hover{color:#fff;border-color:transparent;box-shadow:0 6px 18px rgba(139,111,94,0.35);transform:translateY(-1px);}
+.btn-add-cart:active{transform:translateY(0) scale(0.97);box-shadow:0 2px 8px rgba(139,111,94,0.2);}
 .btn-cart-price{display:inline-flex;align-items:center;gap:5px;background:linear-gradient(135deg,#8B6F5E,#D6C1A3);color:#fff;border:none;border-radius:50px;padding:4px 11px;font-size:10.5px;font-weight:600;font-family:'Poppins',sans-serif;cursor:pointer;transition:all .2s;box-shadow:0 3px 10px rgba(139,111,94,0.2);margin-top:5px;white-space:nowrap;}
-.btn-cart-price:hover{transform:translateY(-1px);box-shadow:0 5px 16px rgba(139,111,94,0.35);}
+.btn-cart-price:hover{transform:translateY(-2px) scale(1.04);box-shadow:0 7px 18px rgba(139,111,94,0.4);}
+.btn-cart-price:active{transform:translateY(0) scale(0.97);box-shadow:0 2px 8px rgba(139,111,94,0.2);}
 
 @media(max-width:480px){#cart-sidebar{width:100vw;}#cart-fab{bottom:20px;right:18px;}.cart-toast{right:16px;bottom:90px;font-size:12px;max-width:calc(100vw - 32px);white-space:normal;}}
     </style>
@@ -421,14 +425,7 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
         .product-name { font-weight: 500; font-family: 'Poppins', sans-serif; }
         .product-price { color: #8B6F5E; font-weight: 600; }
         .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 20px; }
-        .btn-beli {
-            width: 100%; padding: 8px 0; margin-top: 8px;
-            background: linear-gradient(135deg, #8B6F5E, #D6C1A3);
-            color: #fff; border: none; border-radius: 10px;
-            font-size: 13px; font-weight: 600; font-family: 'Poppins', sans-serif;
-            cursor: pointer; transition: 0.2s;
-        }
-        .btn-beli:hover { opacity: 0.85; }
+        .btn-beli { margin-top: 8px; }
     </style>
 </head>
 <body>
@@ -1011,8 +1008,11 @@ document.addEventListener('keydown', function(e) {
 .product-name { font-weight:600; font-family:'Poppins',sans-serif; font-size:14px; color:#2d1f17; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .product-price { color:#8B6F5E; font-weight:700; font-size:15px; margin-bottom:6px; }
 .product-disc-info { font-size:11px; color:#c0392b; margin-bottom:8px; padding:5px 9px; background:#fff5f5; border-radius:8px; border:1px dashed #f5b7b1; }
-.btn-beli { width:100%; padding:9px 0; background:linear-gradient(135deg,#8B6F5E,#D6C1A3); color:#fff; border:none; border-radius:12px; font-size:13px; font-weight:600; font-family:'Poppins',sans-serif; cursor:pointer; transition:all .25s; box-shadow:0 4px 14px rgba(139,111,94,0.25); }
-.btn-beli:hover { box-shadow:0 8px 24px rgba(139,111,94,0.40); transform:translateY(-1px); }
+.btn-beli { position:relative; overflow:hidden; width:100%; padding:9px 0; background:linear-gradient(135deg,#8B6F5E,#D6C1A3); color:#fff; border:none; border-radius:12px; font-size:13px; font-weight:600; font-family:'Poppins',sans-serif; cursor:pointer; transition:color .25s,box-shadow .25s,transform .2s; box-shadow:0 4px 14px rgba(139,111,94,0.25); }
+.btn-beli::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg,#6e5549,#b89e85); opacity:0; transition:opacity .25s; border-radius:12px; z-index:-1; }
+.btn-beli:hover::before { opacity:1; }
+.btn-beli:hover { box-shadow:0 8px 22px rgba(139,111,94,0.42); transform:translateY(-1px); }
+.btn-beli:active { transform:translateY(0) scale(0.97); box-shadow:0 2px 8px rgba(139,111,94,0.2); }
 @media(max-width:576px){ .product-grid { grid-template-columns:repeat(2,1fr); gap:14px; } .product-img { height:180px; } }
 </style>
 
@@ -1231,7 +1231,7 @@ document.addEventListener('keydown', function(e) {
         <div style="padding:20px 22px 22px;">
             <div id="ppName" style="font-family:'Poppins',sans-serif;font-weight:700;font-size:16px;color:#2d1f17;margin-bottom:4px;"></div>
             <div id="ppPrice" style="font-family:'Poppins',sans-serif;font-weight:700;font-size:18px;color:#8B6F5E;margin-bottom:18px;"></div>
-            <button id="ppBeli" style="width:100%;padding:12px;background:linear-gradient(135deg,#8B6F5E,#D6C1A3);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;font-family:'Poppins',sans-serif;cursor:pointer;">
+            <button id="ppBeli" class="btn-beli" style="padding:12px;font-size:14px;font-weight:700;">
                 <i class="fas fa-shopping-bag me-2"></i>Beli Sekarang
             </button>
         </div>
