@@ -635,10 +635,15 @@ $_newServices = "Henna Series:\nBrow Henna\nNail Henna Tangan\nNail Henna Kaki\n
 $_isOld = strpos($booking_page['services_list'], ':') === false;
 if ($_isOld && $conn) { setBookingPage($conn, 'services_list', $_newServices); $booking_page['services_list'] = $_newServices; }
 
-// Auto-patch page_title jika masih nilai lama "Reservasi Online"
-if ($booking_page['page_title'] === 'Reservasi Online' && $conn) {
+// Auto-patch page_title jika masih nilai lama (semua variasi "Reservasi Onlin*" atau kosong)
+if ($conn && (empty($booking_page['page_title']) || stripos($booking_page['page_title'], 'Reservasi') !== false)) {
     setBookingPage($conn, 'page_title', 'Form Booking');
     $booking_page['page_title'] = 'Form Booking';
+}
+// Auto-patch form_title jika kosong
+if ($conn && empty($booking_page['form_title'])) {
+    setBookingPage($conn, 'form_title', 'Form Booking');
+    $booking_page['form_title'] = 'Form Booking';
 }
 
 // Static default price list (displayed when DB is empty, mirroring website)
