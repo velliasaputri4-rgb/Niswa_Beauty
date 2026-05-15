@@ -485,7 +485,19 @@ if ($action === 'save_profil') {
     $fields = ['owner_name','owner_tagline','owner_bio1','owner_bio2',
                'store_name','store_tagline','store_bio1','store_bio2',
                'store_image','value_item_1','value_item_2','value_item_3','value_item_4',
-               'tech_text'];
+               // Statistik pemilik
+               'stat_years','stat_customers','stat_founded','stat_city',
+               // Quote bar
+               'owner_quote',
+               // Timeline
+               'tl_1_year','tl_1_title','tl_1_text',
+               'tl_2_year','tl_2_title','tl_2_text',
+               'tl_3_year','tl_3_title','tl_3_text',
+               'tl_4_year','tl_4_title','tl_4_text',
+               'tl_5_year','tl_5_title','tl_5_text',
+               // Badge toko
+               'store_est_date','store_est_title',
+    ];
     foreach ($fields as $f) {
         if ($f === 'store_image') {
             if ($up = handleUpload('store_image_file')) setProfil($conn, 'profil', $f, $up);
@@ -563,18 +575,51 @@ $kontak = [
 $profil = [
     'owner_name'    => getProfil($conn,'profil','owner_name',   'Niswa'),
     'owner_tagline' => getProfil($conn,'profil','owner_tagline','"Kecantikan adalah kepercayaan diri yang paling murni."'),
-    'owner_bio1'    => getProfil($conn,'profil','owner_bio1',   'Pendiri Niswa Beauty memulai perjalanan usahanya dari jasa henna keliling dengan nama Niswa Henna. Dengan penuh semangat dan ketekunan, layanan dilakukan dari rumah ke rumah untuk memenuhi kebutuhan pelanggan di sekitar Jepara.'),
-    'owner_bio2'    => getProfil($conn,'profil','owner_bio2',   'Tahun 2020–2021 menjadi masa penuh perjuangan sekaligus perkembangan. Pendiri mulai dikenal oleh beberapa publik figur lokal di Jepara.'),
+    'owner_bio1'    => getProfil($conn,'profil','owner_bio1',
+        "Pendiri Niswa Beauty memulai perjalanan usahanya dari jasa henna keliling dengan nama Niswa Henna. Dengan penuh semangat dan ketekunan, layanan dilakukan dari rumah ke rumah untuk memenuhi kebutuhan pelanggan di sekitar Jepara.\n\nPada tahun 2018, dunia kecantikan khususnya nail art dan fake nails mulai berkembang pesat. Melihat peluang tersebut, pendiri mulai mempelajari dan mengembangkan layanan nail art menggunakan perlengkapan sederhana seperti nail polish. Berawal dari daerah Lebak Pakis Aji, hasil karya yang teliti dan pelayanan yang baik membuat nama Niswa mulai dikenal masyarakat.\n\nPerjalanan usaha semakin berkembang ketika mendapat dukungan dan inspirasi dari salah satu teman di Dubai dalam pengembangan dunia kecantikan. Memasuki tahun 2019, usaha mulai berjalan lebih lancar setelah mendapatkan supplier lokal dan pelanggan dari luar daerah seperti Kudus dan Tanjung, Semarang."
+    ),
+    'owner_bio2'    => getProfil($conn,'profil','owner_bio2',
+        "Tahun 2020–2021 menjadi masa penuh perjuangan sekaligus perkembangan. Pendiri mulai dikenal oleh beberapa publik figur lokal di Jepara yang menggunakan jasa nail art Niswa. Bahkan pada masa awal, beberapa layanan diberikan secara gratis sebagai bentuk belajar dan membangun relasi. Dukungan teman-teman menjadi salah satu alasan usaha ini terus bertahan dan berkembang.\n\nPada tahun 2022, perjalanan usaha sempat mengalami ujian ketika pendiri mengalami keguguran sehingga mulai membatasi pekerjaan dengan lokasi yang terlalu jauh. Namun semangat untuk terus berkembang tidak berhenti. Di masa tersebut, usaha seserahan berkembang pesat dan menjadi salah satu layanan yang diminati pelanggan.\n\nSaat merintis sendiri, jam kerja dimulai dari pukul 10 pagi hingga 9 malam dengan jumlah pelanggan yang bisa mencapai lebih dari 7 orang per hari. Hingga kini, pendiri Niswa Beauty terus belajar dan berkembang, terutama dalam bidang media sosial, pelayanan, dan branding, dengan tetap mempertahankan sikap rendah hati dalam membangun usaha sendiri."
+    ),
     'store_name'    => getProfil($conn,'profil','store_name',   'NISWÀ BEAUTY'),
     'store_tagline' => getProfil($conn,'profil','store_tagline','"Premium Beauty Experience di Jantung Jepara"'),
-    'store_bio1'    => getProfil($conn,'profil','store_bio1',   'Niswa Beauty merupakan usaha di bidang kecantikan yang berawal dari layanan henna sederhana bernama Niswa Henna.'),
-    'store_bio2'    => getProfil($conn,'profil','store_bio2',   'Tanggal 15 Juli 2023 menjadi tonggak penting dengan resmi berdirinya Niswa Beauty bersama dua orang tim pertama.'),
+    'store_bio1'    => getProfil($conn,'profil','store_bio1',
+        "Niswa Beauty merupakan usaha di bidang kecantikan yang berawal dari layanan henna sederhana bernama Niswa Henna. Seiring berkembangnya tren kecantikan pada tahun 2018, usaha ini mulai merambah ke layanan nail art dan fake nails untuk memenuhi kebutuhan pelanggan, khususnya calon pengantin.\n\nDengan kualitas pelayanan dan hasil karya yang terus berkembang, Niswa mulai dikenal oleh masyarakat sekitar hingga mendapatkan pelanggan dari luar daerah pada tahun 2019. Perkembangan usaha semakin baik setelah memiliki supplier lokal dan jaringan pelanggan yang lebih luas.\n\nPada tahun 2020, Niswa Beauty membuka studio kecil pertama di rumah daerah Tengguli. Tidak hanya melayani nail art, usaha ini juga menyediakan layanan wedding, gift, dan seserahan. Seiring waktu, layanan nail art menjadi semakin diminati dan dikenal oleh berbagai kalangan di Jepara."
+    ),
+    'store_bio2'    => getProfil($conn,'profil','store_bio2',
+        "Tanggal 15 Juli 2023 menjadi tonggak penting dengan resmi berdirinya Niswa Beauty bersama dua orang tim pertama. Sejak saat itu, usaha berkembang lebih profesional dengan pelayanan yang semakin lengkap dan terstruktur. Beberapa kerja sama dari luar kota hingga tawaran bergabung dengan brand kecantikan besar pernah datang, namun Niswa Beauty memilih untuk tetap berkembang secara mandiri."
+    ),
     'store_image'   => getProfil($conn,'profil','store_image',  'image/WhatsApp Image 2026-05-08 at 10.02.50.jpeg'),
     'value_item_1'  => getProfil($conn,'profil','value_item_1', 'Pelayanan Tulus'),
     'value_item_2'  => getProfil($conn,'profil','value_item_2', 'Produk Aman & Halal'),
     'value_item_3'  => getProfil($conn,'profil','value_item_3', 'Kualitas Premium'),
     'value_item_4'  => getProfil($conn,'profil','value_item_4', 'Kepuasan Pelanggan'),
-    'tech_text'     => getProfil($conn,'profil','tech_text',    'Niswà Beauty juga terus mengikuti perkembangan zaman. Berawal dari promosi sederhana melalui Story WhatsApp, kini hadir lebih luas lewat Instagram dan TikTok — termasuk penggunaan sistem pembayaran digital QRIS sejak awal tahun 2025.'),
+    // Statistik pemilik
+    'stat_years'      => getProfil($conn,'profil','stat_years',      '7+'),
+    'stat_customers'  => getProfil($conn,'profil','stat_customers',  '7+'),
+    'stat_founded'    => getProfil($conn,'profil','stat_founded',    '2023'),
+    'stat_city'       => getProfil($conn,'profil','stat_city',       'Jepara'),
+    // Quote bar owner
+    'owner_quote'     => getProfil($conn,'profil','owner_quote',     'Dari henna keliling door-to-door, hingga memimpin salon kecantikan yang dikenal se-Jepara — inilah perjalanan Niswa yang penuh semangat dan ketekunan.'),
+    // Timeline 5 kolom
+    'tl_1_year'  => getProfil($conn,'profil','tl_1_year',  'Awal'),
+    'tl_1_title' => getProfil($conn,'profil','tl_1_title', 'Niswa Henna'),
+    'tl_1_text'  => getProfil($conn,'profil','tl_1_text',  'Henna keliling rumah ke rumah di sekitar Jepara.'),
+    'tl_2_year'  => getProfil($conn,'profil','tl_2_year',  '2018'),
+    'tl_2_title' => getProfil($conn,'profil','tl_2_title', 'Nail Art'),
+    'tl_2_text'  => getProfil($conn,'profil','tl_2_text',  'Mulai nail art & fake nails dengan peralatan sederhana.'),
+    'tl_3_year'  => getProfil($conn,'profil','tl_3_year',  '2019'),
+    'tl_3_title' => getProfil($conn,'profil','tl_3_title', 'Meluas'),
+    'tl_3_text'  => getProfil($conn,'profil','tl_3_text',  'Supplier lokal, pelanggan dari Kudus, Tanjung & Semarang.'),
+    'tl_4_year'  => getProfil($conn,'profil','tl_4_year',  '2020–21'),
+    'tl_4_title' => getProfil($conn,'profil','tl_4_title', 'Publik Figur'),
+    'tl_4_text'  => getProfil($conn,'profil','tl_4_text',  'Dikenal publik figur lokal. Lebih dari 7 pelanggan/hari.'),
+    'tl_5_year'  => getProfil($conn,'profil','tl_5_year',  '2022'),
+    'tl_5_title' => getProfil($conn,'profil','tl_5_title', 'Bertumbuh'),
+    'tl_5_text'  => getProfil($conn,'profil','tl_5_text',  'Layanan seserahan & wedding berkembang pesat.'),
+    // Badge toko
+    'store_est_date'  => getProfil($conn,'profil','store_est_date',  'Est. 15 Juli 2023'),
+    'store_est_title' => getProfil($conn,'profil','store_est_title', 'NISWÀ BEAUTY'),
 ];
 
 // Navbar
@@ -2103,12 +2148,70 @@ input[type=file]{display:none;}
                     </div>
                     <div class="form-group">
                         <label>Biografi Pemilik (Paragraf 1)</label>
-                        <textarea name="owner_bio1" rows="5" placeholder="Cerita awal mula perjalanan pemilik..."><?= htmlspecialchars($profil['owner_bio1']) ?></textarea>
+                        <textarea name="owner_bio1" rows="7" placeholder="Cerita awal mula perjalanan pemilik..."><?= htmlspecialchars($profil['owner_bio1']) ?></textarea>
+                        <small style="font-size:11px;color:var(--text-lt);">Pisahkan paragraf dengan baris kosong (Enter 2x). Akan ditampilkan di kolom kiri halaman profil.</small>
                     </div>
                     <div class="form-group">
                         <label>Biografi Pemilik (Paragraf 2)</label>
-                        <textarea name="owner_bio2" rows="5" placeholder="Lanjutan perjalanan..."><?= htmlspecialchars($profil['owner_bio2']) ?></textarea>
+                        <textarea name="owner_bio2" rows="7" placeholder="Lanjutan perjalanan..."><?= htmlspecialchars($profil['owner_bio2']) ?></textarea>
+                        <small style="font-size:11px;color:var(--text-lt);">Pisahkan paragraf dengan baris kosong (Enter 2x). Akan ditampilkan di kolom kanan halaman profil.</small>
                     </div>
+
+                    <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
+                    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:16px;">
+                        <i class="fa-solid fa-chart-bar" style="margin-right:5px;color:var(--primary);"></i>Statistik Pemilik (4 angka di header profil)
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-spa" style="margin-right:4px;"></i>Tahun Berkarya</label>
+                            <input type="text" name="stat_years" value="<?= htmlspecialchars($profil['stat_years']) ?>" placeholder="7+">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-users" style="margin-right:4px;"></i>Pelanggan per Hari</label>
+                            <input type="text" name="stat_customers" value="<?= htmlspecialchars($profil['stat_customers']) ?>" placeholder="7+">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-store" style="margin-right:4px;"></i>Tahun Berdiri Resmi</label>
+                            <input type="text" name="stat_founded" value="<?= htmlspecialchars($profil['stat_founded']) ?>" placeholder="2023">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-map-marker-alt" style="margin-right:4px;"></i>Kota Berkarya</label>
+                            <input type="text" name="stat_city" value="<?= htmlspecialchars($profil['stat_city']) ?>" placeholder="Jepara">
+                        </div>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
+                    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:16px;">
+                        <i class="fa-solid fa-quote-left" style="margin-right:5px;color:var(--primary);"></i>Kutipan / Quote Bar Pemilik
+                    </div>
+                    <div class="form-group">
+                        <label>Teks Kutipan (tampil di banner coklat bawah header pemilik)</label>
+                        <textarea name="owner_quote" rows="2" placeholder="Dari henna keliling door-to-door, hingga..."><?= htmlspecialchars($profil['owner_quote']) ?></textarea>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
+                    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:16px;">
+                        <i class="fa-solid fa-timeline" style="margin-right:5px;color:var(--primary);"></i>Timeline Perjalanan (5 kolom di halaman profil)
+                    </div>
+                    <?php for ($tl = 1; $tl <= 5; $tl++): ?>
+                    <div style="background:#fdfaf7;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;">
+                        <div style="font-size:11px;font-weight:700;color:var(--primary);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;">Kolom <?= $tl ?></div>
+                        <div class="grid-3">
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:10px;">Tahun / Label</label>
+                                <input type="text" name="tl_<?= $tl ?>_year" value="<?= htmlspecialchars($profil['tl_'.$tl.'_year']) ?>" placeholder="2018">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:10px;">Judul Singkat</label>
+                                <input type="text" name="tl_<?= $tl ?>_title" value="<?= htmlspecialchars($profil['tl_'.$tl.'_title']) ?>" placeholder="Nail Art">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:10px;">Deskripsi</label>
+                                <input type="text" name="tl_<?= $tl ?>_text" value="<?= htmlspecialchars($profil['tl_'.$tl.'_text']) ?>" placeholder="Cerita singkat...">
+                            </div>
+                        </div>
+                    </div>
+                    <?php endfor; ?>
 
                     <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
                     <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:16px;">
@@ -2146,6 +2249,16 @@ input[type=file]{display:none;}
                         <img src="" class="prev-thumb" id="storeImgPreview">
                         <?php endif; ?>
                     </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-calendar-check" style="margin-right:4px;"></i>Teks Badge Tanggal <small style="text-transform:none;color:var(--text-lt);">(tampil di atas foto toko)</small></label>
+                            <input type="text" name="store_est_date" value="<?= htmlspecialchars($profil['store_est_date']) ?>" placeholder="Est. 15 Juli 2023">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-store" style="margin-right:4px;"></i>Teks Badge Nama <small style="text-transform:none;color:var(--text-lt);">(tampil di atas foto toko)</small></label>
+                            <input type="text" name="store_est_title" value="<?= htmlspecialchars($profil['store_est_title']) ?>" placeholder="NISWÀ BEAUTY">
+                        </div>
+                    </div>
 
                     <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
                     <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:16px;">
@@ -2168,15 +2281,6 @@ input[type=file]{display:none;}
                             <label><i class="fa-solid fa-smile" style="margin-right:4px;color:var(--primary);"></i>Value 4</label>
                             <input type="text" name="value_item_4" value="<?= htmlspecialchars($profil['value_item_4'] ?? 'Kepuasan Pelanggan') ?>" placeholder="Kepuasan Pelanggan">
                         </div>
-                    </div>
-
-                    <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
-                    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:16px;">
-                        <i class="fa-solid fa-mobile-screen-button" style="margin-right:5px;color:var(--primary);"></i>Teks Teknologi & Perkembangan
-                    </div>
-                    <div class="form-group">
-                        <label>Paragraf Teknologi <small style="text-transform:none;color:var(--text-lt);">(tampil di bagian akhir About/Profil)</small></label>
-                        <textarea name="tech_text" rows="4" placeholder="Niswà Beauty juga terus mengikuti perkembangan zaman..."><?= htmlspecialchars($profil['tech_text'] ?? '') ?></textarea>
                     </div>
 
                     <button type="submit" class="btn-primary-cms">
