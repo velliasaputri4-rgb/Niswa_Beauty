@@ -959,23 +959,29 @@ document.addEventListener('keydown', function(e) {
                     <?php endif; ?>
                 </div>
                 <div class="product-info">
-                    <div class="product-name"><?= $pName ?></div>
-                    <div class="product-price"><?= $pPrice ?></div>
-                    <?php if ($pDisc > 0): ?>
-                    <div class="product-disc-info">
-                        <i class="fas fa-tag" style="margin-right:4px;"></i>
-                        Diskon <strong><?= $pDisc ?>%</strong>
-                        <?php if ($pMinBuy > 0): ?>
-                        · Min. beli <strong>Rp <?= number_format($pMinBuy,0,',','.') ?></strong>
+                    <div class="product-info-top">
+                        <div class="product-name"><?= $pName ?></div>
+                        <div class="product-price"><?= $pPrice ?></div>
+                        <?php if ($pDisc > 0): ?>
+                        <div class="product-disc-info">
+                            <i class="fas fa-tag" style="margin-right:4px;"></i>
+                            Diskon <strong><?= $pDisc ?>%</strong>
+                            <?php if ($pMinBuy > 0): ?>
+                            · Min. beli <strong>Rp <?= number_format($pMinBuy,0,',','.') ?></strong>
+                            <?php endif; ?>
+                        </div>
+                        <?php else: ?>
+                        <div class="product-disc-placeholder"></div>
                         <?php endif; ?>
                     </div>
-                    <?php endif; ?>
-                    <button class="btn-beli" onclick="handleBeli('<?= addslashes($p['name']) ?>','<?= addslashes($p['price']) ?>','<?= addslashes($p['image'] ?? $p['img'] ?? '') ?>',<?= $pDisc ?>,<?= $pMinBuy ?>)">
-                        <i class="fas fa-shopping-bag me-1"></i> Beli Sekarang
-                    </button>
-                    <button class="btn-add-cart" onclick="NiswaCart.add('<?= addslashes($p['name']) ?>','<?= addslashes($p['price']) ?>','<?= addslashes($p['image'] ?? $p['img'] ?? '') ?>','Produk',<?= $pDisc ?>,<?= $pMinBuy ?>)">
-                        <i class="fas fa-cart-plus"></i> + Keranjang
-                    </button>
+                    <div class="product-info-actions">
+                        <button class="btn-beli" onclick="handleBeli('<?= addslashes($p['name']) ?>','<?= addslashes($p['price']) ?>','<?= addslashes($p['image'] ?? $p['img'] ?? '') ?>',<?= $pDisc ?>,<?= $pMinBuy ?>)">
+                            <i class="fas fa-shopping-bag me-1"></i> Beli Sekarang
+                        </button>
+                        <button class="btn-add-cart" onclick="NiswaCart.add('<?= addslashes($p['name']) ?>','<?= addslashes($p['price']) ?>','<?= addslashes($p['image'] ?? $p['img'] ?? '') ?>','Produk',<?= $pDisc ?>,<?= $pMinBuy ?>)">
+                            <i class="fas fa-cart-plus"></i> + Keranjang
+                        </button>
+                    </div>
                 </div>
             </div>
         <?php endforeach; ?>
@@ -990,13 +996,13 @@ document.addEventListener('keydown', function(e) {
 .product-section-title span { color:#8B6F5E; }
 .product-section-title p { color:#888; margin-top:10px; font-size:15px; }
 .filter-buttons { text-align:center; margin-bottom:40px; display:flex; justify-content:center; gap:8px; flex-wrap:wrap; }
-.filter-buttons button { border:1.5px solid #e8ddd4; background:#fff; border-radius:50px; padding:8px 20px; font-weight:500; color:#666; cursor:pointer; font-size:14px; font-family:'Poppins',sans-serif; transition:all .25s cubic-bezier(0.4,0,0.2,1); box-shadow:0 2px 8px rgba(139,111,94,0.06); }
-.filter-buttons button:hover:not(.active) { background:linear-gradient(135deg,rgba(139,111,94,0.1),rgba(214,193,163,0.15)); color:#8B6F5E; border-color:#D6C1A3; transform:translateY(-2px); box-shadow:0 6px 18px rgba(139,111,94,0.15); }
-.filter-buttons button.active { background:linear-gradient(135deg,#8B6F5E,#D6C1A3); color:#fff; border-color:transparent; box-shadow:0 6px 20px rgba(139,111,94,0.35); transform:translateY(-2px); }
+.filter-buttons button { border:1.5px solid #e8ddd4; background:#fff; border-radius:50px; padding:8px 24px; font-weight:500; color:#888; cursor:pointer; font-size:14px; font-family:'Poppins',sans-serif; transition:background .22s, color .22s, border-color .22s, box-shadow .22s; box-shadow:0 2px 8px rgba(139,111,94,0.06); outline:none; }
+.filter-buttons button:hover:not(.active) { background:#f5ede6; color:#8B6F5E; border-color:#D6C1A3; box-shadow:0 4px 14px rgba(139,111,94,0.13); }
+.filter-buttons button.active { background:linear-gradient(135deg,#8B6F5E,#C4A882); color:#fff; border-color:transparent; box-shadow:0 4px 16px rgba(139,111,94,0.30); }
 .product-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:20px; }
-.product-card { background:#fff; border-radius:20px; overflow:hidden; transition:.3s; }
+.product-card { background:#fff; border-radius:20px; overflow:hidden; transition:.3s; display:flex; flex-direction:column; }
 .product-card:hover { transform:translateY(-8px); box-shadow:0 12px 40px rgba(139,111,94,0.15); }
-.product-card-img-wrap { position:relative; overflow:hidden; }
+.product-card-img-wrap { position:relative; overflow:hidden; flex-shrink:0; }
 .product-card-overlay { position:absolute; inset:0; background:rgba(0,0,0,0.35); display:flex; align-items:center; justify-content:center; opacity:0; transition:.3s; }
 .product-card:hover .product-card-overlay { opacity:1; }
 .btn-preview { background:rgba(255,255,255,0.92); color:#5A4A42; border:none; border-radius:50px; padding:9px 22px; font-size:13px; font-weight:600; font-family:'Poppins',sans-serif; cursor:pointer; transform:translateY(8px); transition:transform .3s,background .2s; box-shadow:0 4px 14px rgba(0,0,0,0.12); }
@@ -1004,10 +1010,13 @@ document.addEventListener('keydown', function(e) {
 .product-badge-cat { position:absolute; top:12px; left:12px; background:rgba(255,255,255,0.88); color:#5A4A42; font-size:10px; font-weight:700; font-family:'Poppins',sans-serif; letter-spacing:.8px; text-transform:uppercase; padding:4px 12px; border-radius:50px; backdrop-filter:blur(6px); border:1px solid rgba(255,255,255,0.6); }
 .product-badge-disc { position:absolute; top:12px; right:12px; background:linear-gradient(135deg,#e74c3c,#c0392b); color:#fff; font-size:10px; font-weight:800; font-family:'Poppins',sans-serif; letter-spacing:.5px; padding:4px 10px; border-radius:50px; box-shadow:0 3px 10px rgba(231,76,60,0.4); }
 .product-img { width:100%; height:260px; object-fit:cover; }
-.product-info { padding:16px; }
+.product-info { padding:16px; display:flex; flex-direction:column; flex:1; }
+.product-info-top { flex:1; }
 .product-name { font-weight:600; font-family:'Poppins',sans-serif; font-size:14px; color:#2d1f17; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .product-price { color:#8B6F5E; font-weight:700; font-size:15px; margin-bottom:6px; }
 .product-disc-info { font-size:11px; color:#c0392b; margin-bottom:8px; padding:5px 9px; background:#fff5f5; border-radius:8px; border:1px dashed #f5b7b1; }
+.product-disc-placeholder { margin-bottom:8px; height:0; }
+.product-info-actions { margin-top:auto; }
 .btn-beli { position:relative; overflow:hidden; width:100%; padding:9px 0; background:linear-gradient(135deg,#8B6F5E,#D6C1A3); color:#fff; border:none; border-radius:12px; font-size:13px; font-weight:600; font-family:'Poppins',sans-serif; cursor:pointer; transition:color .25s,box-shadow .25s,transform .2s; box-shadow:0 4px 14px rgba(139,111,94,0.25); }
 .btn-beli::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg,#6e5549,#b89e85); opacity:0; transition:opacity .25s; border-radius:12px; z-index:-1; }
 .btn-beli:hover::before { opacity:1; }

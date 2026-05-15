@@ -9,7 +9,22 @@ if (!isset($_SESSION['user'])) {
 
 // Koneksi langsung (tanpa require)
 $conn = mysqli_connect("localhost", "root", "", "salon_db");
+if (!$conn) {
+    die('<div style="font-family:sans-serif;padding:40px;text-align:center;"><h2 style="color:#e11d48;">Database tidak dapat terhubung</h2><p>Pastikan MySQL berjalan dan database <strong>salon_db</strong> sudah dibuat.</p><p style="color:#999;font-size:13px;">Error: ' . mysqli_connect_error() . '</p></div>');
+}
 mysqli_set_charset($conn, 'utf8mb4');
+
+// Pastikan tabel bookings ada
+mysqli_query($conn, "CREATE TABLE IF NOT EXISTS bookings (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    phone VARCHAR(30),
+    email VARCHAR(120),
+    service VARCHAR(150),
+    date DATE,
+    time TIME,
+    created_at DATETIME DEFAULT NOW()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
 // Handle Logout
 if (isset($_GET['logout'])) {
@@ -26,11 +41,17 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
     exit;
 }
 
-// Fetch stats
-$total       = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) AS n FROM bookings"))['n'];
-$today       = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) AS n FROM bookings WHERE date = CURDATE()"))['n'];
-$week        = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) AS n FROM bookings WHERE YEARWEEK(date,1)=YEARWEEK(CURDATE(),1)"))['n'];
-$newBookings = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) AS n FROM bookings WHERE created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)"))['n'];
+// Fetch stats — null-safe agar tidak crash jika tabel masih kosong
+function safeCount($conn, $sql) {
+    $r = mysqli_query($conn, $sql);
+    if (!$r) return 0;
+    $row = mysqli_fetch_assoc($r);
+    return (int)($row['n'] ?? 0);
+}
+$total       = safeCount($conn, "SELECT COUNT(*) AS n FROM bookings");
+$today       = safeCount($conn, "SELECT COUNT(*) AS n FROM bookings WHERE date = CURDATE()");
+$week        = safeCount($conn, "SELECT COUNT(*) AS n FROM bookings WHERE YEARWEEK(date,1)=YEARWEEK(CURDATE(),1)");
+$newBookings = safeCount($conn, "SELECT COUNT(*) AS n FROM bookings WHERE created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)");
 
 // Fetch all bookings
 $result = mysqli_query($conn, "SELECT * FROM bookings ORDER BY created_at DESC");
@@ -38,6 +59,7 @@ $result = mysqli_query($conn, "SELECT * FROM bookings ORDER BY created_at DESC")
 // Fetch orders (buat tabel jika belum ada)
 mysqli_query($conn, "CREATE TABLE IF NOT EXISTS orders (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT DEFAULT NULL,
     nama VARCHAR(100) NOT NULL,
     whatsapp VARCHAR(20) NOT NULL,
     alamat TEXT NOT NULL,
@@ -46,8 +68,9 @@ mysqli_query($conn, "CREATE TABLE IF NOT EXISTS orders (
     qty INT DEFAULT 1,
     total VARCHAR(20),
     catatan TEXT,
+    product_image VARCHAR(500) DEFAULT NULL,
     created_at DATETIME DEFAULT NOW()
-)");
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 $ordersResult = mysqli_query($conn, "SELECT * FROM orders ORDER BY created_at DESC");
 $totalOrders  = ($ordersResult) ? mysqli_num_rows($ordersResult) : 0;
 if ($ordersResult) mysqli_data_seek($ordersResult, 0);

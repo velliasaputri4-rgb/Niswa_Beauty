@@ -9,6 +9,9 @@ if (!isset($_SESSION['user'])) {
 
 /* ── DB Connection ── */
 $conn = mysqli_connect("localhost", "root", "", "salon_db");
+if (!$conn) {
+    die('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Error</title><style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#fdfaf7;margin:0;}.box{text-align:center;padding:40px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.1);max-width:440px;}h2{color:#e11d48;}p{color:#666;font-size:14px;margin:10px 0;}code{background:#f5f5f5;padding:3px 8px;border-radius:6px;font-size:13px;}</style></head><body><div class="box"><h2>⚠️ Database Error</h2><p>Tidak dapat terhubung ke database <strong>salon_db</strong>.</p><p>Pastikan MySQL sudah berjalan dan database sudah dibuat.</p><p><code>' . mysqli_connect_error() . '</code></p><a href="dashboard.php" style="display:inline-block;margin-top:16px;padding:10px 24px;background:#8B6F5E;color:#fff;border-radius:30px;text-decoration:none;font-size:14px;">← Kembali</a></div></body></html>');
+}
 if ($conn) mysqli_set_charset($conn, 'utf8mb4');
 
 /* ══════════════════════════════════════════════
@@ -121,6 +124,29 @@ if ($conn) {
         updated_at DATETIME DEFAULT NOW() ON UPDATE NOW(),
         UNIQUE KEY uk_bkpg_sec_key (section, `key`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // Pastikan tabel orders ada & kolom lengkap
+    mysqli_query($conn, "CREATE TABLE IF NOT EXISTS orders (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT DEFAULT NULL,
+        nama VARCHAR(100) NOT NULL,
+        whatsapp VARCHAR(20) NOT NULL,
+        alamat TEXT NOT NULL,
+        product_name VARCHAR(100) NOT NULL,
+        product_price VARCHAR(20) NOT NULL,
+        qty INT DEFAULT 1,
+        total VARCHAR(20),
+        catatan TEXT,
+        product_image VARCHAR(500) DEFAULT NULL,
+        created_at DATETIME DEFAULT NOW()
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    foreach (["user_id"=>"ALTER TABLE orders ADD COLUMN user_id INT DEFAULT NULL",
+              "catatan" =>"ALTER TABLE orders ADD COLUMN catatan TEXT",
+              "total"   =>"ALTER TABLE orders ADD COLUMN total VARCHAR(20)",
+              "product_image"=>"ALTER TABLE orders ADD COLUMN product_image VARCHAR(500) DEFAULT NULL"] as $col=>$sql) {
+        $cek = mysqli_query($conn, "SHOW COLUMNS FROM orders LIKE '$col'");
+        if ($cek && mysqli_num_rows($cek) === 0) mysqli_query($conn, $sql);
+    }
 
     /* ── AUTO-SEED: isi default jika tabel masih kosong ── */
     $cntSvc = (int)(mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM cms_services"))['c'] ?? 0);
@@ -458,7 +484,8 @@ if ($action === 'delete_testi' && isset($_GET['id'])) {
 if ($action === 'save_profil') {
     $fields = ['owner_name','owner_tagline','owner_bio1','owner_bio2',
                'store_name','store_tagline','store_bio1','store_bio2',
-               'store_image','value_item_1','value_item_2','value_item_3','value_item_4'];
+               'store_image','value_item_1','value_item_2','value_item_3','value_item_4',
+               'tech_text'];
     foreach ($fields as $f) {
         if ($f === 'store_image') {
             if ($up = handleUpload('store_image_file')) setProfil($conn, 'profil', $f, $up);
@@ -496,7 +523,10 @@ if ($action === 'save_footer') {
 /* ── 12. Booking Page Content ── */
 if ($action === 'save_booking_page') {
     $fields = ['page_title','page_subtitle','form_title',
-               'services_list','time_slots'];
+               'services_list','time_slots',
+               'sidebar_address','sidebar_whatsapp','sidebar_hours',
+               'perk_1','perk_2','perk_3','perk_4',
+               'max_jumlah_orang','show_catatan','show_jumlah_orang'];
     foreach ($fields as $f) setBookingPage($conn, $f, $_POST[$f] ?? '');
     header('Location: cms.php?tab=booking_page&saved=1'); exit;
 }
@@ -544,6 +574,7 @@ $profil = [
     'value_item_2'  => getProfil($conn,'profil','value_item_2', 'Produk Aman & Halal'),
     'value_item_3'  => getProfil($conn,'profil','value_item_3', 'Kualitas Premium'),
     'value_item_4'  => getProfil($conn,'profil','value_item_4', 'Kepuasan Pelanggan'),
+    'tech_text'     => getProfil($conn,'profil','tech_text',    'Niswà Beauty juga terus mengikuti perkembangan zaman. Berawal dari promosi sederhana melalui Story WhatsApp, kini hadir lebih luas lewat Instagram dan TikTok — termasuk penggunaan sistem pembayaran digital QRIS sejak awal tahun 2025.'),
 ];
 
 // Navbar
@@ -578,19 +609,37 @@ $footer_data = [
 
 // Booking Page
 $booking_page = [
-    'page_title'      => getBookingPage($conn, 'page_title',      'Reservasi Online'),
-    'page_subtitle'   => getBookingPage($conn, 'page_subtitle',   'Isi form di bawah untuk memesan jadwal kecantikan Anda'),
-    'form_title'      => getBookingPage($conn, 'form_title',      'Form Booking'),
-    'services_list'   => getBookingPage($conn, 'services_list',   "Brow Henna\nNail Henna Tangan\nNail Henna Kaki\nBundling Meni-Henna\nHenna Fun\nBundling Manicure & Pedicure\nManicure / Pedicure\nHand Spa\nFoot Spa\nCallus Treatment\nBrow Bomb\nLashlift\nLashlift Tint\nCreambath\nHair Mask\nHair Spa\nCuci,Catok,Blow\nBleaching S\nColoring Full\nBleaching\nBalayage\nDown Peim Poni\nKeriting Klasik\nKeriting Digital\nKeratin Treatment\nSmoothing\nPress On Nail Basic\nPress On Nail Motif\nKids Basic Gel\nKids Gel + 4 Sticker\nKids Gel + Full Sticker\nGel Basic Tangan / Kaki\nExtension\nGel French / Cat Eyes\nRemove Gel\nGel Ombre / Blush On\nRemove Extension\nBundling Nail Art + Extension"),
-    'time_slots'      => getBookingPage($conn, 'time_slots',      "09:00\n10:00\n11:00\n12:00\n13:00\n14:00\n15:00\n16:00\n17:00\n18:00\n19:00"),
+    'page_title'         => getBookingPage($conn, 'page_title',         'Form Booking'),
+    'page_subtitle'      => getBookingPage($conn, 'page_subtitle',      'Isi form di bawah untuk memesan jadwal kecantikan Anda'),
+    'form_title'         => getBookingPage($conn, 'form_title',         'Form Booking'),
+    'services_list'      => getBookingPage($conn, 'services_list',      "Henna Series:\nBrow Henna\nNail Henna Tangan\nNail Henna Kaki\nBundling Meni-Henna\nHenna Fun\n\nTreatment Spa:\nBundling Manicure & Pedicure\nManicure / Pedicure\nHand Spa\nFoot Spa\nCallus Treatment\n\nBrow & Lash:\nBrow Bomb\nLashlift\nLashlift Tint\n\nRambut:\nCreambath\nHair Mask\nHair Spa\nCuci,Catok,Blow\nBleaching S\nColoring Full\nBleaching\nBalayage\nDown Peim Poni\nKeriting Klasik\nKeriting Digital\nKeratin Treatment\nSmoothing\n\nNail Art & Services:\nPress On Nail Basic\nPress On Nail Motif\nKids Basic Gel\nKids Gel + 4 Sticker\nKids Gel + Full Sticker\nGel Basic Tangan / Kaki\nExtension\nGel French / Cat Eyes\nRemove Gel\nGel Ombre / Blush On\nRemove Extension\nBundling Nail Art + Extension"),
+    'time_slots'         => getBookingPage($conn, 'time_slots',         "09:00\n10:00\n11:00\n13:00\n14:00\n15:00\n16:00\n17:00\n18:00\n19:00\n20:00"),
+    // Sidebar info
+    'sidebar_address'    => getBookingPage($conn, 'sidebar_address',    'Jl. Lkr. Bangsri, Jepara, Jawa Tengah'),
+    'sidebar_whatsapp'   => getBookingPage($conn, 'sidebar_whatsapp',   '+62 882 006 903 068'),
+    'sidebar_hours'      => getBookingPage($conn, 'sidebar_hours',      'Senin - Minggu, 09:00 - 20:00'),
+    // Keunggulan / perks
+    'perk_1'             => getBookingPage($conn, 'perk_1',             'Fast Response <1 jam'),
+    'perk_2'             => getBookingPage($conn, 'perk_2',             'Beautician Profesional'),
+    'perk_3'             => getBookingPage($conn, 'perk_3',             'Tempat Nyaman Mewah'),
+    'perk_4'             => getBookingPage($conn, 'perk_4',             'Produk Premium Import'),
+    // Field tambahan form
+    'max_jumlah_orang'   => getBookingPage($conn, 'max_jumlah_orang',   '10'),
+    'show_catatan'       => getBookingPage($conn, 'show_catatan',       '1'),
+    'show_jumlah_orang'  => getBookingPage($conn, 'show_jumlah_orang',  '1'),
 ];
 
-// Auto-update services_list jika masih berisi data lama
-$_newServices = "Brow Henna\nNail Henna Tangan\nNail Henna Kaki\nBundling Meni-Henna\nHenna Fun\nBundling Manicure & Pedicure\nManicure / Pedicure\nHand Spa\nFoot Spa\nCallus Treatment\nBrow Bomb\nLashlift\nLashlift Tint\nCreambath\nHair Mask\nHair Spa\nCuci,Catok,Blow\nBleaching S\nColoring Full\nBleaching\nBalayage\nDown Peim Poni\nKeriting Klasik\nKeriting Digital\nKeratin Treatment\nSmoothing\nPress On Nail Basic\nPress On Nail Motif\nKids Basic Gel\nKids Gel + 4 Sticker\nKids Gel + Full Sticker\nGel Basic Tangan / Kaki\nExtension\nGel French / Cat Eyes\nRemove Gel\nGel Ombre / Blush On\nRemove Extension\nBundling Nail Art + Extension";
-$_oldKeywords = ['Nail Art', 'Haircut', 'Eye Lash', 'Hair Treatment', 'Press on Nail'];
-$_isOld = false;
-foreach ($_oldKeywords as $_kw) { if (strpos($booking_page['services_list'], $_kw) !== false) { $_isOld = true; break; } }
+// Auto-update services_list jika masih berisi data lama (flat list tanpa grup)
+$_newServices = "Henna Series:\nBrow Henna\nNail Henna Tangan\nNail Henna Kaki\nBundling Meni-Henna\nHenna Fun\n\nTreatment Spa:\nBundling Manicure & Pedicure\nManicure / Pedicure\nHand Spa\nFoot Spa\nCallus Treatment\n\nBrow & Lash:\nBrow Bomb\nLashlift\nLashlift Tint\n\nRambut:\nCreambath\nHair Mask\nHair Spa\nCuci,Catok,Blow\nBleaching S\nColoring Full\nBleaching\nBalayage\nDown Peim Poni\nKeriting Klasik\nKeriting Digital\nKeratin Treatment\nSmoothing\n\nNail Art & Services:\nPress On Nail Basic\nPress On Nail Motif\nKids Basic Gel\nKids Gel + 4 Sticker\nKids Gel + Full Sticker\nGel Basic Tangan / Kaki\nExtension\nGel French / Cat Eyes\nRemove Gel\nGel Ombre / Blush On\nRemove Extension\nBundling Nail Art + Extension";
+// Jika belum ada format grup (ditandai dengan adanya ":"), migrate ke format baru
+$_isOld = strpos($booking_page['services_list'], ':') === false;
 if ($_isOld && $conn) { setBookingPage($conn, 'services_list', $_newServices); $booking_page['services_list'] = $_newServices; }
+
+// Auto-patch page_title jika masih nilai lama "Reservasi Online"
+if ($booking_page['page_title'] === 'Reservasi Online' && $conn) {
+    setBookingPage($conn, 'page_title', 'Form Booking');
+    $booking_page['page_title'] = 'Form Booking';
+}
 
 // Static default price list (displayed when DB is empty, mirroring website)
 // description = sama persis dengan priceDescriptions di index.php
@@ -645,16 +694,25 @@ $defaultPriceList = [
     ],
 ];
 
+// Helper: safe count — tidak crash meski tabel belum ada
+function cmsCount($conn, $sql) {
+    if (!$conn) return 0;
+    $r = mysqli_query($conn, $sql);
+    if (!$r) return 0;
+    $row = mysqli_fetch_assoc($r);
+    return (int)($row['c'] ?? 0);
+}
+
 // DB rows
 $servicesRows  = $conn ? mysqli_query($conn, "SELECT * FROM cms_services ORDER BY sort_order, id") : null;
 $pricesRows    = $conn ? mysqli_query($conn, "SELECT * FROM cms_prices ORDER BY category, sort_order, id") : null;
 $productsRows  = $conn ? mysqli_query($conn, "SELECT * FROM cms_products ORDER BY sort_order, id") : null;
 $testiRows     = $conn ? mysqli_query($conn, "SELECT * FROM cms_testimonials ORDER BY sort_order, id") : null;
 // Stats
-$totalProducts = $conn ? (int)(mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM cms_products"))['c'] ?? 0) : 0;
-$totalServices = $conn ? (int)(mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM cms_services"))['c'] ?? 0) : 0;
-$totalOrders   = $conn ? (int)(mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM orders"))['c'] ?? 0) : 0;
-$newOrders     = $conn ? (int)(mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM orders WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)"))['c'] ?? 0) : 0;
+$totalProducts = cmsCount($conn, "SELECT COUNT(*) c FROM cms_products");
+$totalServices = cmsCount($conn, "SELECT COUNT(*) c FROM cms_services");
+$totalOrders   = cmsCount($conn, "SELECT COUNT(*) c FROM orders");
+$newOrders     = cmsCount($conn, "SELECT COUNT(*) c FROM orders WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)");
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -2107,14 +2165,19 @@ input[type=file]{display:none;}
                         </div>
                     </div>
 
+                    <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
+                    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:16px;">
+                        <i class="fa-solid fa-mobile-screen-button" style="margin-right:5px;color:var(--primary);"></i>Teks Teknologi & Perkembangan
+                    </div>
+                    <div class="form-group">
+                        <label>Paragraf Teknologi <small style="text-transform:none;color:var(--text-lt);">(tampil di bagian akhir About/Profil)</small></label>
+                        <textarea name="tech_text" rows="4" placeholder="Niswà Beauty juga terus mengikuti perkembangan zaman..."><?= htmlspecialchars($profil['tech_text'] ?? '') ?></textarea>
+                    </div>
+
                     <button type="submit" class="btn-primary-cms">
                         <i class="fa-solid fa-floppy-disk"></i> Simpan Semua Perubahan
                     </button>
                 </form>
-            </div>
-        </div>
-
-<?php /* ════════ TAB: KONTAK ════════ */ ?>
 <?php elseif ($activeTab === 'kontak'): ?>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
@@ -2521,13 +2584,13 @@ input[type=file]{display:none;}
                 <div class="cms-card-body">
                     <form method="POST" action="cms.php?action=save_booking_page">
 
-                        <!-- Judul & Subtitle -->
+                        <!-- ── Judul & Subtitle ── -->
                         <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:14px;">
                             <i class="fa-solid fa-heading" style="margin-right:5px;color:var(--primary);"></i>Judul Halaman
                         </div>
                         <div class="form-group">
                             <label><i class="fa-solid fa-heading" style="margin-right:4px;"></i>Judul Utama Halaman Booking</label>
-                            <input type="text" name="page_title" value="<?= htmlspecialchars($booking_page['page_title']) ?>" placeholder="Reservasi Online">
+                            <input type="text" name="page_title" value="<?= htmlspecialchars($booking_page['page_title']) ?>" placeholder="Form Booking">
                         </div>
                         <div class="form-group">
                             <label><i class="fa-solid fa-align-left" style="margin-right:4px;"></i>Subtitle / Deskripsi Singkat</label>
@@ -2540,24 +2603,97 @@ input[type=file]{display:none;}
 
                         <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
 
-                        <!-- Daftar Layanan -->
+                        <!-- ── Daftar Layanan dengan Grup ── -->
                         <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:14px;">
                             <i class="fa-solid fa-list-check" style="margin-right:5px;color:var(--primary);"></i>Opsi Dropdown Form
                         </div>
                         <div class="form-group">
-                            <label><i class="fa-solid fa-spa" style="margin-right:4px;"></i>Daftar Layanan (dropdown pilihan layanan)</label>
-                            <textarea name="services_list" rows="10" placeholder="Brow Henna&#10;Nail Henna Tangan&#10;Foot Spa&#10;..."><?= htmlspecialchars($booking_page['services_list']) ?></textarea>
-                            <small style="font-size:11px;color:var(--text-lt);margin-top:4px;display:block;"><i class="fa-solid fa-circle-info" style="margin-right:3px;"></i>Satu layanan per baris. Akan tampil sebagai opsi di dropdown pilih layanan pada form booking.</small>
+                            <label><i class="fa-solid fa-spa" style="margin-right:4px;"></i>Daftar Layanan (dengan Grup Kategori)</label>
+                            <textarea name="services_list" rows="14" placeholder="Henna Series:&#10;Brow Henna&#10;Nail Henna Tangan&#10;&#10;Treatment Spa:&#10;Foot Spa&#10;..."><?= htmlspecialchars($booking_page['services_list']) ?></textarea>
+                            <small style="font-size:11px;color:var(--text-lt);margin-top:4px;display:block;">
+                                <i class="fa-solid fa-circle-info" style="margin-right:3px;"></i>
+                                Format: <strong>NamaKategori:</strong> di baris tersendiri sebagai judul grup, lalu layanan per baris di bawahnya. Baris kosong memisahkan antar grup.
+                            </small>
                         </div>
                         <div class="form-group">
                             <label><i class="fa-solid fa-clock" style="margin-right:4px;"></i>Slot Jam Booking (dropdown pilihan jam)</label>
-                            <textarea name="time_slots" rows="6" placeholder="09:00&#10;10:00&#10;11:00&#10;..."><?= htmlspecialchars($booking_page['time_slots']) ?></textarea>
-                            <small style="font-size:11px;color:var(--text-lt);margin-top:4px;display:block;"><i class="fa-solid fa-circle-info" style="margin-right:3px;"></i>Format 24 jam (HH:MM). Satu slot per baris. Akan tampil di dropdown jam pada form booking.</small>
+                            <textarea name="time_slots" rows="7" placeholder="09:00&#10;10:00&#10;11:00&#10;..."><?= htmlspecialchars($booking_page['time_slots']) ?></textarea>
+                            <small style="font-size:11px;color:var(--text-lt);margin-top:4px;display:block;"><i class="fa-solid fa-circle-info" style="margin-right:3px;"></i>Format 24 jam (HH:MM). Satu slot per baris. Sesuaikan dengan jam operasional salon.</small>
                         </div>
 
-                        <button type="submit" class="btn-primary-cms">
-                            <i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan Halaman Booking
-                        </button>
+                        <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
+
+                        <!-- ── Pengaturan Field Form ── -->
+                        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:14px;">
+                            <i class="fa-solid fa-sliders" style="margin-right:5px;color:var(--primary);"></i>Pengaturan Field Form
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-users" style="margin-right:4px;"></i>Jumlah Orang Maksimal</label>
+                            <input type="number" name="max_jumlah_orang" value="<?= htmlspecialchars($booking_page['max_jumlah_orang']) ?>" min="1" max="50" placeholder="10">
+                            <small style="font-size:11px;color:var(--text-lt);margin-top:4px;display:block;">Batas maksimal pilihan jumlah orang di form booking (sesuai booking.php).</small>
+                        </div>
+                        <div style="display:flex;gap:20px;margin-bottom:16px;">
+                            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+                                <input type="hidden" name="show_jumlah_orang" value="0">
+                                <input type="checkbox" name="show_jumlah_orang" value="1" <?= $booking_page['show_jumlah_orang'] != '0' ? 'checked' : '' ?> style="width:16px;height:16px;accent-color:var(--primary);">
+                                <span>Tampilkan field <strong>Jumlah Orang</strong></span>
+                            </label>
+                            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+                                <input type="hidden" name="show_catatan" value="0">
+                                <input type="checkbox" name="show_catatan" value="1" <?= $booking_page['show_catatan'] != '0' ? 'checked' : '' ?> style="width:16px;height:16px;accent-color:var(--primary);">
+                                <span>Tampilkan field <strong>Catatan</strong></span>
+                            </label>
+                        </div>
+
+                        <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
+
+                        <!-- ── Informasi Sidebar ── -->
+                        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:14px;">
+                            <i class="fa-solid fa-circle-info" style="margin-right:5px;color:var(--primary);"></i>Informasi Sidebar Salon
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-map-marker-alt" style="margin-right:4px;"></i>Alamat Salon</label>
+                            <input type="text" name="sidebar_address" value="<?= htmlspecialchars($booking_page['sidebar_address']) ?>" placeholder="Jl. Lkr. Bangsri, Jepara, Jawa Tengah">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fab fa-whatsapp" style="margin-right:4px;"></i>Nomor WhatsApp (sidebar)</label>
+                            <input type="text" name="sidebar_whatsapp" value="<?= htmlspecialchars($booking_page['sidebar_whatsapp']) ?>" placeholder="+62 882 006 903 068">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-clock" style="margin-right:4px;"></i>Jam Operasional (sidebar)</label>
+                            <input type="text" name="sidebar_hours" value="<?= htmlspecialchars($booking_page['sidebar_hours']) ?>" placeholder="Senin - Minggu, 09:00 - 20:00">
+                        </div>
+
+                        <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
+
+                        <!-- ── Keunggulan Booking ── -->
+                        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:14px;">
+                            <i class="fa-solid fa-star" style="margin-right:5px;color:var(--primary);"></i>Keunggulan Booking (Sidebar)
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:11px;">Poin 1</label>
+                                <input type="text" name="perk_1" value="<?= htmlspecialchars($booking_page['perk_1']) ?>" placeholder="Fast Response <1 jam">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:11px;">Poin 2</label>
+                                <input type="text" name="perk_2" value="<?= htmlspecialchars($booking_page['perk_2']) ?>" placeholder="Beautician Profesional">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:11px;">Poin 3</label>
+                                <input type="text" name="perk_3" value="<?= htmlspecialchars($booking_page['perk_3']) ?>" placeholder="Tempat Nyaman Mewah">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label style="font-size:11px;">Poin 4</label>
+                                <input type="text" name="perk_4" value="<?= htmlspecialchars($booking_page['perk_4']) ?>" placeholder="Produk Premium Import">
+                            </div>
+                        </div>
+
+                        <div style="margin-top:24px;">
+                            <button type="submit" class="btn-primary-cms">
+                                <i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan Halaman Booking
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -2584,14 +2720,27 @@ input[type=file]{display:none;}
                             <div style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);">
                                 <i class="fa-solid fa-calendar-check" style="margin-right:6px;"></i><?= htmlspecialchars($booking_page['form_title']) ?>
                             </div>
-                            <!-- Layanan preview -->
+                            <!-- Layanan preview dengan optgroup -->
                             <div style="margin-bottom:12px;">
                                 <div style="font-size:11px;font-weight:600;color:var(--text-mid);margin-bottom:5px;">Pilih Layanan</div>
                                 <select style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:#fff;color:var(--text);">
                                     <option value="">Pilih layanan...</option>
-                                    <?php foreach (array_filter(array_map('trim', explode("\n", $booking_page['services_list']))) as $svc): ?>
-                                    <option><?= htmlspecialchars($svc) ?></option>
-                                    <?php endforeach; ?>
+                                    <?php
+                                    $lines = array_map('rtrim', explode("\n", $booking_page['services_list']));
+                                    $currentGroup = null;
+                                    foreach ($lines as $line) {
+                                        $line = trim($line);
+                                        if ($line === '') { continue; }
+                                        if (substr($line, -1) === ':') {
+                                            if ($currentGroup !== null) echo '</optgroup>';
+                                            $currentGroup = rtrim($line, ':');
+                                            echo '<optgroup label="' . htmlspecialchars($currentGroup) . '">';
+                                        } else {
+                                            echo '<option>' . htmlspecialchars($line) . '</option>';
+                                        }
+                                    }
+                                    if ($currentGroup !== null) echo '</optgroup>';
+                                    ?>
                                 </select>
                             </div>
                             <!-- Jam preview -->
@@ -2604,10 +2753,69 @@ input[type=file]{display:none;}
                                     <?php endforeach; ?>
                                 </select>
                             </div>
+                            <!-- Jumlah Orang preview -->
+                            <?php if ($booking_page['show_jumlah_orang'] != '0'): ?>
+                            <div style="margin-bottom:12px;">
+                                <div style="font-size:11px;font-weight:600;color:var(--text-mid);margin-bottom:5px;">Jumlah Orang</div>
+                                <select style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:#fff;color:var(--text);">
+                                    <?php for ($i=1; $i<=(int)($booking_page['max_jumlah_orang']?:10); $i++): ?>
+                                    <option><?= $i ?> Orang</option>
+                                    <?php endfor; ?>
+                                </select>
+                            </div>
+                            <?php endif; ?>
+                            <!-- Catatan preview -->
+                            <?php if ($booking_page['show_catatan'] != '0'): ?>
+                            <div style="margin-bottom:4px;">
+                                <div style="font-size:11px;font-weight:600;color:var(--text-mid);margin-bottom:5px;">Catatan (opsional)</div>
+                                <textarea style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;resize:none;color:var(--text-lt);" rows="2" placeholder="Contoh: alergi tertentu, request khusus..." disabled></textarea>
+                            </div>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Info layanan yang tersimpan -->
+                <!-- Preview Sidebar -->
+                <div class="cms-card" style="margin-bottom:16px;">
+                    <div class="cms-card-header">
+                        <i class="fa-solid fa-sidebar"></i>
+                        <h3>Preview Sidebar Booking</h3>
+                    </div>
+                    <div class="cms-card-body" style="padding:14px 18px;">
+                        <div style="font-size:12px;font-weight:700;color:var(--primary);margin-bottom:10px;">
+                            <i class="fa-solid fa-info-circle" style="margin-right:4px;"></i>Informasi Salon
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+                            <div style="display:flex;gap:10px;align-items:flex-start;font-size:12px;">
+                                <i class="fa-solid fa-map-marker-alt" style="color:#e11d48;margin-top:2px;"></i>
+                                <span><?= htmlspecialchars($booking_page['sidebar_address']) ?></span>
+                            </div>
+                            <div style="display:flex;gap:10px;align-items:center;font-size:12px;">
+                                <i class="fab fa-whatsapp" style="color:#22c55e;"></i>
+                                <strong><?= htmlspecialchars($booking_page['sidebar_whatsapp']) ?></strong>
+                            </div>
+                            <div style="display:flex;gap:10px;align-items:flex-start;font-size:12px;">
+                                <i class="fa-solid fa-clock" style="margin-top:2px;"></i>
+                                <span><?= htmlspecialchars($booking_page['sidebar_hours']) ?></span>
+                            </div>
+                        </div>
+                        <div style="font-size:12px;font-weight:700;color:var(--primary);margin-bottom:8px;">
+                            <i class="fa-solid fa-star" style="margin-right:4px;"></i>Kenapa Booking Disini?
+                        </div>
+                        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:5px;">
+                            <?php foreach (['perk_1','perk_2','perk_3','perk_4'] as $pk): ?>
+                            <?php if (!empty($booking_page[$pk])): ?>
+                            <li style="font-size:12px;display:flex;align-items:center;gap:7px;">
+                                <i class="fa-solid fa-check-circle" style="color:#22c55e;"></i>
+                                <?= htmlspecialchars($booking_page[$pk]) ?>
+                            </li>
+                            <?php endif; ?>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Ringkasan Layanan & Slot Jam -->
                 <div class="cms-card">
                     <div class="cms-card-header">
                         <i class="fa-solid fa-list-check"></i>
@@ -2615,8 +2823,10 @@ input[type=file]{display:none;}
                     </div>
                     <div class="cms-card-body">
                         <?php
-                        $svcList = array_filter(array_map('trim', explode("\n", $booking_page['services_list'])));
-                        $tsList  = array_filter(array_map('trim', explode("\n", $booking_page['time_slots'])));
+                        // Hitung total layanan (bukan baris header grup)
+                        $allLines = array_map('trim', explode("\n", $booking_page['services_list']));
+                        $svcList  = array_filter($allLines, fn($l) => $l !== '' && substr($l,-1) !== ':');
+                        $tsList   = array_filter(array_map('trim', explode("\n", $booking_page['time_slots'])));
                         ?>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
                             <div>
@@ -2685,6 +2895,7 @@ $totalOrdersCount = $ordersRows ? mysqli_num_rows($ordersRows) : 0;
                             <th>Waktu</th>
                             <th>Nama</th>
                             <th>WhatsApp</th>
+                            <th>Foto</th>
                             <th>Produk / Layanan</th>
                             <th>Qty</th>
                             <th>Total</th>
@@ -2707,6 +2918,24 @@ $totalOrdersCount = $ordersRows ? mysqli_num_rows($ordersRows) : 0;
                                style="color:#25d366;font-weight:600;font-size:12px;text-decoration:none;display:flex;align-items:center;gap:4px;">
                                 <i class="fa-brands fa-whatsapp"></i> <?= htmlspecialchars($row['whatsapp']) ?>
                             </a>
+                        </td>
+                        <td>
+                            <?php
+                            // Tampilkan foto pertama jika ada (bisa JSON array atau path tunggal)
+                            $pImgRaw = $row['product_image'] ?? '';
+                            $pImgSrc = '';
+                            if ($pImgRaw) {
+                                $decoded = json_decode($pImgRaw, true);
+                                $pImgSrc = is_array($decoded) ? ($decoded[0] ?? '') : $pImgRaw;
+                            }
+                            ?>
+                            <?php if ($pImgSrc): ?>
+                            <img src="<?= htmlspecialchars($pImgSrc) ?>" class="img-preview" style="width:44px;height:44px;" title="<?= htmlspecialchars($row['product_name']) ?>">
+                            <?php else: ?>
+                            <div style="width:44px;height:44px;background:var(--cream);border-radius:8px;border:1.5px dashed var(--border);display:flex;align-items:center;justify-content:center;">
+                                <i class="fa-solid fa-image" style="color:var(--border);font-size:12px;"></i>
+                            </div>
+                            <?php endif; ?>
                         </td>
                         <td style="max-width:180px;font-size:12px;">
                             <?= htmlspecialchars(substr($row['product_name'],0,60)) ?><?= strlen($row['product_name'])>60?'…':'' ?>

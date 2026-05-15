@@ -80,6 +80,68 @@ $prefillNama  = $_POST['nama']  ?? $_SESSION['user']       ?? '';
 $prefillEmail = $_POST['email'] ?? $_SESSION['user_email'] ?? '';
 $isLoggedIn   = isset($_SESSION['user']) && ($_SESSION['user_role'] ?? '') !== 'admin';
 
+// ── Load data dari CMS cms_booking_page ──────────────────────────────────
+function bkGet($conn, $key, $default = '') {
+    $k = mysqli_real_escape_string($conn, $key);
+    $r = mysqli_query($conn, "SELECT value FROM cms_booking_page WHERE section='booking' AND `key`='$k' LIMIT 1");
+    if ($r && $row = mysqli_fetch_assoc($r)) return $row['value'];
+    return $default;
+}
+$bk = [
+    'page_title'        => bkGet($conn, 'page_title',        'Form Booking'),
+    'page_subtitle'     => bkGet($conn, 'page_subtitle',     'Isi form di bawah untuk memesan jadwal kecantikan Anda'),
+    'form_title'        => bkGet($conn, 'form_title',        'Form Booking'),
+    'services_list'     => bkGet($conn, 'services_list',     ''),
+    'time_slots'        => bkGet($conn, 'time_slots',        "09:00\n10:00\n11:00\n13:00\n14:00\n15:00\n16:00\n17:00\n18:00\n19:00\n20:00"),
+    'sidebar_address'   => bkGet($conn, 'sidebar_address',   'Jl. Lkr. Bangsri, Jepara, Jawa Tengah'),
+    'sidebar_whatsapp'  => bkGet($conn, 'sidebar_whatsapp',  '+62 882 006 903 068'),
+    'sidebar_hours'     => bkGet($conn, 'sidebar_hours',     'Senin - Minggu, 09:00 - 20:00'),
+    'perk_1'            => bkGet($conn, 'perk_1',            'Fast Response <1 jam'),
+    'perk_2'            => bkGet($conn, 'perk_2',            'Beautician Profesional'),
+    'perk_3'            => bkGet($conn, 'perk_3',            'Tempat Nyaman Mewah'),
+    'perk_4'            => bkGet($conn, 'perk_4',            'Produk Premium Import'),
+    'max_jumlah_orang'  => bkGet($conn, 'max_jumlah_orang',  '10'),
+    'show_catatan'      => bkGet($conn, 'show_catatan',      '1'),
+    'show_jumlah_orang' => bkGet($conn, 'show_jumlah_orang', '1'),
+];
+
+// Parse services_list menjadi grouped array
+// Format: "KategoriNama:\nlayanan1\nlayanan2\n\nKategori2:\n..."
+function parseServicesGrouped($raw) {
+    // fallback default jika CMS kosong
+    if (empty(trim($raw))) {
+        return [
+            'Henna Series'       => ['Brow Henna','Nail Henna Tangan','Nail Henna Kaki','Bundling Meni-Henna','Henna Fun'],
+            'Treatment Spa'      => ['Bundling Manicure & Pedicure','Manicure / Pedicure','Hand Spa','Foot Spa','Callus Treatment'],
+            'Brow & Lash'        => ['Brow Bomb','Lashlift','Lashlift Tint'],
+            'Rambut'             => ['Creambath','Hair Mask','Hair Spa','Cuci,Catok,Blow','Bleaching S','Coloring Full','Bleaching','Balayage','Down Peim Poni','Keriting Klasik','Keriting Digital','Keratin Treatment','Smoothing'],
+            'Nail Art & Services'=> ['Press On Nail Basic','Press On Nail Motif','Kids Basic Gel','Kids Gel + 4 Sticker','Kids Gel + Full Sticker','Gel Basic Tangan / Kaki','Extension','Gel French / Cat Eyes','Remove Gel','Gel Ombre / Blush On','Remove Extension','Bundling Nail Art + Extension'],
+        ];
+    }
+    $groups = [];
+    $currentGroup = '__ungrouped__';
+    foreach (explode("\n", $raw) as $line) {
+        $line = trim($line);
+        if ($line === '') continue;
+        if (substr($line, -1) === ':') {
+            $currentGroup = rtrim($line, ':');
+            if (!isset($groups[$currentGroup])) $groups[$currentGroup] = [];
+        } else {
+            $groups[$currentGroup][] = $line;
+        }
+    }
+    // Jika semua masuk ungrouped, artinya format lama flat
+    if (count($groups) === 1 && isset($groups['__ungrouped__'])) {
+        return ['Layanan' => $groups['__ungrouped__']];
+    }
+    unset($groups['__ungrouped__']);
+    return $groups;
+}
+$layanansGrouped = parseServicesGrouped($bk['services_list']);
+$timeSlots       = array_filter(array_map('trim', explode("\n", $bk['time_slots'])));
+$maxJumlah       = max(1, (int)($bk['max_jumlah_orang'] ?: 10));
+// ─────────────────────────────────────────────────────────────────────────
+
 $pageTitle = "Booking Appointment — NISWÀ BEAUTY";
 ?>
 <!DOCTYPE html>
@@ -165,8 +227,8 @@ $pageTitle = "Booking Appointment — NISWÀ BEAUTY";
             <div class="col-lg-8" data-aos="fade-up">
                 <div class="premium-booking-card">
                     <div class="card-header text-center">
-                        <h3>Form Booking</h3>
-                        <p>Semua kolom wajib diisi dengan benar untuk proses cepat</p>
+                        <h3><?= htmlspecialchars($bk['form_title']) ?></h3>
+                        <p><?= htmlspecialchars($bk['page_subtitle']) ?></p>
                     </div>
 
                     <?php if ($error): ?>
@@ -216,59 +278,7 @@ $pageTitle = "Booking Appointment — NISWÀ BEAUTY";
                                 <label class="form-label"><i class="fas fa-spa me-2 text-pink"></i>Pilih Layanan</label>
                                 <select class="form-select" name="layanan" required>
                                     <option value="">— Pilih Layanan —</option>
-                                    <?php
-                                    $layanansGrouped = [
-                                        'Henna Series' => [
-                                            'Brow Henna',
-                                            'Nail Henna Tangan',
-                                            'Nail Henna Kaki',
-                                            'Bundling Meni-Henna',
-                                            'Henna Fun',
-                                        ],
-                                        'Treatment Spa' => [
-                                            'Bundling Manicure & Pedicure',
-                                            'Manicure / Pedicure',
-                                            'Hand Spa',
-                                            'Foot Spa',
-                                            'Callus Treatment',
-                                        ],
-                                        'Brow & Lash' => [
-                                            'Brow Bomb',
-                                            'Lashlift',
-                                            'Lashlift Tint',
-                                        ],
-                                        'Rambut' => [
-                                            'Creambath',
-                                            'Hair Mask',
-                                            'Hair Spa',
-                                            'Cuci,Catok,Blow',
-                                            'Bleaching S',
-                                            'Coloring Full',
-                                            'Bleaching',
-                                            'Balayage',
-                                            'Down Peim Poni',
-                                            'Keriting Klasik',
-                                            'Keriting Digital',
-                                            'Keratin Treatment',
-                                            'Smoothing',
-                                        ],
-                                        'Nail Art & Services' => [
-                                            'Press On Nail Basic',
-                                            'Press On Nail Motif',
-                                            'Kids Basic Gel',
-                                            'Kids Gel + 4 Sticker',
-                                            'Kids Gel + Full Sticker',
-                                            'Gel Basic Tangan / Kaki',
-                                            'Extension',
-                                            'Gel French / Cat Eyes',
-                                            'Remove Gel',
-                                            'Gel Ombre / Blush On',
-                                            'Remove Extension',
-                                            'Bundling Nail Art + Extension',
-                                        ],
-                                    ];
-                                    foreach ($layanansGrouped as $grup => $items):
-                                    ?>
+                                    <?php foreach ($layanansGrouped as $grup => $items): ?>
                                     <optgroup label="<?= htmlspecialchars($grup) ?>">
                                         <?php foreach ($items as $l): ?>
                                         <option value="<?= htmlspecialchars($l) ?>" <?= ($_POST['layanan']??'')===$l ? 'selected' : '' ?>>
@@ -293,24 +303,31 @@ $pageTitle = "Booking Appointment — NISWÀ BEAUTY";
                                 <label class="form-label"><i class="fas fa-clock me-2 text-pink"></i>Jam Booking</label>
                                 <select class="form-select" name="jam" required>
                                     <option value="">Pilih jam</option>
-                                    <?php
-                                    $jams = ['09:00','10:00','11:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00'];
-                                    foreach ($jams as $j):
-                                    ?>
-                                    <option value="<?= $j ?>" <?= ($_POST['jam']??'')===$j ? 'selected' : '' ?>><?= $j ?> WIB</option>
+                                    <?php foreach ($timeSlots as $j): ?>
+                                    <option value="<?= htmlspecialchars($j) ?>" <?= ($_POST['jam']??'')===$j ? 'selected' : '' ?>><?= htmlspecialchars($j) ?> WIB</option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
 
                                <!-- Jumlah Orang -->
+                            <?php if ($bk['show_jumlah_orang'] != '0'): ?>
                             <div class="col-md-6">
                                 <label class="form-label"><i class="fas fa-users me-2 text-pink"></i>Jumlah Orang</label>
                                 <select class="form-select" name="jumlah_orang">
-                                    <?php for ($i = 1; $i <= 10; $i++): ?>
+                                    <?php for ($i = 1; $i <= $maxJumlah; $i++): ?>
                                     <option value="<?= $i ?>" <?= ($_POST['jumlah_orang']??1)==$i ? 'selected' : '' ?>><?= $i ?> Orang</option>
                                     <?php endfor; ?>
                                 </select>
                             </div>
+                            <?php endif; ?>
+
+                            <!-- Catatan -->
+                            <?php if ($bk['show_catatan'] != '0'): ?>
+                            <div class="col-12">
+                                <label class="form-label"><i class="fas fa-sticky-note me-2 text-pink"></i>Catatan <span class="text-muted" style="font-size:12px;">(opsional)</span></label>
+                                <textarea class="form-control" name="catatan" rows="2" placeholder="Contoh: alergi tertentu, request khusus, dsb."><?= htmlspecialchars($_POST['catatan'] ?? '') ?></textarea>
+                            </div>
+                            <?php endif; ?>
 
 
                             <!-- Submit -->
@@ -332,24 +349,27 @@ $pageTitle = "Booking Appointment — NISWÀ BEAUTY";
                         <h5><i class="fas fa-info-circle me-2 text-gold"></i>Informasi Salon</h5>
                         <div class="info-item">
                             <i class="fas fa-map-marker-alt text-pink"></i>
-                            <div>Jl. Lkr.<br>Bangsri, Jepara, Jawa Tengah</div>
+                            <div><?= nl2br(htmlspecialchars($bk['sidebar_address'])) ?></div>
                         </div>
                         <div class="info-item">
                             <i class="fab fa-whatsapp text-success"></i>
-                            <div><strong>+62 882 006 903 068</strong></div>
+                            <div><strong><?= htmlspecialchars($bk['sidebar_whatsapp']) ?></strong></div>
                         </div>
                         <div class="info-item">
                             <i class="fas fa-clock"></i>
-                            <div>Senin - Minggu<br>09:00 - 20:00</div>
+                            <div><?= nl2br(htmlspecialchars($bk['sidebar_hours'])) ?></div>
                         </div>
                     </div>
                     <div class="sidebar-card">
                         <h5><i class="fas fa-star me-2 text-gold"></i>Kenapa Booking Disini?</h5>
                         <ul class="perks-list">
-                            <li><i class="fas fa-bolt text-success me-2"></i>Fast Response &lt;1 jam</li>
-                            <li><i class="fas fa-user-md text-pink me-2"></i>Beautician Profesional</li>
-                            <li><i class="fas fa-couch text-gold me-2"></i>Tempat Nyaman Mewah</li>
-                            <li><i class="fas fa-leaf me-2"></i>Produk Premium Import</li>
+                            <?php
+                            $perkIcons = ['fa-bolt text-success', 'fa-user-md text-pink', 'fa-couch text-gold', 'fa-leaf'];
+                            foreach (['perk_1','perk_2','perk_3','perk_4'] as $i => $pk):
+                                if (empty($bk[$pk])) continue;
+                            ?>
+                            <li><i class="fas <?= $perkIcons[$i] ?> me-2"></i><?= htmlspecialchars($bk[$pk]) ?></li>
+                            <?php endforeach; ?>
                         </ul>
                     </div>
                 </div>
