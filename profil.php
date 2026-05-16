@@ -63,419 +63,531 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
     <title>Profil — <?= esc($salonName) ?></title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
-/* ── Layout Wrapper ── */
-        .profil-page-body {
-            background: linear-gradient(180deg, #fdfaf7 0%, #f5ede4 40%, #fdfaf7 100%);
-            padding: 110px 0 40px;
+        /* ══ DESIGN TOKENS ══ */
+        :root {
+            --cream:      #FAF7F2;
+            --warm-white: #FFFCF8;
+            --nude-50:    #F5EDE3;
+            --nude-100:   #EAD9C8;
+            --nude-200:   #D6BFA6;
+            --nude-300:   #C4A882;
+            --bronze:     #A07850;
+            --mocha:      #7A5C40;
+            --espresso:   #4A3020;
+            --ink:        #1E130A;
+            --gold:       #C9A96E;
+            --gold-light: #E8D5A8;
+
+            --serif: 'Cormorant Garamond', Georgia, serif;
+            --sans:  'DM Sans', sans-serif;
+
+            --radius-sm:  10px;
+            --radius-md:  20px;
+            --radius-lg:  32px;
+            --radius-xl:  48px;
+
+            --shadow-soft: 0 2px 20px rgba(74,48,32,.07);
+            --shadow-med:  0 8px 40px rgba(74,48,32,.11);
+            --shadow-deep: 0 20px 80px rgba(74,48,32,.16);
         }
 
-        /* ── Section Labels ── */
-        .pp-section-label {
+        /* ══ BASE ══ */
+        *, *::before, *::after { box-sizing: border-box; }
+
+        .profil-page-body {
+            background: var(--cream);
+            padding: 120px 0 80px;
+            min-height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Subtle background texture */
+        .profil-page-body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 900px 600px at 10% 20%, rgba(201,169,110,.08) 0%, transparent 70%),
+                radial-gradient(ellipse 700px 500px at 90% 80%, rgba(160,120,80,.07) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .profil-page-body > .container { position: relative; z-index: 1; }
+
+        /* ══ SECTION PILL ══ */
+        .pp-pill {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            background: linear-gradient(135deg, #f5ede4, #EADBC8);
-            border: 1px solid rgba(214,193,163,0.5);
-            color: #8B6F5E;
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 2px;
+            gap: 7px;
+            background: linear-gradient(135deg, var(--warm-white), var(--nude-50));
+            border: 1px solid var(--nude-200);
+            color: var(--bronze);
+            font-family: var(--sans);
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 2.5px;
             text-transform: uppercase;
-            padding: 6px 18px;
+            padding: 7px 20px;
             border-radius: 50px;
-            font-family: 'Poppins', sans-serif;
-            margin-bottom: 14px;
-            transition: box-shadow 0.3s, transform 0.3s;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-soft);
+            transition: transform .25s ease, box-shadow .25s ease;
         }
-        .pp-section-label:hover {
-            box-shadow: 0 4px 16px rgba(139,111,94,0.18);
+        .pp-pill:hover {
             transform: translateY(-2px);
+            box-shadow: var(--shadow-med);
         }
-        .pp-section-label i,
-        .owner-crown-label i {
-            transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
-        }
-        .pp-section-label:hover i {
-            transform: scale(1.3) rotate(-10deg);
+        .pp-pill i { font-size: 9px; color: var(--gold); }
+
+        /* ══ THIN DIVIDER ══ */
+        .pp-rule {
+            border: none;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--nude-200), transparent);
+            margin: 60px 0;
         }
 
-        /* ══ OWNER SECTION — Simple ══ */
-        .owner-section {
-            border-radius: 24px;
+        /* ════════════════════════════════════
+           OWNER CARD
+        ════════════════════════════════════ */
+        .owner-card {
+            background: var(--warm-white);
+            border-radius: var(--radius-lg);
+            border: 1px solid rgba(214,191,166,.35);
+            box-shadow: var(--shadow-deep);
             overflow: hidden;
-            box-shadow: 0 4px 24px rgba(139,111,94,0.10);
-            border: 1px solid rgba(214,193,163,0.25);
-            background: #fff;
         }
 
-        /* ── Baris atas: avatar+identitas kiri | stats kanan ── */
-        .owner-top-row {
+        /* — Hero header strip — */
+        .owner-hero {
+            position: relative;
+            background: linear-gradient(135deg, var(--espresso) 0%, var(--mocha) 45%, var(--bronze) 100%);
+            padding: 52px 56px 48px;
             display: flex;
             align-items: center;
-            padding: 44px 48px;
-            gap: 48px;
-            border-bottom: 1px solid rgba(214,193,163,0.18);
+            gap: 40px;
+            overflow: hidden;
+        }
+        .owner-hero::before {
+            content: '';
+            position: absolute;
+            top: -60px; right: -60px;
+            width: 320px; height: 320px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(201,169,110,.18) 0%, transparent 70%);
+        }
+        .owner-hero::after {
+            content: '';
+            position: absolute;
+            bottom: -80px; left: 30%;
+            width: 400px; height: 200px;
+            border-radius: 50%;
+            background: radial-gradient(ellipse, rgba(255,252,248,.05) 0%, transparent 70%);
         }
 
         /* Avatar */
-        .owner-avatar-ring {
-            width: 80px; height: 80px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #D6C1A3, #8B6F5E);
-            padding: 3px;
-            flex-shrink: 0;
-            cursor: pointer;
-            transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1),
-                        box-shadow 0.4s ease,
-                        background 0.4s ease;
+        .owner-avatar {
             position: relative;
-        }
-        .owner-avatar-ring::before {
-            content: '';
-            position: absolute;
-            inset: -4px;
-            border-radius: 50%;
-            background: conic-gradient(#D6C1A3, #8B6F5E, #C4A882, #D6C1A3);
-            z-index: -1;
-            opacity: 0;
-            transition: opacity 0.4s ease, transform 0.4s ease;
-        }
-        .owner-avatar-ring:hover {
-            transform: scale(1.12) rotate(5deg);
-            box-shadow: 0 10px 32px rgba(139,111,94,0.35);
-            background: linear-gradient(135deg, #8B6F5E, #D6C1A3);
-        }
-        .owner-avatar-ring:hover::before {
-            opacity: 1;
-            animation: spin-ring 2s linear infinite;
-        }
-        @keyframes spin-ring {
-            from { transform: rotate(0deg); }
-            to   { transform: rotate(360deg); }
-        }
-        .owner-avatar-inner {
-            width: 100%; height: 100%; border-radius: 50%;
-            background: #4a3a32;
-            display: flex; align-items: center; justify-content: center;
-            font-family: 'Playfair Display', serif;
-            font-size: 30px; color: #D6C1A3; font-weight: 700;
-            transition: background 0.4s ease, color 0.4s ease, font-size 0.35s cubic-bezier(0.34,1.56,0.64,1);
-        }
-        .owner-avatar-ring:hover .owner-avatar-inner {
-            background: #3a2c24;
-            color: #fff;
-            font-size: 34px;
-        }
-
-        /* Identitas tengah */
-        .owner-id-panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .owner-crown-label {
-            display: inline-flex; align-items: center; gap: 5px;
-            color: #C4A882;
-            font-size: 10px; font-weight: 700; letter-spacing: 2px;
-            text-transform: uppercase;
-            font-family: 'Poppins', sans-serif;
-            margin-bottom: 2px;
-        }
-        .owner-name-hero {
-            font-family: 'Playfair Display', serif;
-            font-size: clamp(28px, 3.5vw, 40px);
-            font-weight: 700; color: #2d1f17; line-height: 1.1; margin: 0;
-        }
-        .owner-tagline-hero {
-            color: #A08B7A;
-            font-style: italic; font-size: 13.5px;
-            font-family: 'Playfair Display', serif;
-            margin: 0;
-        }
-
-        /* Stats kanan — 4 item horizontal */
-        .owner-stats-panel {
-            display: flex;
-            gap: 0;
+            width: 96px; height: 96px;
             flex-shrink: 0;
-            border: 1px solid rgba(214,193,163,0.2);
-            border-radius: 16px;
-            overflow: hidden;
-            background: #fdfaf7;
+            z-index: 1;
         }
-        .owner-stat-item {
-            padding: 22px 28px;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            text-align: center;
-            gap: 4px;
-            border-right: 1px solid rgba(214,193,163,0.18);
-            min-width: 100px;
-            transition: background 0.3s, transform 0.3s, box-shadow 0.3s;
+        .owner-avatar-circle {
+            width: 96px; height: 96px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--gold-light), var(--gold));
+            display: flex; align-items: center; justify-content: center;
+            font-family: var(--serif);
+            font-size: 36px; font-weight: 700;
+            color: var(--espresso);
+            border: 3px solid rgba(255,252,248,.25);
+            transition: transform .4s cubic-bezier(.34,1.56,.64,1), box-shadow .3s;
             cursor: default;
         }
-        .owner-stat-item:last-child { border-right: none; }
-        .owner-stat-item:hover {
-            background: linear-gradient(135deg, #f5ede4, #EADBC8);
-            transform: translateY(-4px);
-            box-shadow: 0 8px 24px rgba(139,111,94,0.13);
+        .owner-avatar-circle:hover {
+            transform: scale(1.08) rotate(4deg);
+            box-shadow: 0 0 0 6px rgba(201,169,110,.25);
         }
-        .owner-stat-item:hover .owner-stat-icon { color: #8B6F5E; transform: scale(1.3) rotate(-8deg); }
-        .owner-stat-item:hover .owner-stat-num { color: #2d1f17; }
-        .owner-stat-icon { font-size: 16px; color: #C4A882; transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), color 0.3s; }
-        .owner-stat-num {
-            font-family: 'Playfair Display', serif;
-            font-size: 24px; font-weight: 700;
-            color: #5A4A42; line-height: 1; margin: 0;
-        }
-        .owner-stat-label {
-            font-family: 'Poppins', sans-serif;
-            font-size: 9px; font-weight: 600;
-            color: #bbb; letter-spacing: 1px; text-transform: uppercase;
-            margin: 0;
-        }
-
-        /* ── Kutipan bio singkat full width ── */
-        .owner-quote-bar {
-            background: linear-gradient(135deg, #8B6F5E, #a68570);
-            padding: 28px 52px;
-            display: flex; align-items: center; gap: 20px;
-        }
-        .owner-quote-bar i {
-            font-size: 28px; color: rgba(255,255,255,0.3); flex-shrink: 0;
-        }
-        .owner-quote-bar p {
-            margin: 0;
-            font-family: 'Playfair Display', serif;
-            font-style: italic; font-size: 16px;
-            color: rgba(255,255,255,0.92); line-height: 1.65;
-        }
-
-        /* ── Timeline horizontal strip ── */
-        .owner-timeline-strip {
-            background: #fdfaf7;
-            border-top: 1px solid rgba(214,193,163,0.2);
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-        }
-        .tl-step {
-            padding: 28px 24px;
-            border-right: 1px solid rgba(214,193,163,0.18);
-            position: relative;
-            transition: background 0.2s;
-        }
-        .tl-step:last-child { border-right: none; }
-        .tl-step:hover { background: #f5ede4; }
-        .tl-step::before {
-            content: '';
-            position: absolute; top: 0; left: 0; right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, #8B6F5E, #D6C1A3);
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-        .tl-step:hover::before { opacity: 1; }
-        .tl-year {
-            font-family: 'Playfair Display', serif;
-            font-size: 20px; font-weight: 700;
-            color: #8B6F5E; display: block; margin-bottom: 4px;
-        }
-        .tl-title {
-            font-family: 'Poppins', sans-serif;
-            font-size: 11px; font-weight: 700;
-            color: #2d1f17; text-transform: uppercase;
-            letter-spacing: 0.5px; margin-bottom: 6px;
-        }
-        .tl-text {
-            font-family: 'Poppins', sans-serif;
-            font-size: 12.5px; color: #999; line-height: 1.6;
-        }
-
-        /* ── Bio paragraf bawah ── */
-        .owner-bio-panel {
-            background: #fff;
-            border-top: 1px solid rgba(214,193,163,0.2);
-            padding: 44px 52px 48px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-        }
-        .owner-bio {
-            color: #5A4A42; line-height: 1.95;
-            font-size: 15px; font-family: 'Poppins', sans-serif;
-            margin: 0;
-        }
-
-        @media (max-width: 991px) {
-            .owner-top-row { flex-wrap: wrap; padding: 32px 28px; gap: 28px; }
-            .owner-stats-panel { width: 100%; }
-            .owner-stat-item { flex: 1; min-width: 80px; padding: 18px 12px; }
-            .owner-timeline-strip { grid-template-columns: repeat(3, 1fr); }
-            .tl-step:nth-child(3) { border-right: none; }
-            .tl-step:nth-child(4) { border-top: 1px solid rgba(214,193,163,0.18); }
-            .owner-bio-panel { grid-template-columns: 1fr; gap: 20px; padding: 32px 28px; }
-        }
-        @media (max-width: 575px) {
-            .owner-top-row { padding: 28px 20px; gap: 20px; }
-            .owner-avatar-ring { width: 68px; height: 68px; }
-            .owner-avatar-inner { font-size: 26px; }
-            .owner-stat-num { font-size: 20px; }
-            .owner-stat-item { padding: 16px 8px; }
-            .owner-quote-bar { padding: 22px 24px; gap: 14px; }
-            .owner-quote-bar p { font-size: 14px; }
-            .owner-timeline-strip { grid-template-columns: 1fr 1fr; }
-            .tl-step:nth-child(2) { border-right: none; }
-            .tl-step:nth-child(3) { border-right: 1px solid rgba(214,193,163,0.18); border-top: 1px solid rgba(214,193,163,0.18); }
-            .tl-step:nth-child(4) { border-top: 1px solid rgba(214,193,163,0.18); }
-            .tl-step:nth-child(5) { grid-column: 1 / -1; border-right: none; border-top: 1px solid rgba(214,193,163,0.18); }
-        }
-
-        /* ── Store Section ── */
-        .store-section {
-            background: #fff;
-            border-radius: 28px;
-            overflow: hidden;
-            box-shadow: 0 10px 50px rgba(139,111,94,0.10);
-            border: 1px solid rgba(214,193,163,0.25);
-        }
-        .store-img-col {
-            position: relative;
-        }
-        .store-img-col img {
-            width: 100%;
-            height: 100%;
-            min-height: 500px;
-            object-fit: cover;
-            display: block;
-        }
-        .store-img-overlay {
+        .owner-avatar-badge {
             position: absolute;
-            inset: 0;
-            background: linear-gradient(to top, rgba(90,74,66,0.6) 0%, transparent 50%);
-        }
-        .store-img-badge {
-            position: absolute;
-            bottom: 28px; left: 28px;
-            background: rgba(255,255,255,0.95);
-            border-radius: 16px;
-            padding: 14px 20px;
-            backdrop-filter: blur(12px);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-        }
-        .store-img-badge .badge-date {
+            bottom: -2px; right: -4px;
+            background: var(--gold);
+            color: var(--espresso);
+            border-radius: 50%;
+            width: 26px; height: 26px;
+            display: flex; align-items: center; justify-content: center;
             font-size: 11px;
-            font-weight: 600;
-            color: #8B6F5E;
-            letter-spacing: 1px;
+            border: 2px solid var(--warm-white);
+        }
+
+        /* Identity text */
+        .owner-identity { flex: 1; z-index: 1; }
+        .owner-role-tag {
+            font-family: var(--sans);
+            font-size: 9px; font-weight: 600;
+            letter-spacing: 3px;
+            color: var(--gold-light);
             text-transform: uppercase;
-            font-family: 'Poppins', sans-serif;
-            margin-bottom: 2px;
+            margin-bottom: 8px;
         }
-        .store-img-badge .badge-title {
-            font-size: 14px;
-            font-weight: 700;
-            color: #2d1f17;
-            font-family: 'Playfair Display', serif;
+        .owner-name {
+            font-family: var(--serif);
+            font-size: clamp(36px, 4.5vw, 58px);
+            font-weight: 600;
+            color: var(--warm-white);
+            line-height: 1.0;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
         }
-        .store-content-col {
-            padding: 52px 48px;
-        }
-        .store-name {
-            font-family: 'Playfair Display', serif;
-            font-size: 30px;
-            font-weight: 700;
-            color: #2d1f17;
-            margin-bottom: 6px;
-        }
-        .store-tagline {
-            color: #8B6F5E;
+        .owner-quote-inline {
+            font-family: var(--serif);
             font-style: italic;
             font-size: 15px;
-            font-family: 'Playfair Display', serif;
-            margin-bottom: 24px;
+            color: rgba(250,247,242,.65);
+            line-height: 1.5;
         }
-        .store-bio {
-            color: #5A4A42;
-            line-height: 1.9;
+
+        /* Stats row */
+        .owner-stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            z-index: 1;
+            flex-shrink: 0;
+        }
+        .owner-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            padding: 22px 16px;
+            border-left: 1px solid rgba(255,252,248,.10);
+            text-align: center;
+            transition: background .25s;
+            cursor: default;
+        }
+        .owner-stat:hover { background: rgba(255,252,248,.06); }
+        .owner-stat-icon {
+            font-size: 14px;
+            color: var(--gold-light);
+            margin-bottom: 4px;
+            transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+        }
+        .owner-stat:hover .owner-stat-icon { transform: scale(1.3) rotate(-8deg); }
+        .owner-stat-val {
+            font-family: var(--serif);
+            font-size: 22px; font-weight: 700;
+            color: var(--warm-white);
+            line-height: 1;
+        }
+        .owner-stat-lbl {
+            font-family: var(--sans);
+            font-size: 8.5px; font-weight: 500;
+            color: rgba(255,252,248,.45);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        /* Pull quote bar */
+        .owner-pull-quote {
+            background: linear-gradient(90deg, var(--nude-50), var(--warm-white));
+            border-left: 4px solid var(--gold);
+            padding: 28px 52px;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+        .owner-pull-quote .pq-mark {
+            font-family: var(--serif);
+            font-size: 72px;
+            line-height: .6;
+            color: var(--nude-200);
+            flex-shrink: 0;
+            align-self: flex-start;
+            margin-top: -4px;
+        }
+        .owner-pull-quote p {
+            margin: 0;
+            font-family: var(--serif);
+            font-size: 18px;
+            font-style: italic;
+            color: var(--mocha);
+            line-height: 1.7;
+        }
+
+        /* Timeline */
+        .owner-timeline {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            background: var(--cream);
+            border-top: 1px solid rgba(214,191,166,.3);
+        }
+        .tl-node {
+            padding: 32px 24px 28px;
+            border-right: 1px solid rgba(214,191,166,.25);
+            position: relative;
+            transition: background .2s, transform .2s;
+            cursor: default;
+        }
+        .tl-node:last-child { border-right: none; }
+        .tl-node::after {
+            content: '';
+            position: absolute; bottom: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--bronze), var(--gold));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform .3s ease;
+        }
+        .tl-node:hover::after { transform: scaleX(1); }
+        .tl-node:hover { background: var(--nude-50); }
+        .tl-node-year {
+            font-family: var(--serif);
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--bronze);
+            margin-bottom: 6px;
+            display: block;
+        }
+        .tl-node-title {
+            font-family: var(--sans);
+            font-size: 10.5px;
+            font-weight: 600;
+            color: var(--espresso);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+        .tl-node-text {
+            font-family: var(--sans);
+            font-size: 12.5px;
+            color: var(--mocha);
+            line-height: 1.65;
+            opacity: .8;
+        }
+
+        /* Bio columns */
+        .owner-bio-block {
+            background: var(--warm-white);
+            border-top: 1px solid rgba(214,191,166,.25);
+            padding: 52px 56px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+            align-items: start;
+        }
+        .owner-bio-text {
+            font-family: var(--sans);
+            font-size: 14.5px;
+            color: var(--mocha);
+            line-height: 2.0;
+            margin: 0;
+        }
+        .owner-bio-text + .owner-bio-text { color: rgba(122,92,64,.75); }
+
+        /* ════════════════════════════════════
+           STORE SECTION
+        ════════════════════════════════════ */
+        .store-card {
+            background: var(--warm-white);
+            border-radius: var(--radius-lg);
+            border: 1px solid rgba(214,191,166,.35);
+            box-shadow: var(--shadow-deep);
+            overflow: hidden;
+        }
+
+        /* Two-column layout */
+        .store-layout {
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            min-height: 600px;
+        }
+
+        /* Image column */
+        .store-img-wrap {
+            position: relative;
+            overflow: hidden;
+        }
+        .store-img-wrap img {
+            width: 100%;
+            height: 100%;
+            min-height: 580px;
+            object-fit: cover;
+            display: block;
+            transition: transform .6s ease;
+        }
+        .store-img-wrap:hover img { transform: scale(1.04); }
+        .store-img-grad {
+            position: absolute; inset: 0;
+            background: linear-gradient(
+                to top,
+                rgba(30,19,10,.75) 0%,
+                rgba(30,19,10,.2) 40%,
+                transparent 70%
+            );
+        }
+        /* Floating badge */
+        .store-float-badge {
+            position: absolute;
+            bottom: 32px; left: 28px;
+            right: 28px;
+            background: rgba(250,247,242,.96);
+            backdrop-filter: blur(16px);
+            border-radius: var(--radius-md);
+            padding: 18px 22px;
+            border: 1px solid rgba(201,169,110,.3);
+            box-shadow: 0 12px 40px rgba(30,19,10,.2);
+        }
+        .store-badge-est {
+            font-family: var(--sans);
+            font-size: 9.5px;
+            font-weight: 600;
+            color: var(--bronze);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .store-badge-name {
+            font-family: var(--serif);
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--espresso);
+            letter-spacing: 1px;
+        }
+        /* Decorative corner ornament */
+        .store-img-wrap::before {
+            content: '✦';
+            position: absolute;
+            top: 24px; right: 24px;
+            font-size: 22px;
+            color: rgba(250,247,242,.5);
+            z-index: 1;
+        }
+
+        /* Content column */
+        .store-content {
+            padding: 52px 52px 52px 56px;
+            display: flex;
+            flex-direction: column;
+        }
+        .store-eyebrow {
+            font-family: var(--sans);
+            font-size: 9px;
+            font-weight: 600;
+            letter-spacing: 3px;
+            color: var(--gold);
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        .store-name-head {
+            font-family: var(--serif);
+            font-size: clamp(28px, 3vw, 40px);
+            font-weight: 600;
+            color: var(--espresso);
+            line-height: 1.1;
+            margin-bottom: 10px;
+            letter-spacing: .5px;
+        }
+        .store-tagline-text {
+            font-family: var(--serif);
+            font-style: italic;
             font-size: 15px;
-            font-family: 'Poppins', sans-serif;
-            margin-bottom: 16px;
+            color: var(--bronze);
+            margin-bottom: 32px;
         }
+        /* Thin accent line */
+        .store-accent-line {
+            width: 48px; height: 2px;
+            background: linear-gradient(90deg, var(--gold), var(--bronze));
+            border-radius: 2px;
+            margin-bottom: 28px;
+        }
+        .store-bio-para {
+            font-family: var(--sans);
+            font-size: 14px;
+            color: var(--mocha);
+            line-height: 1.95;
+            margin-bottom: 14px;
+        }
+        .store-bio-para:last-of-type { color: rgba(122,92,64,.75); }
+
+        /* Values grid */
         .store-values {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-top: 32px;
+            gap: 10px;
+            margin-top: auto;
+            padding-top: 32px;
         }
-        .store-value-item {
+        .store-val-chip {
             display: flex;
             align-items: center;
             gap: 10px;
-            background: #fdfaf7;
-            border: 1px solid rgba(214,193,163,0.3);
-            border-radius: 12px;
-            padding: 12px 16px;
-            font-size: 13px;
+            background: var(--cream);
+            border: 1px solid rgba(214,191,166,.4);
+            border-radius: var(--radius-sm);
+            padding: 13px 16px;
+            font-family: var(--sans);
+            font-size: 12.5px;
             font-weight: 500;
-            color: #5A4A42;
-            font-family: 'Poppins', sans-serif;
-            transition: background 0.3s, border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+            color: var(--espresso);
+            transition: background .25s, transform .25s, box-shadow .25s;
             cursor: default;
         }
-        .store-value-item:hover {
-            background: linear-gradient(135deg, #f5ede4, #EADBC8);
-            border-color: rgba(139,111,94,0.35);
+        .store-val-chip:hover {
+            background: var(--nude-50);
             transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(139,111,94,0.12);
+            box-shadow: var(--shadow-med);
+            border-color: var(--nude-200);
         }
-        .store-value-item i {
-            color: #8B6F5E;
-            font-size: 14px;
-            width: 18px;
+        .store-val-chip i {
+            color: var(--gold);
+            font-size: 13px;
+            width: 16px;
             text-align: center;
-            transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), color 0.3s;
+            transition: transform .3s cubic-bezier(.34,1.56,.64,1);
         }
-        .store-value-item:hover i {
-            transform: scale(1.35) rotate(-10deg);
-            color: #5A4A42;
+        .store-val-chip:hover i { transform: scale(1.35) rotate(-10deg); }
+
+        /* ══ RESPONSIVE ══ */
+        @media (max-width: 1100px) {
+            .store-layout { grid-template-columns: 1fr; }
+            .store-img-wrap img { min-height: 360px; }
+            .store-content { padding: 40px 36px; }
         }
-
-
-
-        /* ── Back Button ── */
-        .back-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            color: #8B6F5E;
-            font-size: 14px;
-            font-weight: 500;
-            font-family: 'Poppins', sans-serif;
-            text-decoration: none;
-            padding: 10px 0;
-            transition: gap 0.2s;
+        @media (max-width: 991px) {
+            .owner-hero { padding: 36px 32px; gap: 24px; flex-wrap: wrap; }
+            .owner-stats-row { grid-template-columns: repeat(4, 1fr); width: 100%; }
+            .owner-bio-block { grid-template-columns: 1fr; padding: 36px 32px; gap: 24px; }
+            .owner-timeline { grid-template-columns: repeat(3, 1fr); }
+            .tl-node:nth-child(3) { border-right: none; }
+            .tl-node:nth-child(4) { border-top: 1px solid rgba(214,191,166,.25); }
+            .owner-pull-quote { padding: 24px 32px; }
         }
-        .back-btn:hover { color: #5A4A42; gap: 12px; }
-
-        /* ── Divider ── */
-        .pp-divider {
-            border: none;
-            border-top: 1px solid rgba(214,193,163,0.3);
-            margin: 30px 0;
-        }
-
-        @media (max-width: 767px) {
-            .store-content-col { padding: 32px 24px; }
-            .tech-card { padding: 40px 28px; }
+        @media (max-width: 640px) {
+            .profil-page-body { padding: 100px 0 60px; }
+            .owner-hero { padding: 28px 22px; }
+            .owner-stats-row { grid-template-columns: repeat(2, 1fr); }
+            .owner-stat:nth-child(2) { border-left: 1px solid rgba(255,252,248,.10); }
+            .owner-stat:nth-child(3) { border-top: 1px solid rgba(255,252,248,.10); }
+            .owner-timeline { grid-template-columns: 1fr 1fr; }
+            .tl-node:nth-child(2) { border-right: none; }
+            .tl-node:nth-child(3) { border-top: 1px solid rgba(214,191,166,.25); border-right: 1px solid rgba(214,191,166,.25); }
+            .tl-node:nth-child(5) { grid-column: 1 / -1; border-right: none; border-top: 1px solid rgba(214,191,166,.25); }
+            .owner-bio-block { padding: 28px 22px; }
+            .store-val-chip { font-size: 11.5px; padding: 11px 12px; }
             .store-values { grid-template-columns: 1fr; }
-            .store-img-col img { min-height: 280px; }
+            .owner-pull-quote { padding: 22px 22px; }
+            .owner-pull-quote .pq-mark { font-size: 48px; }
+            .owner-pull-quote p { font-size: 15px; }
         }
     </style>
 </head>
@@ -483,130 +595,140 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
 
 <?php include 'navbar.php'; ?>
 
-
 <!-- ── MAIN CONTENT ── -->
 <div class="profil-page-body">
     <div class="container">
 
-        <!-- ══ PEMILIK ══ -->
-        <div class="pp-section-label mb-3" data-aos="fade-up"><i class="fas fa-user"></i>Tentang Pemilik</div>
-        <div class="owner-section mb-5" data-aos="fade-up" data-aos-delay="100">
+        <!-- ════ PEMILIK ════ -->
+        <div class="pp-pill" data-aos="fade-up">
+            <i class="fas fa-feather-alt"></i>Tentang Pemilik
+        </div>
 
-            <!-- Baris atas: avatar + identitas + stats -->
-            <div class="owner-top-row">
-                <div class="owner-avatar-ring">
-                    <div class="owner-avatar-inner">N</div>
+        <div class="owner-card mb-5" data-aos="fade-up" data-aos-delay="80">
+
+            <!-- Hero Header -->
+            <div class="owner-hero">
+                <div class="owner-avatar">
+                    <div class="owner-avatar-circle"><?= mb_substr(esc($profil['owner_name']), 0, 1) ?></div>
+                    <div class="owner-avatar-badge"><i class="fas fa-crown"></i></div>
                 </div>
-                <div class="owner-id-panel">
-                    <div class="owner-crown-label"><i class="fas fa-crown"></i> Pendiri & Pemilik</div>
-                    <div class="owner-name-hero"><?= esc($profil['owner_name']) ?></div>
-                    <div class="owner-tagline-hero"><?= esc($profil['owner_tagline']) ?></div>
+                <div class="owner-identity">
+                    <div class="owner-role-tag"><i class="fas fa-spa" style="margin-right:5px;opacity:.7"></i>Pendiri & Pemilik</div>
+                    <div class="owner-name"><?= esc($profil['owner_name']) ?></div>
+                    <div class="owner-quote-inline"><?= esc($profil['owner_tagline']) ?></div>
                 </div>
-                <div class="owner-stats-panel">
-                    <div class="owner-stat-item">
+                <div class="owner-stats-row">
+                    <div class="owner-stat">
                         <div class="owner-stat-icon"><i class="fas fa-spa"></i></div>
-                        <div class="owner-stat-num">7+</div>
-                        <div class="owner-stat-label">Tahun Berkarya</div>
+                        <div class="owner-stat-val">7+</div>
+                        <div class="owner-stat-lbl">Tahun Berkarya</div>
                     </div>
-                    <div class="owner-stat-item">
+                    <div class="owner-stat">
                         <div class="owner-stat-icon"><i class="fas fa-users"></i></div>
-                        <div class="owner-stat-num">7+</div>
-                        <div class="owner-stat-label">Pelanggan / Hari</div>
+                        <div class="owner-stat-val">7+</div>
+                        <div class="owner-stat-lbl">Klien / Hari</div>
                     </div>
-                    <div class="owner-stat-item">
+                    <div class="owner-stat">
                         <div class="owner-stat-icon"><i class="fas fa-store"></i></div>
-                        <div class="owner-stat-num">2023</div>
-                        <div class="owner-stat-label">Berdiri Resmi</div>
+                        <div class="owner-stat-val">2023</div>
+                        <div class="owner-stat-lbl">Berdiri Resmi</div>
                     </div>
-                    <div class="owner-stat-item">
+                    <div class="owner-stat">
                         <div class="owner-stat-icon"><i class="fas fa-map-marker-alt"></i></div>
-                        <div class="owner-stat-num">Jepara</div>
-                        <div class="owner-stat-label">Kota Berkarya</div>
+                        <div class="owner-stat-val">Jepara</div>
+                        <div class="owner-stat-lbl">Kota Berkarya</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Kutipan bio singkat -->
-            <div class="owner-quote-bar">
-                <i class="fas fa-quote-left"></i>
+            <!-- Pull Quote -->
+            <div class="owner-pull-quote">
+                <span class="pq-mark">&ldquo;</span>
                 <p>Dari henna keliling door-to-door, hingga memimpin salon kecantikan yang dikenal se-Jepara — inilah perjalanan Niswa yang penuh semangat dan ketekunan.</p>
             </div>
 
-            <!-- Timeline horizontal 5 kolom -->
-            <div class="owner-timeline-strip">
-                <div class="tl-step">
-                    <span class="tl-year">Awal</span>
-                    <div class="tl-title">Niswa Henna</div>
-                    <div class="tl-text">Henna keliling rumah ke rumah di sekitar Jepara.</div>
+            <!-- Timeline Strip -->
+            <div class="owner-timeline">
+                <div class="tl-node">
+                    <span class="tl-node-year">Awal</span>
+                    <div class="tl-node-title">Niswa Henna</div>
+                    <div class="tl-node-text">Henna keliling rumah ke rumah di sekitar Jepara.</div>
                 </div>
-                <div class="tl-step">
-                    <span class="tl-year">2018</span>
-                    <div class="tl-title">Nail Art</div>
-                    <div class="tl-text">Mulai nail art & fake nails dengan peralatan sederhana.</div>
+                <div class="tl-node">
+                    <span class="tl-node-year">2018</span>
+                    <div class="tl-node-title">Nail Art</div>
+                    <div class="tl-node-text">Mulai nail art & fake nails dengan peralatan sederhana.</div>
                 </div>
-                <div class="tl-step">
-                    <span class="tl-year">2019</span>
-                    <div class="tl-title">Meluas</div>
-                    <div class="tl-text">Supplier lokal, pelanggan dari Kudus, Tanjung & Semarang.</div>
+                <div class="tl-node">
+                    <span class="tl-node-year">2019</span>
+                    <div class="tl-node-title">Meluas</div>
+                    <div class="tl-node-text">Supplier lokal, pelanggan dari Kudus, Tanjung & Semarang.</div>
                 </div>
-                <div class="tl-step">
-                    <span class="tl-year">2020–21</span>
-                    <div class="tl-title">Publik Figur</div>
-                    <div class="tl-text">Dikenal publik figur lokal. Lebih dari 7 pelanggan/hari.</div>
+                <div class="tl-node">
+                    <span class="tl-node-year">2020–21</span>
+                    <div class="tl-node-title">Publik Figur</div>
+                    <div class="tl-node-text">Dikenal publik figur lokal. Lebih dari 7 pelanggan/hari.</div>
                 </div>
-                <div class="tl-step">
-                    <span class="tl-year">2022</span>
-                    <div class="tl-title">Bertumbuh</div>
-                    <div class="tl-text">Layanan seserahan & wedding berkembang pesat.</div>
+                <div class="tl-node">
+                    <span class="tl-node-year">2022</span>
+                    <div class="tl-node-title">Bertumbuh</div>
+                    <div class="tl-node-text">Layanan seserahan & wedding berkembang pesat.</div>
                 </div>
             </div>
 
-            <!-- Bio paragraf bawah -->
-            <div class="owner-bio-panel">
-                <p class="owner-bio"><?= nl2br(esc($profil['owner_bio1'])) ?></p>
-                <p class="owner-bio"><?= nl2br(esc($profil['owner_bio2'])) ?></p>
+            <!-- Bio Block -->
+            <div class="owner-bio-block">
+                <p class="owner-bio-text"><?= nl2br(esc($profil['owner_bio1'])) ?></p>
+                <p class="owner-bio-text"><?= nl2br(esc($profil['owner_bio2'])) ?></p>
             </div>
 
         </div>
 
-        <hr class="pp-divider">
+        <hr class="pp-rule">
 
-        <!-- ══ TOKO ══ -->
-        <div class="pp-section-label mb-3" data-aos="fade-up"><i class="fas fa-store"></i>Tentang Toko</div>
-        <div class="store-section mb-5" data-aos="fade-up" data-aos-delay="100">
-            <div class="row g-0">
-                <div class="col-lg-5 store-img-col">
+        <!-- ════ TOKO ════ -->
+        <div class="pp-pill" data-aos="fade-up">
+            <i class="fas fa-store"></i>Tentang Toko
+        </div>
+
+        <div class="store-card mb-5" data-aos="fade-up" data-aos-delay="80">
+            <div class="store-layout">
+
+                <!-- Image -->
+                <div class="store-img-wrap">
                     <img src="<?= esc($profil['store_image']) ?>" alt="<?= esc($profil['store_name']) ?>">
-                    <div class="store-img-overlay"></div>
-                    <div class="store-img-badge">
-                        <div class="badge-date"><i class="fas fa-calendar-check me-1"></i>Est. 15 Juli 2023</div>
-                        <div class="badge-title">NISWÀ BEAUTY</div>
+                    <div class="store-img-grad"></div>
+                    <div class="store-float-badge">
+                        <div class="store-badge-est"><i class="fas fa-calendar-check" style="margin-right:5px"></i>Est. 15 Juli 2023</div>
+                        <div class="store-badge-name">NISWÀ BEAUTY</div>
                     </div>
                 </div>
-                <div class="col-lg-7 store-content-col">
-                    <div class="store-name"><?= esc($profil['store_name']) ?></div>
-                    <div class="store-tagline"><?= esc($profil['store_tagline']) ?></div>
-                    <p class="store-bio"><?= nl2br(esc($profil['store_bio1'])) ?></p>
-                    <p class="store-bio"><?= nl2br(esc($profil['store_bio2'])) ?></p>
+
+                <!-- Content -->
+                <div class="store-content">
+                    <div class="store-eyebrow">Beauty Studio · Jepara</div>
+                    <div class="store-name-head"><?= esc($profil['store_name']) ?></div>
+                    <div class="store-tagline-text"><?= esc($profil['store_tagline']) ?></div>
+                    <div class="store-accent-line"></div>
+                    <p class="store-bio-para"><?= nl2br(esc($profil['store_bio1'])) ?></p>
+                    <p class="store-bio-para"><?= nl2br(esc($profil['store_bio2'])) ?></p>
                     <div class="store-values">
-                        <div class="store-value-item"><i class="fas fa-heart"></i><?= esc($profil['value_item_1'] ?? 'Pelayanan Tulus') ?></div>
-                        <div class="store-value-item"><i class="fas fa-shield-alt"></i><?= esc($profil['value_item_2'] ?? 'Produk Aman & Halal') ?></div>
-                        <div class="store-value-item"><i class="fas fa-star"></i><?= esc($profil['value_item_3'] ?? 'Kualitas Premium') ?></div>
-                        <div class="store-value-item"><i class="fas fa-smile"></i><?= esc($profil['value_item_4'] ?? 'Kepuasan Pelanggan') ?></div>
+                        <div class="store-val-chip"><i class="fas fa-heart"></i><?= esc($profil['value_item_1']) ?></div>
+                        <div class="store-val-chip"><i class="fas fa-shield-alt"></i><?= esc($profil['value_item_2']) ?></div>
+                        <div class="store-val-chip"><i class="fas fa-star"></i><?= esc($profil['value_item_3']) ?></div>
+                        <div class="store-val-chip"><i class="fas fa-smile"></i><?= esc($profil['value_item_4']) ?></div>
                     </div>
                 </div>
+
             </div>
         </div>
-
 
     </div>
 </div>
 
-
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
-<script>AOS.init({ once: true, duration: 700 });</script>
+<script>AOS.init({ once: true, duration: 800, easing: 'ease-out-cubic' });</script>
 <script src="script.js"></script>
 
 <?php include 'footer.php'; ?>

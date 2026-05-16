@@ -527,6 +527,174 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
 </section>
 
 <!-- ══ SERVICES GRID ══ -->
+<style>
+/* ── Service Card (estetik seperti produk) ── */
+.services-clean { background: linear-gradient(180deg,#fdfaf7 0%,#f5ede4 100%); padding: 50px 0; }
+
+.svc-card {
+    background: #fff;
+    border-radius: 20px;
+    overflow: hidden;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    transition: transform .3s cubic-bezier(0.4,0,0.2,1), box-shadow .3s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: 0 4px 20px rgba(139,111,94,0.10);
+    border: 1px solid rgba(214,193,163,0.25);
+}
+.svc-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 16px 48px rgba(139,111,94,0.20);
+}
+
+/* Bagian gambar */
+.svc-card-img-wrap {
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.svc-card-img-wrap img {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+    display: block;
+    transition: transform .45s ease;
+}
+.svc-card:hover .svc-card-img-wrap img {
+    transform: scale(1.06);
+}
+
+/* Badge nama layanan (pojok kiri atas) */
+.svc-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: rgba(255,255,255,0.88);
+    color: #5A4A42;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: 'Poppins', sans-serif;
+    letter-spacing: .7px;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 50px;
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(255,255,255,0.6);
+    z-index: 2;
+}
+
+/* Badge jumlah foto (pojok kanan atas) */
+.svc-photo-count {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(139,111,94,0.82);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    padding: 4px 10px;
+    border-radius: 50px;
+    backdrop-filter: blur(6px);
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Hover overlay + tombol lihat */
+.svc-card-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity .3s;
+    z-index: 3;
+}
+.svc-card:hover .svc-card-overlay { opacity: 1; }
+.svc-btn-preview {
+    background: rgba(255,255,255,0.92);
+    color: #5A4A42;
+    border: none;
+    border-radius: 50px;
+    padding: 9px 22px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    cursor: pointer;
+    transform: translateY(8px);
+    transition: transform .3s, background .2s;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.svc-card:hover .svc-btn-preview { transform: translateY(0); }
+
+/* Bagian info bawah */
+.svc-card-info {
+    padding: 16px 18px 18px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+.svc-card-name {
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: #2d1f17;
+    margin-bottom: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.svc-card-sub {
+    font-size: 11.5px;
+    color: #aaa;
+    font-family: 'Poppins', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.svc-card-divider {
+    border: none;
+    border-top: 1px solid #f0ebe5;
+    margin: 12px 0 10px;
+}
+.svc-card-cta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.svc-cta-label {
+    font-size: 11.5px;
+    color: #8B6F5E;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.svc-cta-arrow {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg,#8B6F5E,#D6C1A3);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    transition: transform .25s;
+}
+.svc-card:hover .svc-cta-arrow { transform: translateX(3px); }
+
+@media (max-width: 576px) {
+    .svc-card-img-wrap img { height: 180px; }
+}
+</style>
+
 <section id="layanan" class="services-clean">
     <div class="container">
         <div class="text-center mb-5">
@@ -544,17 +712,44 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
                 $galleryJsonAttr = htmlspecialchars(json_encode($gallery, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8');
                 $svcName = esc($svc['name']);
                 $svcNameJs = htmlspecialchars($svc['name'], ENT_QUOTES, 'UTF-8');
+                $photoCount = count($gallery);
             ?>
             <div class="col-lg-3 col-md-6">
-                <div class="service-box"
+                <div class="svc-card"
                      data-svc-name="<?= $svcNameJs ?>"
                      data-svc-gallery="<?= $galleryJsonAttr ?>"
                      onclick="openSvcFromEl(this)">
-                    <?php if (!empty($svc['image'])): ?>
-                    <img src="<?= esc($svc['image']) ?>" alt="<?= $svcName ?>">
-                    <?php endif; ?>
-                    <div class="overlay"><i class="fas fa-images me-1"></i><?= $svcName ?></div>
-                    <div class="service-click-hint"><i class="fas fa-eye"></i></div>
+
+                    <!-- Gambar + Overlay -->
+                    <div class="svc-card-img-wrap">
+                        <?php if (!empty($svc['image'])): ?>
+                        <img src="<?= esc($svc['image']) ?>" alt="<?= $svcName ?>" loading="lazy">
+                        <?php endif; ?>
+
+                        <!-- Badge nama layanan -->
+                        <span class="svc-badge"><?= $svcName ?></span>
+
+                        <!-- Hover overlay -->
+                        <div class="svc-card-overlay"></div>
+                    </div>
+
+                    <!-- Info bawah -->
+                    <div class="svc-card-info">
+                        <div class="svc-card-name"><?= $svcName ?></div>
+                        <div class="svc-card-sub">
+                            <i class="fas fa-spa" style="color:#D6C1A3;font-size:10px;"></i>
+                            Niswa Beauty
+                        </div>
+                        <div class="svc-card-divider"></div>
+                        <div class="svc-card-cta">
+                            <span class="svc-cta-label">
+                                <i class="fas fa-eye" style="font-size:10px;"></i>
+                                Lihat Galeri
+                            </span>
+                            <span class="svc-cta-arrow"><i class="fas fa-arrow-right"></i></span>
+                        </div>
+                    </div>
+
                 </div>
             </div>
             <?php endforeach; ?>
