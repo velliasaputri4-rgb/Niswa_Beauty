@@ -529,7 +529,7 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
 <!-- ══ SERVICES GRID ══ -->
 <style>
 /* ── Service Card (estetik seperti produk) ── */
-.services-clean { background: linear-gradient(180deg,#fdfaf7 0%,#f5ede4 100%); padding: 50px 0; }
+.services-clean { background: linear-gradient(180deg,#fdfaf7 0%,#f5ede4 100%) !important; padding: 50px 0; }
 
 .svc-card {
     background: #fff;

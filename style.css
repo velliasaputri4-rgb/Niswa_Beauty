@@ -413,12 +413,10 @@ section { padding: 50px 0; }
 
 /* Layanan Kami langsung nempel di bawah hero */
 section#layanan {
-    padding-top: 20px !important;
-    margin-top: -100px !important;
+    padding-top: 0 !important;
+    margin-top: 0 !important;
 }
 
-/* Kurangi gap hero → layanan */
-section#layanan { padding-top: 0 !important; margin-top: 0 !important; }
 
 .section-label {
     display: inline-flex;
@@ -4110,6 +4108,7 @@ section p {
     padding-top: 0 !important;
     margin-top: 0 !important;
     padding-bottom: 60px;
+    background: linear-gradient(180deg,#fdfaf7 0%,#f5ede4 100%) !important;
 }
 .services-header {
     margin-top: 0;
