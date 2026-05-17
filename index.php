@@ -1100,19 +1100,21 @@ document.addEventListener('keydown', function(e) {
 .price-cards-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:20px; }
 .price-card { border-radius:20px; overflow:hidden; box-shadow:0 4px 20px rgba(139,111,94,0.12); border:1px solid rgba(214,193,163,0.3); background:#fff; transition:transform .32s cubic-bezier(0.4,0,0.2,1),box-shadow .32s cubic-bezier(0.4,0,0.2,1); }
 .price-card:hover { transform:translateY(-6px); box-shadow:0 16px 48px rgba(139,111,94,0.22); }
-.price-card-header { display:flex; align-items:center; justify-content:space-between; background:linear-gradient(135deg,#8B6F5E,#D6C1A3); padding:16px 20px; }
-.price-card-label { font-weight:700; font-size:15px; color:#fff; font-family:'Poppins',sans-serif; }
-.price-acc-count { font-size:11px; color:rgba(255,255,255,0.9); background:rgba(255,255,255,0.2); border-radius:20px; padding:3px 12px; font-weight:500; font-family:'Poppins',sans-serif; }
-.price-acc-body { border-top:1px solid rgba(139,111,94,0.12); }
-.price-table { width:100%; border-collapse:collapse; background:#fff; font-family:'Poppins',sans-serif; font-size:13.5px; }
+.price-card-header { display:flex; align-items:center; justify-content:space-between; background:linear-gradient(135deg,#8B6F5E,#D6C1A3); padding:16px 20px; gap:8px; }
+.price-card-label { font-weight:700; font-size:15px; color:#fff; font-family:'Poppins',sans-serif; flex:1; min-width:0; }
+.price-acc-count { font-size:11px; color:rgba(255,255,255,0.9); background:rgba(255,255,255,0.2); border-radius:20px; padding:3px 12px; font-weight:500; font-family:'Poppins',sans-serif; white-space:nowrap; flex-shrink:0; }
+.price-acc-body { border-top:1px solid rgba(139,111,94,0.12); overflow-x:hidden; }
+.price-table { width:100%; border-collapse:collapse; background:#fff; font-family:'Poppins',sans-serif; font-size:13.5px; table-layout:fixed; }
 .price-table thead tr { background:#faf5f0; border-bottom:2px solid #f0e8df; }
-.price-table th { padding:10px 20px; color:#8B6F5E; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.5px; }
+.price-table th { padding:10px 16px; color:#8B6F5E; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.5px; }
+.price-table th:first-child { width:55%; }
+.price-table th:last-child { width:45%; }
 .price-table tbody tr { border-bottom:1px solid #f5ede6; transition:background .15s; }
 .price-table tbody tr:last-child { border-bottom:none; }
 .price-table tbody tr:hover { background:#fdf8f4; }
-.price-table td { padding:11px 20px; color:#444; vertical-align:middle; }
-.price-cell { color:#8B6F5E; font-weight:700; font-size:13px; white-space:nowrap; }
-@media(max-width:576px){ .price-cards-grid { grid-template-columns:1fr; } }
+.price-table td { padding:10px 16px; color:#444; vertical-align:middle; word-break:break-word; }
+.price-cell { color:#8B6F5E; font-weight:700; font-size:12.5px; word-break:break-word; white-space:normal; line-height:1.4; }
+@media(max-width:576px){ .price-cards-grid { grid-template-columns:1fr; } .price-table { font-size:12.5px; } .price-table td { padding:9px 12px; } .price-cell { font-size:12px; } }
 </style>
 
 <!-- ══ PRODUK COLLECTION ══ -->
