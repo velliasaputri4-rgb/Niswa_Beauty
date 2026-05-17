@@ -529,7 +529,7 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
 <!-- ══ SERVICES GRID ══ -->
 <style>
 /* ── Service Card (estetik seperti produk) ── */
-.services-clean { background: linear-gradient(180deg,#fdfaf7 0%,#f5ede4 100%) !important; padding: 50px 0; }
+.services-clean { background: #fdfaf7 !important; padding: 50px 0; }
 
 .svc-card {
     background: #fff;
@@ -1096,11 +1096,11 @@ document.addEventListener('keydown', function(e) {
 </script>
 
 <style>
-.price-list-section { background: linear-gradient(180deg,#fdfaf7 0%,#f5ede4 100%); padding: 45px 0; }
+.price-list-section { background: #fdfaf7; padding: 45px 0; }
 .price-cards-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:20px; }
 .price-card { border-radius:20px; overflow:hidden; box-shadow:0 4px 20px rgba(139,111,94,0.12); border:1px solid rgba(214,193,163,0.3); background:#fff; transition:transform .32s cubic-bezier(0.4,0,0.2,1),box-shadow .32s cubic-bezier(0.4,0,0.2,1); }
 .price-card:hover { transform:translateY(-6px); box-shadow:0 16px 48px rgba(139,111,94,0.22); }
-.price-card-header { display:flex; align-items:center; justify-content:space-between; background:linear-gradient(135deg,#8B6F5E,#D6C1A3); padding:16px 20px; gap:8px; }
+.price-card-header { display:flex; align-items:center; justify-content:space-between; background:#8B6F5E; padding:16px 20px; gap:8px; }
 .price-card-label { font-weight:700; font-size:15px; color:#fff; font-family:'Poppins',sans-serif; flex:1; min-width:0; }
 .price-acc-count { font-size:11px; color:rgba(255,255,255,0.9); background:rgba(255,255,255,0.2); border-radius:20px; padding:3px 12px; font-weight:500; font-family:'Poppins',sans-serif; white-space:nowrap; flex-shrink:0; }
 .price-acc-body { border-top:1px solid rgba(139,111,94,0.12); overflow-x:hidden; }
@@ -1187,7 +1187,7 @@ document.addEventListener('keydown', function(e) {
 </section>
 
 <style>
-.section-product { background:linear-gradient(180deg,#f5ede4 0%,#fdfaf7 100%); padding:50px 0; }
+.section-product { background:#fdfaf7; padding:50px 0; }
 .product-section-title { text-align:center; margin-bottom:32px; }
 .product-section-title h2 { font-weight:700; font-size:34px; font-family:'Playfair Display',serif; color:#2d1f17; }
 .product-section-title span { color:#8B6F5E; }

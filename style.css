@@ -4108,7 +4108,7 @@ section p {
     padding-top: 0 !important;
     margin-top: 0 !important;
     padding-bottom: 60px;
-    background: linear-gradient(180deg,#fdfaf7 0%,#f5ede4 100%) !important;
+    background: #fdfaf7 !important;
 }
 .services-header {
     margin-top: 0;
