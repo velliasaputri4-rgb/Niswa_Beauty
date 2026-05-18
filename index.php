@@ -25,12 +25,20 @@ if ($conn) {
         qty INT DEFAULT 1,
         total VARCHAR(20),
         catatan TEXT,
+        payment_method VARCHAR(30) DEFAULT 'COD',
+        payment_status VARCHAR(20) DEFAULT 'pending',
+        order_status VARCHAR(30) DEFAULT 'menunggu_konfirmasi',
         created_at DATETIME DEFAULT NOW()
     )");
     // AUTO-FIX kolom
-    foreach (["user_id"=>"ALTER TABLE orders ADD COLUMN user_id INT DEFAULT NULL",
-              "catatan" =>"ALTER TABLE orders ADD COLUMN catatan TEXT",
-              "total"   =>"ALTER TABLE orders ADD COLUMN total VARCHAR(20)"] as $col=>$sql) {
+    foreach ([
+        "user_id"        => "ALTER TABLE orders ADD COLUMN user_id INT DEFAULT NULL",
+        "catatan"        => "ALTER TABLE orders ADD COLUMN catatan TEXT",
+        "total"          => "ALTER TABLE orders ADD COLUMN total VARCHAR(20)",
+        "payment_method" => "ALTER TABLE orders ADD COLUMN payment_method VARCHAR(30) DEFAULT 'COD'",
+        "payment_status" => "ALTER TABLE orders ADD COLUMN payment_status VARCHAR(20) DEFAULT 'pending'",
+        "order_status"   => "ALTER TABLE orders ADD COLUMN order_status VARCHAR(30) DEFAULT 'menunggu_konfirmasi'",
+    ] as $col=>$sql) {
         $cek = mysqli_query($conn, "SHOW COLUMNS FROM orders LIKE '$col'");
         if ($cek && mysqli_num_rows($cek) === 0) mysqli_query($conn, $sql);
     }
@@ -237,15 +245,21 @@ $testimonials = !empty($testiRows) ? $testiRows : $defaultTestis;
 ══════════════════════════════════════════════ */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order']) && !empty($_SERVER['HTTP_X_REQUESTED_WITH'])) {
     header('Content-Type: application/json');
-    $nama          = trim($_POST['nama']          ?? '');
-    $whatsapp      = trim($_POST['whatsapp']      ?? '');
-    $alamat        = trim($_POST['alamat']        ?? '');
-    $product_name  = trim($_POST['product_name']  ?? '');
-    $product_price = trim($_POST['product_price'] ?? '');
-    $qty           = max(1, (int)($_POST['qty']   ?? 1));
-    $catatan       = trim($_POST['catatan']       ?? '');
-    $product_image = trim($_POST['product_image'] ?? '');
-    $user_id       = $_SESSION['user_id']         ?? null;
+    $nama           = trim($_POST['nama']           ?? '');
+    $whatsapp       = trim($_POST['whatsapp']       ?? '');
+    $alamat         = trim($_POST['alamat']         ?? '');
+    $product_name   = trim($_POST['product_name']   ?? '');
+    $product_price  = trim($_POST['product_price']  ?? '');
+    $qty            = max(1, (int)($_POST['qty']    ?? 1));
+    $catatan        = trim($_POST['catatan']        ?? '');
+    $product_image  = trim($_POST['product_image']  ?? '');
+    $payment_method = trim($_POST['payment_method'] ?? 'COD');
+    $user_id        = $_SESSION['user_id']          ?? null;
+
+    // Hanya izinkan COD
+    if (!in_array($payment_method, ['COD'])) {
+        $payment_method = 'COD';
+    }
 
     $harga_num = (int) preg_replace('/[^0-9]/', '', $product_price);
     $total     = 'Rp ' . number_format($harga_num * $qty, 0, ',', '.');
@@ -260,19 +274,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order']) && !empty($_
     } elseif (!$conn) {
         echo json_encode(['success'=>false,'message'=>'Koneksi database gagal: '.mysqli_connect_error()]);
     } else {
+        $order_status  = 'menunggu_konfirmasi';
+        $payment_status = 'pending';
+
         $stmt = mysqli_prepare($conn,
-            "INSERT INTO orders (user_id,nama,whatsapp,alamat,product_name,product_price,qty,total,catatan,product_image)
-             VALUES (?,?,?,?,?,?,?,?,?,?)"
+            "INSERT INTO orders (user_id,nama,whatsapp,alamat,product_name,product_price,qty,total,catatan,product_image,payment_method,payment_status,order_status)
+             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)"
         );
         if (!$stmt) {
             echo json_encode(['success'=>false,'message'=>'Prepare gagal: '.mysqli_error($conn)]);
             exit;
         }
-        mysqli_stmt_bind_param($stmt, "isssssisss",
-            $user_id,$nama,$whatsapp,$alamat,$product_name,$product_price,$qty,$total,$catatan,$product_image
+        mysqli_stmt_bind_param($stmt, "issssssissssss",
+            $user_id,$nama,$whatsapp,$alamat,$product_name,$product_price,$qty,$total,$catatan,$product_image,$payment_method,$payment_status,$order_status
         );
         if (mysqli_stmt_execute($stmt)) {
-            echo json_encode(['success'=>true]);
+            $order_id = mysqli_insert_id($conn);
+            $wa_number = $kontak['whatsapp'];
+            echo json_encode([
+                'success'    => true,
+                'order_id'   => $order_id,
+                'payment'    => $payment_method,
+                'wa_number'  => $wa_number,
+                'nama'       => $nama,
+                'product'    => $product_name,
+                'total'      => $total,
+                'alamat'     => $alamat,
+                'whatsapp'   => $whatsapp,
+            ]);
         } else {
             echo json_encode(['success'=>false,'message'=>'Gagal menyimpan: '.mysqli_stmt_error($stmt)]);
         }
@@ -1557,23 +1586,120 @@ document.addEventListener('keydown', function(e) {
 </div>
 <style>@keyframes ppFadeIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}</style>
 
+<!-- ══ COD PAYMENT GATEWAY STYLES ══ -->
+<style>
+.cod-payment-section { margin-bottom:14px; }
+.cod-payment-label { font-size:13px;font-weight:600;margin-bottom:10px;display:block;color:#2d1f17; }
+.cod-method-card {
+    border:2px solid #e8e0d8; border-radius:14px; padding:14px 16px;
+    cursor:pointer; transition:all .2s; background:#fff;
+    display:flex; align-items:center; gap:14px; position:relative;
+}
+.cod-method-card:hover { border-color:#D6C1A3; background:#fdf8f4; }
+.cod-method-card.selected { border-color:#8B6F5E; background:#fdf5ee; box-shadow:0 0 0 3px rgba(139,111,94,0.12); }
+.cod-method-icon {
+    width:48px; height:48px; border-radius:12px; display:flex;
+    align-items:center; justify-content:center; font-size:22px;
+    background:linear-gradient(135deg,#f5ede6,#ede0d4); color:#8B6F5E; flex-shrink:0;
+}
+.cod-method-info { flex:1; }
+.cod-method-title { font-family:'Poppins',sans-serif; font-size:13.5px; font-weight:700; color:#2d1f17; }
+.cod-method-desc { font-family:'Poppins',sans-serif; font-size:11.5px; color:#aaa; margin-top:2px; line-height:1.4; }
+.cod-method-badge {
+    font-size:10px; font-weight:700; padding:3px 10px; border-radius:20px;
+    background:linear-gradient(135deg,#10b981,#059669); color:#fff;
+    font-family:'Poppins',sans-serif; letter-spacing:.3px; flex-shrink:0;
+}
+.cod-method-check {
+    position:absolute; top:10px; right:12px;
+    width:20px; height:20px; border-radius:50%;
+    border:2px solid #e8e0d8; display:flex; align-items:center; justify-content:center;
+    transition:all .2s; font-size:10px; color:transparent;
+}
+.cod-method-card.selected .cod-method-check { border-color:#8B6F5E; background:#8B6F5E; color:#fff; }
+
+/* COD info box */
+.cod-info-box {
+    background: linear-gradient(135deg, #f0faf5, #e8f5f0);
+    border: 1.5px solid #a7d7c5; border-radius:12px;
+    padding:12px 14px; margin-bottom:14px;
+    font-family:'Poppins',sans-serif; font-size:12px; color:#2d6a4f;
+}
+.cod-info-box .cod-info-title { font-weight:700; font-size:13px; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+.cod-info-box ul { margin:0; padding-left:16px; }
+.cod-info-box li { margin-bottom:4px; line-height:1.5; }
+
+/* Submit button COD */
+.btn-cod-submit {
+    width:100%; padding:14px; border:none; border-radius:14px; cursor:pointer;
+    font-size:15px; font-weight:700; font-family:'Poppins',sans-serif;
+    background:linear-gradient(135deg,#8B6F5E,#C4A882);
+    color:#fff; box-shadow:0 6px 20px rgba(139,111,94,0.35);
+    transition:all .25s; display:flex; align-items:center; justify-content:center; gap:8px;
+    position:relative; overflow:hidden;
+}
+.btn-cod-submit:hover { transform:translateY(-2px); box-shadow:0 10px 28px rgba(139,111,94,0.45); }
+.btn-cod-submit:active { transform:translateY(0); box-shadow:0 4px 12px rgba(139,111,94,0.3); }
+.btn-cod-submit:disabled { background:#ccc; box-shadow:none; cursor:not-allowed; transform:none; }
+
+/* Step indicator */
+.cod-steps { display:flex; align-items:center; gap:0; margin-bottom:16px; }
+.cod-step { display:flex; flex-direction:column; align-items:center; flex:1; position:relative; }
+.cod-step:not(:last-child)::after { content:''; position:absolute; top:13px; left:calc(50% + 13px); right:calc(-50% + 13px); height:2px; background:#e8e0d8; z-index:0; }
+.cod-step.active:not(:last-child)::after { background:#8B6F5E; }
+.cod-step-dot { width:28px; height:28px; border-radius:50%; border:2.5px solid #e8e0d8; background:#fff; z-index:1; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:#bbb; transition:all .3s; }
+.cod-step.active .cod-step-dot { border-color:#8B6F5E; background:#8B6F5E; color:#fff; }
+.cod-step.done .cod-step-dot { border-color:#10b981; background:#10b981; color:#fff; }
+.cod-step-label { font-size:9.5px; font-weight:600; color:#bbb; font-family:'Poppins',sans-serif; margin-top:4px; text-align:center; letter-spacing:.3px; transition:color .3s; }
+.cod-step.active .cod-step-label { color:#8B6F5E; }
+.cod-step.done .cod-step-label { color:#10b981; }
+
+/* Ongkir estimasi */
+.cod-shipping-info { background:#fff8f0; border:1.5px solid #f5dbb5; border-radius:10px; padding:10px 14px; margin-bottom:14px; font-family:'Poppins',sans-serif; font-size:12px; color:#a07030; display:flex; align-items:center; gap:10px; }
+</style>
+
 <!-- ══ ORDER MODAL ══ -->
-<div id="orderModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;padding:16px;">
-    <div style="background:#fff;border-radius:24px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,0.25);">
-        <div style="padding:20px 24px 0;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #f0e8df;padding-bottom:16px;margin-bottom:20px;">
+<div id="orderModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.55);align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(3px);">
+    <div style="background:#fff;border-radius:24px;width:100%;max-width:460px;max-height:92vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,0.28);">
+        <!-- Header -->
+        <div style="padding:18px 22px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #f0e8df;position:sticky;top:0;background:#fff;z-index:2;border-radius:24px 24px 0 0;">
             <div>
-                <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#8B6F5E;font-weight:600;margin-bottom:4px;">Pemesanan</div>
-                <h5 id="modalProductName" style="font-weight:700;font-size:16px;color:#2d1f17;margin:0;font-family:'Poppins',sans-serif;"></h5>
+                <div style="font-size:10px;letter-spacing:1.8px;text-transform:uppercase;color:#8B6F5E;font-weight:700;margin-bottom:3px;">
+                    <i class="fas fa-store me-1"></i> Checkout Produk
+                </div>
+                <h5 id="modalProductName" style="font-weight:700;font-size:15px;color:#2d1f17;margin:0;font-family:'Poppins',sans-serif;"></h5>
             </div>
-            <button onclick="closeOrder()" style="background:none;border:none;font-size:22px;color:#999;cursor:pointer;line-height:1;">&times;</button>
+            <button onclick="closeOrder()" style="background:#f5ede6;border:none;border-radius:50%;width:34px;height:34px;font-size:18px;color:#8B6F5E;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s;" onmouseover="this.style.background='#e8d8cc'" onmouseout="this.style.background='#f5ede6'">&times;</button>
         </div>
-        <div style="padding:0 24px 24px;">
-            <div style="display:flex;align-items:center;gap:14px;background:#faf5f0;border-radius:14px;padding:14px;margin-bottom:18px;">
-                <img id="modalProductImg" src="" alt="" style="width:60px;height:60px;object-fit:cover;border-radius:10px;">
+
+        <div style="padding:18px 22px 22px;">
+            <!-- Step Indicator -->
+            <div class="cod-steps">
+                <div class="cod-step done" id="step1">
+                    <div class="cod-step-dot"><i class="fas fa-check" style="font-size:9px;"></i></div>
+                    <div class="cod-step-label">Produk</div>
+                </div>
+                <div class="cod-step active" id="step2">
+                    <div class="cod-step-dot">2</div>
+                    <div class="cod-step-label">Pengiriman</div>
+                </div>
+                <div class="cod-step" id="step3">
+                    <div class="cod-step-dot">3</div>
+                    <div class="cod-step-label">Pembayaran</div>
+                </div>
+                <div class="cod-step" id="step4">
+                    <div class="cod-step-dot">4</div>
+                    <div class="cod-step-label">Selesai</div>
+                </div>
+            </div>
+
+            <!-- Product Info -->
+            <div style="display:flex;align-items:center;gap:14px;background:#faf5f0;border-radius:14px;padding:14px;margin-bottom:18px;border:1px solid #f0e8df;">
+                <img id="modalProductImg" src="" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid #e8e0d8;">
                 <div style="flex:1;">
-                    <div id="modalProductNameInner" style="font-weight:600;font-size:14px;color:#2d1f17;font-family:'Poppins',sans-serif;"></div>
-                    <div style="display:flex;align-items:center;gap:8px;margin-top:3px;flex-wrap:wrap;">
-                        <div id="modalProductPrice" style="color:#8B6F5E;font-weight:700;font-size:15px;font-family:'Poppins',sans-serif;"></div>
+                    <div id="modalProductNameInner" style="font-weight:600;font-size:14px;color:#2d1f17;font-family:'Poppins',sans-serif;line-height:1.4;"></div>
+                    <div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;">
+                        <div id="modalProductPrice" style="color:#8B6F5E;font-weight:800;font-size:16px;font-family:'Poppins',sans-serif;"></div>
                         <div id="modalProductPriceOri" style="display:none;color:#bbb;font-weight:500;font-size:12px;font-family:'Poppins',sans-serif;text-decoration:line-through;"></div>
                     </div>
                     <div id="modalDiscBadge" style="display:none;margin-top:5px;background:#fff3e0;color:#c97000;font-size:11px;font-weight:700;font-family:'Poppins',sans-serif;padding:3px 10px;border-radius:20px;align-items:center;gap:4px;">
@@ -1581,74 +1707,206 @@ document.addEventListener('keydown', function(e) {
                     </div>
                 </div>
             </div>
+
             <form method="POST" id="orderForm">
                 <input type="hidden" name="order" value="1">
                 <input type="hidden" name="product_name" id="inputProductName">
                 <input type="hidden" name="product_price" id="inputProductPrice">
                 <input type="hidden" name="product_image" id="inputProductImage">
-                <div id="orderError" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:10px 14px;font-size:13px;color:#dc2626;margin-bottom:14px;"></div>
+                <input type="hidden" name="payment_method" id="inputPaymentMethod" value="COD">
+
+                <div id="orderError" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:10px 14px;font-size:13px;color:#dc2626;margin-bottom:14px;">
+                    <i class="fas fa-exclamation-circle me-1"></i> <span id="orderErrorText"></span>
+                </div>
+
+                <!-- Nama & WhatsApp -->
                 <?php
                 $fields = [
-                    ['label'=>'Nama Lengkap','name'=>'nama','type'=>'text','req'=>true,'placeholder'=>'Nama Anda'],
-                    ['label'=>'Nomor WhatsApp','name'=>'whatsapp','type'=>'tel','req'=>true,'placeholder'=>'08xxxxxxxxxx'],
+                    ['label'=>'Nama Lengkap','name'=>'nama','type'=>'text','req'=>true,'placeholder'=>'Nama penerima','icon'=>'fas fa-user'],
+                    ['label'=>'Nomor WhatsApp','name'=>'whatsapp','type'=>'tel','req'=>true,'placeholder'=>'08xxxxxxxxxx','icon'=>'fab fa-whatsapp'],
                 ];
                 foreach ($fields as $f): ?>
                 <div style="margin-bottom:14px;">
-                    <label style="font-size:13px;font-weight:500;margin-bottom:6px;display:block;"><?= $f['label'] ?></label>
-                    <input type="<?= $f['type'] ?>" name="<?= $f['name'] ?>" <?= $f['req']?'required':'' ?> placeholder="<?= $f['placeholder'] ?>"
-                        style="width:100%;padding:10px 14px;border:1.5px solid #e8e0d8;border-radius:10px;font-size:13px;font-family:Poppins,sans-serif;outline:none;">
+                    <label style="font-size:12.5px;font-weight:600;margin-bottom:7px;display:block;color:#2d1f17;"><?= $f['label'] ?> <span style="color:#e74c3c;">*</span></label>
+                    <div style="position:relative;">
+                        <i class="<?= $f['icon'] ?>" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#C4A882;font-size:14px;"></i>
+                        <input type="<?= $f['type'] ?>" name="<?= $f['name'] ?>" <?= $f['req']?'required':'' ?> placeholder="<?= $f['placeholder'] ?>"
+                            style="width:100%;padding:11px 14px 11px 38px;border:1.5px solid #e8e0d8;border-radius:11px;font-size:13px;font-family:Poppins,sans-serif;outline:none;transition:border-color .2s;"
+                            onfocus="this.style.borderColor='#8B6F5E'" onblur="this.style.borderColor='#e8e0d8'">
+                    </div>
                 </div>
                 <?php endforeach; ?>
+
+                <!-- Alamat -->
                 <div style="margin-bottom:14px;">
-                    <label style="font-size:13px;font-weight:500;margin-bottom:6px;display:block;">Alamat Pengiriman</label>
-                    <textarea name="alamat" required placeholder="Alamat lengkap..." rows="2"
-                        style="width:100%;padding:10px 14px;border:1.5px solid #e8e0d8;border-radius:10px;font-size:13px;font-family:Poppins,sans-serif;outline:none;resize:none;"></textarea>
+                    <label style="font-size:12.5px;font-weight:600;margin-bottom:7px;display:block;color:#2d1f17;">Alamat Pengiriman <span style="color:#e74c3c;">*</span></label>
+                    <div style="position:relative;">
+                        <i class="fas fa-map-marker-alt" style="position:absolute;left:13px;top:13px;color:#C4A882;font-size:14px;"></i>
+                        <textarea name="alamat" required placeholder="Nama jalan, nomor rumah, RT/RW, kelurahan, kecamatan, kota, kode pos..." rows="3"
+                            style="width:100%;padding:11px 14px 11px 38px;border:1.5px solid #e8e0d8;border-radius:11px;font-size:13px;font-family:Poppins,sans-serif;outline:none;resize:none;transition:border-color .2s;"
+                            onfocus="this.style.borderColor='#8B6F5E'" onblur="this.style.borderColor='#e8e0d8'"></textarea>
+                    </div>
                 </div>
+
+                <!-- Jumlah -->
                 <div id="qtyField" style="margin-bottom:14px;">
-                    <label style="font-size:13px;font-weight:500;margin-bottom:6px;display:block;">Jumlah</label>
+                    <label style="font-size:12.5px;font-weight:600;margin-bottom:7px;display:block;color:#2d1f17;">Jumlah</label>
                     <input type="number" name="qty" id="inputQty" min="1" max="10" value="1"
-                        style="width:100%;padding:10px 14px;border:1.5px solid #e8e0d8;border-radius:10px;font-size:13px;font-family:Poppins,sans-serif;outline:none;">
-                    <div id="qtyCartInfo" style="display:none;background:#f0faf5;border:1.5px solid #a7d7c5;border-radius:10px;padding:10px 14px;font-size:13px;font-family:Poppins,sans-serif;color:#2d6a4f;font-weight:500;align-items:center;gap:8px;">
+                        style="width:100%;padding:11px 14px;border:1.5px solid #e8e0d8;border-radius:11px;font-size:13px;font-family:Poppins,sans-serif;outline:none;transition:border-color .2s;"
+                        onfocus="this.style.borderColor='#8B6F5E'" onblur="this.style.borderColor='#e8e0d8'">
+                    <div id="qtyCartInfo" style="display:none;background:#f0faf5;border:1.5px solid #a7d7c5;border-radius:11px;padding:10px 14px;font-size:13px;font-family:Poppins,sans-serif;color:#2d6a4f;font-weight:500;align-items:center;gap:8px;">
                         <i class="fas fa-shopping-cart" style="color:#40916c;"></i>
                         <span id="qtyCartText"></span>
                     </div>
                 </div>
+
+                <!-- Catatan -->
+                <div style="margin-bottom:16px;">
+                    <label style="font-size:12.5px;font-weight:600;margin-bottom:7px;display:block;color:#2d1f17;">Catatan <span style="color:#aaa;font-weight:400;">(opsional)</span></label>
+                    <div style="position:relative;">
+                        <i class="fas fa-sticky-note" style="position:absolute;left:13px;top:13px;color:#C4A882;font-size:13px;"></i>
+                        <textarea name="catatan" placeholder="Contoh: warna pilihan, ukuran, atau permintaan khusus lainnya..." rows="2"
+                            style="width:100%;padding:11px 14px 11px 38px;border:1.5px solid #e8e0d8;border-radius:11px;font-size:13px;font-family:Poppins,sans-serif;outline:none;resize:none;transition:border-color .2s;"
+                            onfocus="this.style.borderColor='#8B6F5E'" onblur="this.style.borderColor='#e8e0d8'"></textarea>
+                    </div>
+                </div>
+
+                <!-- ══ METODE PEMBAYARAN COD ══ -->
+                <div class="cod-payment-section">
+                    <label class="cod-payment-label"><i class="fas fa-wallet me-2" style="color:#8B6F5E;"></i>Metode Pembayaran</label>
+                    <div class="cod-method-card selected" id="codCard" onclick="selectPayment('COD', this)">
+                        <div class="cod-method-icon">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <div class="cod-method-info">
+                            <div class="cod-method-title">Bayar di Tempat (COD)</div>
+                            <div class="cod-method-desc">Bayar tunai saat produk diterima</div>
+                        </div>
+                        <div class="cod-method-badge">Tersedia</div>
+                        <div class="cod-method-check"><i class="fas fa-check"></i></div>
+                    </div>
+                </div>
+
+                <!-- Info COD -->
+                <div class="cod-info-box">
+                    <div class="cod-info-title">
+                        <i class="fas fa-info-circle" style="color:#10b981;"></i> Cara Kerja COD
+                    </div>
+                    <ul>
+                        <li>Pesanan dikonfirmasi via WhatsApp setelah submit</li>
+                        <li>Tim kami akan menghubungi untuk verifikasi pengiriman</li>
+                        <li>Siapkan uang tunai sesuai total saat kurir tiba</li>
+                        <li>Pembayaran dilakukan kepada kurir/tim pengiriman</li>
+                    </ul>
+                </div>
+
+                <!-- Info ongkir -->
+                <div class="cod-shipping-info">
+                    <i class="fas fa-truck" style="font-size:20px;flex-shrink:0;"></i>
+                    <div>
+                        <div style="font-weight:700;font-size:12.5px;">Ongkos Kirim</div>
+                        <div style="font-size:11.5px;margin-top:1px;">Akan dikonfirmasi tim kami via WhatsApp sesuai lokasi pengiriman.</div>
+                    </div>
+                </div>
+
                 <!-- Ringkasan Pembayaran -->
-                <div id="orderSummaryBox" style="background:#faf5f0;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-family:'Poppins',sans-serif;font-size:13px;">
-                    <div style="display:flex;justify-content:space-between;color:#888;margin-bottom:6px;">
-                        <span>Subtotal</span><span id="summarySubtotal">-</span>
+                <div id="orderSummaryBox" style="background:linear-gradient(135deg,#faf5f0,#f5ede6);border-radius:14px;padding:14px 16px;margin-bottom:16px;font-family:'Poppins',sans-serif;font-size:13px;border:1px solid #ede0d4;">
+                    <div style="font-weight:700;font-size:12px;color:#8B6F5E;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+                        <i class="fas fa-receipt"></i> Ringkasan Pesanan
                     </div>
-                    <div id="summaryDiscRow" style="display:none;justify-content:space-between;color:#c97000;margin-bottom:6px;">
-                        <span id="summaryDiscLabel">Diskon</span><span id="summaryDiscAmt">-</span>
+                    <div style="display:flex;justify-content:space-between;color:#888;margin-bottom:7px;">
+                        <span>Subtotal</span><span id="summarySubtotal" style="font-weight:600;color:#2d1f17;">-</span>
                     </div>
-                    <div id="summaryMinBuyRow" style="display:none;align-items:center;gap:6px;color:#e74c3c;margin-bottom:6px;font-size:12px;background:#fff5f5;border:1px dashed #f5b7b1;border-radius:8px;padding:6px 10px;">
+                    <div id="summaryDiscRow" style="display:none;justify-content:space-between;color:#c97000;margin-bottom:7px;">
+                        <span id="summaryDiscLabel">Diskon</span><span id="summaryDiscAmt" style="font-weight:600;">-</span>
+                    </div>
+                    <div id="summaryMinBuyRow" style="display:none;align-items:center;gap:6px;color:#e74c3c;margin-bottom:7px;font-size:11.5px;background:#fff5f5;border:1px dashed #f5b7b1;border-radius:8px;padding:6px 10px;">
                         <i class="fas fa-lock" style="flex-shrink:0;font-size:11px;"></i>
                         <span id="summaryMinBuyText"></span>
                     </div>
-                    <div style="border-top:1px dashed #e8ddd4;margin:8px 0;"></div>
-                    <div style="display:flex;justify-content:space-between;font-weight:700;color:#2d1f17;font-size:14px;">
-                        <span>Total Bayar</span><span id="summaryTotal" style="color:#8B6F5E;">-</span>
+                    <div style="display:flex;justify-content:space-between;color:#888;margin-bottom:7px;">
+                        <span>Ongkos Kirim</span>
+                        <span style="color:#10b981;font-weight:600;font-size:11.5px;background:#f0faf5;padding:2px 8px;border-radius:8px;">Konfirmasi WA</span>
                     </div>
+                    <div style="display:flex;justify-content:space-between;color:#888;margin-bottom:7px;">
+                        <span>Metode Bayar</span>
+                        <span style="color:#8B6F5E;font-weight:700;display:flex;align-items:center;gap:5px;"><i class="fas fa-money-bill-wave" style="font-size:11px;"></i> <span id="summaryPayMethod">COD</span></span>
+                    </div>
+                    <div style="border-top:1.5px dashed #e8ddd4;margin:10px 0;"></div>
+                    <div style="display:flex;justify-content:space-between;font-weight:800;color:#2d1f17;font-size:15px;">
+                        <span>Total Produk</span>
+                        <span id="summaryTotal" style="color:#8B6F5E;">-</span>
+                    </div>
+                    <div style="font-size:10.5px;color:#aaa;text-align:right;margin-top:3px;">*belum termasuk ongkos kirim</div>
                 </div>
-                <button type="submit"
-                    style="width:100%;padding:12px;background:linear-gradient(135deg,#8B6F5E,#D6C1A3);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;font-family:Poppins,sans-serif;cursor:pointer;">
-                    <i class="fas fa-shopping-bag me-2"></i>Konfirmasi Pesanan
+
+                <button type="submit" class="btn-cod-submit" id="btnCodSubmit">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span>Konfirmasi & Pesan Sekarang</span>
                 </button>
+                <div style="text-align:center;margin-top:10px;font-size:11px;color:#bbb;font-family:'Poppins',sans-serif;display:flex;align-items:center;justify-content:center;gap:5px;">
+                    <i class="fas fa-lock" style="font-size:10px;"></i> Pesanan aman & dikonfirmasi via WhatsApp
+                </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- ══ SUCCESS ORDER ══ -->
-<div id="successOrder" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;">
-    <div style="background:#fff;border-radius:20px;width:90%;max-width:360px;padding:32px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
-        <i class="fas fa-check-circle" style="font-size:56px;color:#10b981;margin-bottom:16px;display:block;"></i>
-        <h5 style="font-weight:700;margin-bottom:8px;">Pesanan Berhasil!</h5>
-        <p style="color:#666;font-size:13px;margin-bottom:20px;">Terima kasih!</p>
-        <button onclick="document.getElementById('successOrder').style.display='none'"
-            style="background:linear-gradient(135deg,#8B6F5E,#D6C1A3);color:#fff;border:none;border-radius:30px;padding:10px 28px;font-weight:600;font-family:Poppins,sans-serif;cursor:pointer;">
-            Tutup
-        </button>
+<!-- ══ SUCCESS ORDER COD ══ -->
+<div id="successOrder" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px);">
+    <div style="background:#fff;border-radius:24px;width:90%;max-width:400px;padding:0;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,0.25);">
+        <!-- Header success -->
+        <div style="background:linear-gradient(135deg,#8B6F5E,#C4A882);padding:28px 24px 22px;text-align:center;">
+            <div style="width:70px;height:70px;background:rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;border:3px solid rgba(255,255,255,0.4);">
+                <i class="fas fa-check" style="font-size:32px;color:#fff;"></i>
+            </div>
+            <h5 style="font-weight:800;font-size:20px;color:#fff;margin:0 0 5px;font-family:'Playfair Display',serif;">Pesanan Berhasil!</h5>
+            <p style="color:rgba(255,255,255,0.85);font-size:13px;margin:0;font-family:'Poppins',sans-serif;">Terima kasih telah memesan di Niswà Beauty</p>
+        </div>
+        <!-- Detail COD -->
+        <div style="padding:20px 22px;">
+            <!-- Badge COD -->
+            <div style="background:#f0faf5;border:1.5px solid #a7d7c5;border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;">
+                <div style="width:40px;height:40px;background:linear-gradient(135deg,#10b981,#059669);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <i class="fas fa-money-bill-wave" style="color:#fff;font-size:18px;"></i>
+                </div>
+                <div>
+                    <div style="font-family:'Poppins',sans-serif;font-size:12.5px;font-weight:700;color:#2d6a4f;">Metode: Bayar di Tempat (COD)</div>
+                    <div style="font-family:'Poppins',sans-serif;font-size:11.5px;color:#52b788;margin-top:2px;">Siapkan uang tunai saat kurir tiba</div>
+                </div>
+            </div>
+            <!-- Info steps -->
+            <div style="font-family:'Poppins',sans-serif;font-size:12.5px;color:#555;margin-bottom:16px;">
+                <div style="font-weight:700;font-size:13px;color:#2d1f17;margin-bottom:10px;"><i class="fas fa-list-ol me-2" style="color:#8B6F5E;"></i>Langkah Selanjutnya:</div>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                    <div style="display:flex;align-items:flex-start;gap:10px;">
+                        <div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#8B6F5E,#C4A882);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px;">1</div>
+                        <span>Tim kami akan menghubungi kamu via <b>WhatsApp</b> untuk konfirmasi pesanan</span>
+                    </div>
+                    <div style="display:flex;align-items:flex-start;gap:10px;">
+                        <div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#8B6F5E,#C4A882);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px;">2</div>
+                        <span>Pesanan dikemas & dikirim ke alamat kamu</span>
+                    </div>
+                    <div style="display:flex;align-items:flex-start;gap:10px;">
+                        <div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#8B6F5E,#C4A882);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px;">3</div>
+                        <span>Bayar tunai kepada kurir saat barang diterima ✓</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Buttons -->
+            <a id="successWaBtn" href="#" target="_blank"
+                style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:linear-gradient(135deg,#25d366,#128c4a);color:#fff;font-weight:700;font-size:14px;border-radius:12px;padding:13px;text-decoration:none;font-family:'Poppins',sans-serif;margin-bottom:10px;box-shadow:0 4px 16px rgba(37,211,102,0.3);transition:all .2s;"
+                onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(37,211,102,0.4)'"
+                onmouseout="this.style.transform='none';this.style.boxShadow='0 4px 16px rgba(37,211,102,0.3)'">
+                <i class="fab fa-whatsapp" style="font-size:18px;"></i>
+                Konfirmasi via WhatsApp
+            </a>
+            <button onclick="document.getElementById('successOrder').style.display='none'"
+                style="width:100%;background:#f5ede6;color:#8B6F5E;border:none;border-radius:12px;padding:12px;font-weight:600;font-family:'Poppins',sans-serif;font-size:13.5px;cursor:pointer;transition:background .2s;"
+                onmouseover="this.style.background='#ede0d4'" onmouseout="this.style.background='#f5ede6'">
+                Tutup
+            </button>
+        </div>
     </div>
 </div>
 
@@ -1791,16 +2049,56 @@ document.querySelector('#orderForm [name="qty"]').addEventListener('input',updat
 
 document.getElementById('orderForm').addEventListener('submit',function(e){
     e.preventDefault();
-    var errBox=document.getElementById('orderError');errBox.style.display='none';
+    var errBox=document.getElementById('orderError');
+    var errText=document.getElementById('orderErrorText');
+    errBox.style.display='none';
+
+    var btn = document.getElementById('btnCodSubmit');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Memproses pesanan...</span>';
+
     var cleanUrl = window.location.protocol + '//' + window.location.host + window.location.pathname;
     fetch(cleanUrl,{method:'POST',headers:{'X-Requested-With':'XMLHttpRequest'},body:new FormData(this)})
     .then(res=>res.json())
     .then(data=>{
-        if(data.success){closeOrder();document.getElementById('successOrder').style.display='flex';this.reset();}
-        else{errBox.innerHTML=data.message||'Terjadi kesalahan.';errBox.style.display='block';}
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-shopping-bag"></i><span>Konfirmasi & Pesan Sekarang</span>';
+        if(data.success){
+            closeOrder();
+            // Buat pesan WA konfirmasi COD
+            var waNum = '<?= $kontak["whatsapp"] ?>';
+            var msg = '🛍️ *PESANAN BARU - COD*\n\n'
+                + '📦 *Produk:* ' + (data.product || '') + '\n'
+                + '💰 *Total Produk:* ' + (data.total || '') + '\n'
+                + '💵 *Metode Bayar:* Bayar di Tempat (COD)\n\n'
+                + '👤 *Nama:* ' + (data.nama || '') + '\n'
+                + '📱 *WhatsApp:* ' + (data.whatsapp || '') + '\n'
+                + '📍 *Alamat:* ' + (data.alamat || '') + '\n\n'
+                + '✅ Mohon konfirmasi pesanan dan informasikan ongkos kirim. Terima kasih!';
+            var waUrl = 'https://wa.me/' + waNum + '?text=' + encodeURIComponent(msg);
+            document.getElementById('successWaBtn').href = waUrl;
+            document.getElementById('successOrder').style.display='flex';
+            this.reset();
+        } else {
+            errText.innerHTML = data.message || 'Terjadi kesalahan.';
+            errBox.style.display='block';
+        }
     })
-    .catch((err)=>{errBox.innerHTML='Terjadi kesalahan koneksi: '+err;errBox.style.display='block';});
+    .catch((err)=>{
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-shopping-bag"></i><span>Konfirmasi & Pesan Sekarang</span>';
+        errText.innerHTML = 'Terjadi kesalahan koneksi: ' + err;
+        errBox.style.display = 'block';
+    });
 });
+
+function selectPayment(method, el) {
+    document.querySelectorAll('.cod-method-card').forEach(function(c){ c.classList.remove('selected'); });
+    el.classList.add('selected');
+    document.getElementById('inputPaymentMethod').value = method;
+    var summaryPayMethod = document.getElementById('summaryPayMethod');
+    if (summaryPayMethod) summaryPayMethod.textContent = method;
+}
 
 function showProductPreview(name,price,img,disc){
     disc=disc||0;
