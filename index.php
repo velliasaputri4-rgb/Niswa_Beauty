@@ -243,6 +243,11 @@ $testimonials = !empty($testiRows) ? $testiRows : $defaultTestis;
 /* ══════════════════════════════════════════════
    HANDLE AJAX ORDER
 ══════════════════════════════════════════════ */
+// Load helper notifikasi WhatsApp
+if (file_exists(__DIR__ . '/notify.php')) {
+    require_once __DIR__ . '/notify.php';
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order']) && !empty($_SERVER['HTTP_X_REQUESTED_WITH'])) {
     header('Content-Type: application/json');
     $nama           = trim($_POST['nama']           ?? '');
@@ -285,12 +290,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order']) && !empty($_
             echo json_encode(['success'=>false,'message'=>'Prepare gagal: '.mysqli_error($conn)]);
             exit;
         }
-        mysqli_stmt_bind_param($stmt, "issssssissssss",
+        mysqli_stmt_bind_param($stmt, "isssssissssss",
             $user_id,$nama,$whatsapp,$alamat,$product_name,$product_price,$qty,$total,$catatan,$product_image,$payment_method,$payment_status,$order_status
         );
         if (mysqli_stmt_execute($stmt)) {
-            $order_id = mysqli_insert_id($conn);
+            $order_id  = mysqli_insert_id($conn);
             $wa_number = $kontak['whatsapp'];
+
+            // ── Kirim notifikasi WA ke admin ──
+            if (function_exists('notifyAdminOrder')) {
+                notifyAdminOrder([
+                    'order_id'       => $order_id,
+                    'nama'           => $nama,
+                    'whatsapp'       => $whatsapp,
+                    'alamat'         => $alamat,
+                    'product_name'   => $product_name,
+                    'product_price'  => $product_price,
+                    'qty'            => $qty,
+                    'total'          => $total,
+                    'catatan'        => $catatan,
+                    'payment_method' => $payment_method,
+                ]);
+            }
+
+            // ── Kirim konfirmasi otomatis ke customer ──
+            if (function_exists('notifyCustomerOrder')) {
+                notifyCustomerOrder([
+                    'order_id'       => $order_id,
+                    'nama'           => $nama,
+                    'whatsapp'       => $whatsapp,
+                    'alamat'         => $alamat,
+                    'product_name'   => $product_name,
+                    'product_price'  => $product_price,
+                    'qty'            => $qty,
+                    'total'          => $total,
+                    'catatan'        => $catatan,
+                    'payment_method' => $payment_method,
+                ]);
+            }
+
             echo json_encode([
                 'success'    => true,
                 'order_id'   => $order_id,
@@ -1894,13 +1932,7 @@ document.addEventListener('keydown', function(e) {
                 </div>
             </div>
             <!-- Buttons -->
-            <a id="successWaBtn" href="#" target="_blank"
-                style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:linear-gradient(135deg,#25d366,#128c4a);color:#fff;font-weight:700;font-size:14px;border-radius:12px;padding:13px;text-decoration:none;font-family:'Poppins',sans-serif;margin-bottom:10px;box-shadow:0 4px 16px rgba(37,211,102,0.3);transition:all .2s;"
-                onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(37,211,102,0.4)'"
-                onmouseout="this.style.transform='none';this.style.boxShadow='0 4px 16px rgba(37,211,102,0.3)'">
-                <i class="fab fa-whatsapp" style="font-size:18px;"></i>
-                Konfirmasi via WhatsApp
-            </a>
+            <a id="successWaCustomerBtn" href="#" target="_blank" style="display:none;"></a>
             <button onclick="document.getElementById('successOrder').style.display='none'"
                 style="width:100%;background:#f5ede6;color:#8B6F5E;border:none;border-radius:12px;padding:12px;font-weight:600;font-family:'Poppins',sans-serif;font-size:13.5px;cursor:pointer;transition:background .2s;"
                 onmouseover="this.style.background='#ede0d4'" onmouseout="this.style.background='#f5ede6'">
@@ -2065,18 +2097,32 @@ document.getElementById('orderForm').addEventListener('submit',function(e){
         btn.innerHTML = '<i class="fas fa-shopping-bag"></i><span>Konfirmasi & Pesan Sekarang</span>';
         if(data.success){
             closeOrder();
-            // Buat pesan WA konfirmasi COD
-            var waNum = '<?= $kontak["whatsapp"] ?>';
-            var msg = '🛍️ *PESANAN BARU - COD*\n\n'
-                + '📦 *Produk:* ' + (data.product || '') + '\n'
-                + '💰 *Total Produk:* ' + (data.total || '') + '\n'
-                + '💵 *Metode Bayar:* Bayar di Tempat (COD)\n\n'
+
+            // ── Pesan notif ke ADMIN (dikirim dari sisi customer, WA terbuka ke nomor admin) ──
+            var waAdminNum = '6289714408805';
+            var custWa = (data.whatsapp || '').replace(/[^0-9]/g,'');
+            if(custWa.charAt(0)==='0') custWa = '62' + custWa.slice(1);
+
+            var msgKeAdmin = '🛍️ *PESANAN BARU - NISWÀ BEAUTY*\n\n'
+                + '━━━━━━━━━━━━━━━━━━━━\n'
+                + '📋 *Order ID:* #' + (data.order_id || '') + '\n'
+                + '━━━━━━━━━━━━━━━━━━━━\n'
                 + '👤 *Nama:* ' + (data.nama || '') + '\n'
-                + '📱 *WhatsApp:* ' + (data.whatsapp || '') + '\n'
-                + '📍 *Alamat:* ' + (data.alamat || '') + '\n\n'
-                + '✅ Mohon konfirmasi pesanan dan informasikan ongkos kirim. Terima kasih!';
-            var waUrl = 'https://wa.me/' + waNum + '?text=' + encodeURIComponent(msg);
-            document.getElementById('successWaBtn').href = waUrl;
+                + '📱 *WhatsApp Customer:* ' + (data.whatsapp || '') + '\n'
+                + '📍 *Alamat:* ' + (data.alamat || '') + '\n'
+                + '📦 *Produk:* ' + (data.product || '') + '\n'
+                + '💰 *Total:* ' + (data.total || '') + '\n'
+                + '💵 *Pembayaran:* Bayar di Tempat (COD)\n'
+                + '━━━━━━━━━━━━━━━━━━━━\n'
+                + '⏰ ' + new Date().toLocaleString('id-ID') + '\n\n'
+                + 'Mohon segera konfirmasi pesanan ke customer. Terima kasih! 🙏';
+
+            var waAdminUrl = 'https://wa.me/' + waAdminNum + '?text=' + encodeURIComponent(msgKeAdmin);
+
+            // Simpan URL admin (untuk internal use jika dibutuhkan)
+            var custBtn = document.getElementById('successWaCustomerBtn');
+            if(custBtn) custBtn.style.display = 'none';
+
             document.getElementById('successOrder').style.display='flex';
             this.reset();
         } else {
