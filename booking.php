@@ -368,7 +368,7 @@ $pageTitle = "Booking Appointment — NISWÀ BEAUTY";
         to   { opacity:1; transform: scale(1)    translateY(0); }
     }
     .wa-modal-header {
-        background: linear-gradient(135deg, #25d366, #128c4a);
+        background: linear-gradient(135deg, #8B6F5E, #D6C1A3);
         padding: 28px 24px 22px;
         text-align: center;
         color: #fff;
@@ -384,8 +384,8 @@ $pageTitle = "Booking Appointment — NISWÀ BEAUTY";
     .wa-modal-body { padding: 22px 24px; }
 
     .wa-detail-box {
-        background: #f8fffe;
-        border: 1.5px solid #a7f3d0;
+        background: #fdf6f2;
+        border: 1.5px solid #e5d5cc;
         border-radius: 14px;
         padding: 14px 16px;
         font-family: 'Poppins', sans-serif;
@@ -418,7 +418,7 @@ $pageTitle = "Booking Appointment — NISWÀ BEAUTY";
         display: flex; flex-wrap: wrap; gap: 6px;
     }
     .wa-slot-badge {
-        background: #10b981; color: #fff;
+        background: #8B6F5E; color: #fff;
         padding: 3px 10px; border-radius: 20px;
         font-size: 11.5px; font-weight: 600;
     }
@@ -426,26 +426,26 @@ $pageTitle = "Booking Appointment — NISWÀ BEAUTY";
     .btn-wa-customer {
         display: flex; align-items: center; justify-content: center; gap: 8px;
         width: 100%;
-        background: linear-gradient(135deg, #25d366, #128c4a);
+        background: linear-gradient(135deg, #8B6F5E, #D6C1A3);
         color: #fff; font-weight: 700; font-size: 14px;
         border-radius: 12px; padding: 13px;
         text-decoration: none;
         font-family: 'Poppins', sans-serif;
         margin-bottom: 10px;
-        box-shadow: 0 4px 16px rgba(37,211,102,0.3);
+        box-shadow: 0 4px 16px rgba(139,111,94,0.3);
         transition: all .2s;
     }
     .btn-wa-customer:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(37,211,102,0.45);
+        box-shadow: 0 8px 24px rgba(139,111,94,0.45);
         color: #fff;
     }
     .btn-wa-admin {
         display: flex; align-items: center; justify-content: center; gap: 8px;
         width: 100%;
-        background: #f0fdf4;
-        color: #128c4a; font-weight: 600; font-size: 13px;
-        border: 1.5px solid #a7f3d0;
+        background: #fdf6f2;
+        color: #8B6F5E; font-weight: 600; font-size: 13px;
+        border: 1.5px solid #e5d5cc;
         border-radius: 12px; padding: 10px;
         text-decoration: none;
         font-family: 'Poppins', sans-serif;
@@ -453,7 +453,7 @@ $pageTitle = "Booking Appointment — NISWÀ BEAUTY";
         transition: all .2s;
     }
     .btn-wa-admin:hover {
-        background: #dcfce7; color: #128c4a;
+        background: #ede0d4; color: #6d3a28;
     }
     .btn-close-modal {
         width: 100%;
@@ -468,7 +468,7 @@ $pageTitle = "Booking Appointment — NISWÀ BEAUTY";
 
     /* ── Slot status pada select ── */
     .slot-hint {
-        font-size: 11px; color: #10b981;
+        font-size: 11px; color: #8B6F5E;
         display: flex; align-items: center; gap: 5px;
         margin-top: 5px;
     }
@@ -722,8 +722,8 @@ $pageTitle = "Booking Appointment — NISWÀ BEAUTY";
 
                             <!-- Info WA notif -->
                             <div class="col-12">
-                                <div style="background:#f0fff8;border:1.5px solid #a7f3d0;border-radius:12px;padding:12px 16px;display:flex;align-items:flex-start;gap:10px;font-family:'Poppins',sans-serif;font-size:12.5px;color:#065f46;">
-                                    <i class="fab fa-whatsapp" style="font-size:18px;color:#25d366;margin-top:1px;flex-shrink:0;"></i>
+                                <div style="background:#fdf6f2;border:1.5px solid #e5d5cc;border-radius:12px;padding:12px 16px;display:flex;align-items:flex-start;gap:10px;font-family:'Poppins',sans-serif;font-size:12.5px;color:#6d3a28;">
+                                    <i class="fab fa-whatsapp" style="font-size:18px;color:#8B6F5E;margin-top:1px;flex-shrink:0;"></i>
                                     <span>Setelah booking berhasil, tim kami akan <strong>menghubungi Anda</strong> dalam waktu &lt;1 jam untuk konfirmasi jadwal.</span>
                                 </div>
                             </div>
@@ -811,10 +811,6 @@ $pageTitle = "Booking Appointment — NISWÀ BEAUTY";
                     <strong id="modalDateFmt"><?= htmlspecialchars($_POST['tanggal'] ?? '') ?></strong>
                 </div>
                 <div class="wa-detail-row">
-                    <span>⏰ Jam</span>
-                    <strong><?= htmlspecialchars($_POST['jam'] ?? '') ?> WIB</strong>
-                </div>
-                <div class="wa-detail-row">
                     <span>📍 Jenis</span>
                     <strong><?= (($_POST['jenis_layanan']??'datang')==='home_service') ? '🏠 Home Service' : '🏪 Datang ke Tempat' ?></strong>
                 </div>
@@ -826,27 +822,7 @@ $pageTitle = "Booking Appointment — NISWÀ BEAUTY";
                 <?php endif; ?>
             </div>
 
-            <!-- Slot tersedia -->
-            <?php
-            $avail_decoded = json_decode($available_slots_js, true);
-            if (!empty($avail_decoded)):
-            ?>
-            <div class="wa-slots-box">
-                <div class="wa-slots-title">
-                    <i class="fas fa-clock"></i>
-                    Jam Lain Tersedia di Tanggal Ini
-                </div>
-                <div class="wa-slots-grid">
-                    <?php foreach ($avail_decoded as $sl): ?>
-                    <span class="wa-slot-badge"><?= htmlspecialchars($sl) ?> WIB</span>
-                    <?php endforeach; ?>
-                </div>
-                <div style="font-size:11px;color:#92400e;margin-top:8px;">
-                    <i class="fas fa-info-circle me-1"></i>
-                    Jika jam yang kamu pilih penuh, tim kami akan konfirmasi dengan salah satu jam di atas.
-                </div>
-            </div>
-            <?php endif; ?>
+
 
             <!-- Tutup -->
             <button class="btn-close-modal" onclick="closeWaModal()">
