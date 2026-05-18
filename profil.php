@@ -131,7 +131,7 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
             border: 1px solid var(--nude-200);
             color: var(--bronze);
             font-family: var(--sans);
-            font-size: 10px;
+            font-size: 13px;
             font-weight: 600;
             letter-spacing: 2.5px;
             text-transform: uppercase;
@@ -206,7 +206,7 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
             background: linear-gradient(135deg, var(--gold-light), var(--gold));
             display: flex; align-items: center; justify-content: center;
             font-family: var(--serif);
-            font-size: 36px; font-weight: 700;
+            font-size: 38px; font-weight: 700;
             color: var(--espresso);
             border: 3px solid rgba(255,252,248,.25);
             transition: transform .4s cubic-bezier(.34,1.56,.64,1), box-shadow .3s;
@@ -224,7 +224,7 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
             border-radius: 50%;
             width: 26px; height: 26px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 11px;
+            font-size: 12px;
             border: 2px solid var(--warm-white);
         }
 
@@ -232,7 +232,7 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
         .owner-identity { flex: 1; z-index: 1; }
         .owner-role-tag {
             font-family: var(--sans);
-            font-size: 9px; font-weight: 600;
+            font-size: 13px; font-weight: 600;
             letter-spacing: 3px;
             color: var(--gold-light);
             text-transform: uppercase;
@@ -240,7 +240,7 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
         }
         .owner-name {
             font-family: var(--serif);
-            font-size: clamp(36px, 4.5vw, 58px);
+            font-size: clamp(38px, 4.5vw, 59px);
             font-weight: 600;
             color: var(--warm-white);
             line-height: 1.0;
@@ -250,8 +250,8 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
         .owner-quote-inline {
             font-family: var(--serif);
             font-style: italic;
-            font-size: 15px;
-            color: rgba(250,247,242,.65);
+            font-size: 18px;
+            color: rgba(250,247,242,.95);
             line-height: 1.5;
         }
 
@@ -284,14 +284,14 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
         .owner-stat:hover .owner-stat-icon { transform: scale(1.3) rotate(-8deg); }
         .owner-stat-val {
             font-family: var(--serif);
-            font-size: 22px; font-weight: 700;
+            font-size: 27px; font-weight: 700;
             color: var(--warm-white);
             line-height: 1;
         }
         .owner-stat-lbl {
             font-family: var(--sans);
-            font-size: 8.5px; font-weight: 500;
-            color: rgba(255,252,248,.45);
+            font-size: 12px; font-weight: 500;
+            color: rgba(255,252,248,.80);
             letter-spacing: 1.5px;
             text-transform: uppercase;
         }
@@ -307,7 +307,7 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
         }
         .owner-pull-quote .pq-mark {
             font-family: var(--serif);
-            font-size: 72px;
+            font-size: 74px;
             line-height: .6;
             color: var(--nude-200);
             flex-shrink: 0;
@@ -317,9 +317,9 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
         .owner-pull-quote p {
             margin: 0;
             font-family: var(--serif);
-            font-size: 18px;
+            font-size: 21px;
             font-style: italic;
-            color: var(--mocha);
+            color: var(--espresso);
             line-height: 1.7;
         }
 
@@ -351,7 +351,7 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
         .tl-node:hover { background: var(--nude-50); }
         .tl-node-year {
             font-family: var(--serif);
-            font-size: 22px;
+            font-size: 27px;
             font-weight: 600;
             color: var(--bronze);
             margin-bottom: 6px;
@@ -359,7 +359,7 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
         }
         .tl-node-title {
             font-family: var(--sans);
-            font-size: 10.5px;
+            font-size: 14px;
             font-weight: 600;
             color: var(--espresso);
             text-transform: uppercase;
@@ -368,10 +368,10 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
         }
         .tl-node-text {
             font-family: var(--sans);
-            font-size: 12.5px;
-            color: var(--mocha);
+            font-size: 14px;
+            color: var(--espresso);
             line-height: 1.65;
-            opacity: .8;
+            opacity: 1;
         }
 
         /* Bio columns */
@@ -386,12 +386,12 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
         }
         .owner-bio-text {
             font-family: var(--sans);
-            font-size: 14.5px;
-            color: var(--mocha);
+            font-size: 17px;
+            color: var(--espresso);
             line-height: 2.0;
             margin: 0;
         }
-        .owner-bio-text + .owner-bio-text { color: rgba(122,92,64,.75); }
+        .owner-bio-text + .owner-bio-text { color: var(--espresso); }
 
         /* ════════════════════════════════════
            STORE SECTION
@@ -448,7 +448,7 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
         }
         .store-badge-est {
             font-family: var(--sans);
-            font-size: 9.5px;
+            font-size: 13px;
             font-weight: 600;
             color: var(--bronze);
             letter-spacing: 2px;
@@ -457,7 +457,7 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
         }
         .store-badge-name {
             font-family: var(--serif);
-            font-size: 20px;
+            font-size: 24px;
             font-weight: 600;
             color: var(--espresso);
             letter-spacing: 1px;
@@ -467,7 +467,7 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
             content: '✦';
             position: absolute;
             top: 24px; right: 24px;
-            font-size: 22px;
+            font-size: 23px;
             color: rgba(250,247,242,.5);
             z-index: 1;
         }
@@ -480,7 +480,7 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
         }
         .store-eyebrow {
             font-family: var(--sans);
-            font-size: 9px;
+            font-size: 13px;
             font-weight: 600;
             letter-spacing: 3px;
             color: var(--gold);
@@ -489,7 +489,7 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
         }
         .store-name-head {
             font-family: var(--serif);
-            font-size: clamp(28px, 3vw, 40px);
+            font-size: clamp(29px, 3vw, 41px);
             font-weight: 600;
             color: var(--espresso);
             line-height: 1.1;
@@ -499,7 +499,7 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
         .store-tagline-text {
             font-family: var(--serif);
             font-style: italic;
-            font-size: 15px;
+            font-size: 18px;
             color: var(--bronze);
             margin-bottom: 32px;
         }
@@ -512,12 +512,12 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
         }
         .store-bio-para {
             font-family: var(--sans);
-            font-size: 14px;
-            color: var(--mocha);
+            font-size: 17px;
+            color: var(--espresso);
             line-height: 1.95;
             margin-bottom: 14px;
         }
-        .store-bio-para:last-of-type { color: rgba(122,92,64,.75); }
+        .store-bio-para:last-of-type { color: var(--espresso); }
 
         /* Values grid */
         .store-values {
@@ -536,7 +536,7 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
             border-radius: var(--radius-sm);
             padding: 13px 16px;
             font-family: var(--sans);
-            font-size: 12.5px;
+            font-size: 15px;
             font-weight: 500;
             color: var(--espresso);
             transition: background .25s, transform .25s, box-shadow .25s;
@@ -550,7 +550,7 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
         }
         .store-val-chip i {
             color: var(--gold);
-            font-size: 13px;
+            font-size: 14px;
             width: 16px;
             text-align: center;
             transition: transform .3s cubic-bezier(.34,1.56,.64,1);
@@ -583,10 +583,10 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
             .tl-node:nth-child(3) { border-top: 1px solid rgba(214,191,166,.25); border-right: 1px solid rgba(214,191,166,.25); }
             .tl-node:nth-child(5) { grid-column: 1 / -1; border-right: none; border-top: 1px solid rgba(214,191,166,.25); }
             .owner-bio-block { padding: 28px 22px; }
-            .store-val-chip { font-size: 11.5px; padding: 11px 12px; }
+            .store-val-chip { font-size: 13px; padding: 11px 12px; }
             .store-values { grid-template-columns: 1fr; }
             .owner-pull-quote { padding: 22px 22px; }
-            .owner-pull-quote .pq-mark { font-size: 48px; }
+            .owner-pull-quote .pq-mark { font-size: 50px; }
             .owner-pull-quote p { font-size: 15px; }
         }
     </style>
