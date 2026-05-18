@@ -56,6 +56,11 @@ function getProfil($conn, $section, $key, $default = '') {
     return $default;
 }
 function esc($v) { return htmlspecialchars($v, ENT_QUOTES, 'UTF-8'); }
+function lowestPrice($s) {
+    preg_match_all('/[\d.]+/', $s, $m);
+    $n = array_map(fn($x) => (int)str_replace('.','', $x), $m[0]);
+    return $n ? min($n) : 0;
+}
 
 /* ══════════════════════════════════════════════
    LOAD SEMUA DATA DARI DATABASE
@@ -849,31 +854,47 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
         foreach ($catOrder as $c) { if (isset($priceList[$c])) $sorted[$c] = $priceList[$c]; }
         foreach ($priceList as $c => $v) { if (!isset($sorted[$c])) $sorted[$c] = $v; }
 
-        // Fungsi ambil nilai numerik terendah dari string harga (misal "Rp 25.000 - 100.000" → 25000)
-        function lowestPrice($priceStr) {
-            preg_match_all('/[\d.]+/', $priceStr, $m);
-            $nums = array_map(fn($n) => (int)str_replace('.', '', $n), $m[0]);
-            return empty($nums) ? 0 : min($nums);
-        }
-
-        // Urutkan item dalam setiap card dari harga terendah
+        // Urutkan item tiap kategori dari harga terendah
         foreach ($sorted as $cat => &$items) {
-            usort($items, fn($a, $b) => lowestPrice($a['price']) - lowestPrice($b['price']));
+            usort($items, fn($a,$b) => lowestPrice($a['price']) - lowestPrice($b['price']));
         }
         unset($items);
 
-        $delay=0; foreach ($sorted as $cat => $items): ?>
-        <div class="price-card" data-aos="fade-up" data-aos-delay="<?= $delay*80 ?>">
+        // Bangun array card — Rambut dipecah 6 & 7, Nail Art dipecah 6 & 6
+        $priceCards = [];
+        foreach ($sorted as $cat => $items) {
+            if ($cat === 'Rambut') {
+                $priceCards[] = ['cat'=>$cat, 'label'=>'Rambut', 'badge'=>'≤ Rp 100rb', 'items'=>array_slice($items, 0, 6)];
+                $priceCards[] = ['cat'=>$cat, 'label'=>'Rambut', 'badge'=>'> Rp 100rb',  'items'=>array_slice($items, 6)];
+            } elseif ($cat === 'Nail Art & Services') {
+                $priceCards[] = ['cat'=>$cat, 'label'=>'Nail Art & Services', 'badge'=>'≤ Rp 50rb', 'items'=>array_slice($items, 0, 6)];
+                $priceCards[] = ['cat'=>$cat, 'label'=>'Nail Art & Services', 'badge'=>'> Rp 50rb',  'items'=>array_slice($items, 6)];
+            } else {
+                $priceCards[] = ['cat'=>$cat, 'label'=>$cat, 'badge'=>'', 'items'=>$items];
+            }
+        }
+
+        foreach ($priceCards as $delay => $card):
+            $cat   = $card['cat'];
+            $items = $card['items'];
+            if (empty($items)) continue;
+        ?>
+        <div class="price-card" data-aos="fade-up" data-aos-delay="<?= $delay * 80 ?>">
             <div class="price-card-header">
-                <span class="price-card-label"><?= esc($cat) ?></span>
-                <span class="price-acc-count"><?= count($items) ?> layanan</span>
+                <span class="price-card-label"><?= esc($card['label']) ?></span>
+                <div class="price-card-header-right">
+                    <?php if ($card['badge']): ?>
+                    <span class="price-card-badge"><?= esc($card['badge']) ?></span>
+                    <?php endif; ?>
+                    <span class="price-acc-count"><?= count($items) ?> layanan</span>
+                </div>
             </div>
             <div class="price-acc-body">
                 <table class="price-table">
                     <thead><tr><th>Layanan</th><th class="text-end">Harga</th></tr></thead>
                     <tbody>
                         <?php foreach ($items as $row): ?>
-                        <tr class="price-row-clickable" 
+                        <tr class="price-row-clickable"
                             data-name="<?= htmlspecialchars($row['name'], ENT_QUOTES) ?>"
                             data-price="<?= htmlspecialchars($row['price'], ENT_QUOTES) ?>"
                             data-desc="<?= htmlspecialchars($row['desc'] ?? '', ENT_QUOTES) ?>"
@@ -894,7 +915,7 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
                 </table>
             </div>
         </div>
-        <?php $delay++; endforeach; ?>
+        <?php endforeach; ?>
         </div>
 
         <div class="text-center mt-4" data-aos="fade-up">
@@ -1102,6 +1123,8 @@ document.addEventListener('keydown', function(e) {
 .price-card:hover { transform:translateY(-6px); box-shadow:0 16px 48px rgba(139,111,94,0.22); }
 .price-card-header { display:flex; align-items:center; justify-content:space-between; background:#8B6F5E; padding:16px 20px; gap:8px; }
 .price-card-label { font-weight:700; font-size:15px; color:#fff; font-family:'Poppins',sans-serif; flex:1; min-width:0; }
+.price-card-header-right { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+.price-card-badge { font-size:10px; font-weight:700; font-family:'Poppins',sans-serif; color:#8B6F5E; background:#fff; border-radius:20px; padding:3px 10px; white-space:nowrap; }
 .price-acc-count { font-size:11px; color:rgba(255,255,255,0.9); background:rgba(255,255,255,0.2); border-radius:20px; padding:3px 12px; font-weight:500; font-family:'Poppins',sans-serif; white-space:nowrap; flex-shrink:0; }
 .price-acc-body { border-top:1px solid rgba(139,111,94,0.12); overflow-x:hidden; }
 .price-table { width:100%; border-collapse:collapse; background:#fff; font-family:'Poppins',sans-serif; font-size:13.5px; table-layout:fixed; }
