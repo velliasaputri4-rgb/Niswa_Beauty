@@ -488,16 +488,7 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
             font-size: 16px; font-family: 'Poppins', sans-serif; transition: 0.2s;
         }
         .filter-buttons button.active { color: #8B6F5E; border-bottom: 2px solid #8B6F5E; }
-        .product-card {
-            background: #fff; border-radius: 20px; overflow: hidden; transition: 0.3s; cursor: pointer;
-        }
-        .product-card:hover { transform: translateY(-8px); box-shadow: 0 12px 40px rgba(139,111,94,0.15); }
-        .product-img { width: 100%; height: 260px; object-fit: cover; }
-        .product-info { padding: 15px; }
-        .product-name { font-weight: 500; font-family: 'Poppins', sans-serif; }
-        .product-price { color: #8B6F5E; font-weight: 600; }
-        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 20px; }
-        .btn-beli { margin-top: 8px; }
+        /* product styles defined below in section-product block */
     </style>
 </head>
 <body>
@@ -1287,23 +1278,26 @@ document.addEventListener('keydown', function(e) {
 .filter-buttons button:hover:not(.active) { background:#f5ede6; color:#8B6F5E; border-color:#D6C1A3; box-shadow:0 4px 14px rgba(139,111,94,0.13); }
 .filter-buttons button.active { background:linear-gradient(135deg,#8B6F5E,#C4A882); color:#fff; border-color:transparent; box-shadow:0 4px 16px rgba(139,111,94,0.30); }
 .product-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:20px; }
-.product-card { background:#fff; border-radius:20px; overflow:hidden; transition:.3s; display:flex; flex-direction:column; }
-.product-card:hover { transform:translateY(-8px); box-shadow:0 12px 40px rgba(139,111,94,0.15); }
+.product-card { background:#fff; border-radius:20px; overflow:hidden; transition:transform .3s cubic-bezier(0.4,0,0.2,1), box-shadow .3s cubic-bezier(0.4,0,0.2,1); display:flex; flex-direction:column; box-shadow:0 4px 20px rgba(139,111,94,0.10); border:1px solid rgba(214,193,163,0.25); }
+.product-card:hover { transform:translateY(-8px); box-shadow:0 16px 48px rgba(139,111,94,0.22); }
 .product-card-img-wrap { position:relative; overflow:hidden; flex-shrink:0; }
-.product-card-overlay { position:absolute; inset:0; background:rgba(0,0,0,0.35); display:flex; align-items:center; justify-content:center; opacity:0; transition:.3s; }
+.product-img { width:100%; height:260px; object-fit:cover; display:block; transition:transform .45s ease; }
+.product-card:hover .product-img { transform:scale(1.06); }
+.product-card-overlay { position:absolute; inset:0; background:rgba(0,0,0,0.38); display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity .3s; z-index:3; }
 .product-card:hover .product-card-overlay { opacity:1; }
-.btn-preview { background:rgba(255,255,255,0.92); color:#5A4A42; border:none; border-radius:50px; padding:9px 22px; font-size:13px; font-weight:600; font-family:'Poppins',sans-serif; cursor:pointer; transform:translateY(8px); transition:transform .3s,background .2s; box-shadow:0 4px 14px rgba(0,0,0,0.12); }
+.btn-preview { background:rgba(255,255,255,0.92); color:#5A4A42; border:none; border-radius:50px; padding:9px 22px; font-size:13px; font-weight:600; font-family:'Poppins',sans-serif; cursor:pointer; transform:translateY(8px); transition:transform .3s, background .2s; box-shadow:0 4px 14px rgba(0,0,0,0.12); display:flex; align-items:center; gap:6px; }
 .product-card:hover .btn-preview { transform:translateY(0); }
-.product-badge-cat { position:absolute; top:12px; left:12px; background:rgba(255,255,255,0.88); color:#5A4A42; font-size:10px; font-weight:700; font-family:'Poppins',sans-serif; letter-spacing:.8px; text-transform:uppercase; padding:4px 12px; border-radius:50px; backdrop-filter:blur(6px); border:1px solid rgba(255,255,255,0.6); }
-.product-badge-disc { position:absolute; top:12px; right:12px; background:linear-gradient(135deg,#e74c3c,#c0392b); color:#fff; font-size:10px; font-weight:800; font-family:'Poppins',sans-serif; letter-spacing:.5px; padding:4px 10px; border-radius:50px; box-shadow:0 3px 10px rgba(231,76,60,0.4); }
-.product-img { width:100%; height:260px; object-fit:cover; }
+.btn-preview:hover { background:#fff; color:#8B6F5E; }
+.product-badge-cat { position:absolute; top:12px; left:12px; background:rgba(255,255,255,0.88); color:#5A4A42; font-size:10px; font-weight:700; font-family:'Poppins',sans-serif; letter-spacing:.8px; text-transform:uppercase; padding:4px 12px; border-radius:50px; backdrop-filter:blur(6px); border:1px solid rgba(255,255,255,0.6); z-index:2; }
+.product-badge-disc { position:absolute; top:12px; right:12px; background:linear-gradient(135deg,#e74c3c,#c0392b); color:#fff; font-size:10px; font-weight:800; font-family:'Poppins',sans-serif; letter-spacing:.5px; padding:4px 10px; border-radius:50px; box-shadow:0 3px 10px rgba(231,76,60,0.4); z-index:2; }
 .product-info { padding:16px; display:flex; flex-direction:column; flex:1; }
 .product-info-top { flex:1; }
-.product-name { font-weight:600; font-family:'Poppins',sans-serif; font-size:14px; color:#2d1f17; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.product-name { font-weight:600; font-family:'Poppins',sans-serif; font-size:14px; color:#2d1f17; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:color .25s; }
+.product-card:hover .product-name { color:#8B6F5E; }
 .product-price { color:#8B6F5E; font-weight:700; font-size:15px; margin-bottom:6px; }
 .product-disc-info { font-size:11px; color:#c0392b; margin-bottom:8px; padding:5px 9px; background:#fff5f5; border-radius:8px; border:1px dashed #f5b7b1; }
 .product-disc-placeholder { margin-bottom:8px; height:0; }
-.product-info-actions { margin-top:auto; }
+.product-info-actions { margin-top:auto; display:flex; flex-direction:column; gap:6px; }
 .btn-beli { position:relative; overflow:hidden; width:100%; padding:9px 0; background:linear-gradient(135deg,#8B6F5E,#D6C1A3); color:#fff; border:none; border-radius:12px; font-size:13px; font-weight:600; font-family:'Poppins',sans-serif; cursor:pointer; transition:color .25s,box-shadow .25s,transform .2s; box-shadow:0 4px 14px rgba(139,111,94,0.25); }
 .btn-beli::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg,#6e5549,#b89e85); opacity:0; transition:opacity .25s; border-radius:12px; z-index:-1; }
 .btn-beli:hover::before { opacity:1; }
@@ -1978,7 +1972,14 @@ document.addEventListener('keydown', function(e) {
             document.querySelectorAll(".product-card").forEach(function(card){
                 var show = card.dataset.category === filter;
                 card.style.display = show ? "" : "none";
-                if(show) card.style.animation = "cardFadeIn 0.3s ease forwards";
+                if(show){
+                    card.classList.remove("card-fade-in");
+                    void card.offsetWidth;
+                    card.classList.add("card-fade-in");
+                    card.addEventListener("animationend", function(){
+                        card.classList.remove("card-fade-in");
+                    }, {once: true});
+                }
             });
         });
     });
@@ -1986,6 +1987,7 @@ document.addEventListener('keydown', function(e) {
 </script>
 <style>
 @keyframes cardFadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.card-fade-in{animation:cardFadeIn 0.3s ease forwards;}
 </style>
 
 <!-- Order Modal Script -->
