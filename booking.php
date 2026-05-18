@@ -65,6 +65,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($jam))      $errors[] = 'Jam wajib dipilih.';
     if ($jenis_layanan === 'home_service' && empty($alamat_hs)) $errors[] = 'Alamat lengkap wajib diisi untuk Home Service.';
 
+    // Cek apakah jam diblokir admin
+    if (empty($errors) && !empty($tanggal) && !empty($jam)) {
+        $tglEsc = mysqli_real_escape_string($conn, $tanggal);
+        $jamEsc = mysqli_real_escape_string($conn, $jam);
+        $blkChk = mysqli_query($conn, "SELECT id FROM booking_blocked_slots WHERE tanggal='$tglEsc' AND jam='$jamEsc' LIMIT 1");
+        if ($blkChk && mysqli_num_rows($blkChk) > 0) {
+            $errors[] = "Jam $jam WIB di tanggal tersebut tidak tersedia. Silakan pilih jam lain.";
+        }
+    }
+
     if (empty($errors)) {
         $stmt = mysqli_prepare($conn,
             "INSERT INTO bookings (user_id, name, phone, email, service, date, time, jumlah_orang, catatan, jenis_layanan, alamat_hs, created_at)
@@ -219,12 +229,23 @@ if (isset($_GET['check_slots']) && !empty($_GET['tanggal'])) {
         }
     }
 
+    // Ambil jam yang diblokir oleh admin
+    $blockedRes = mysqli_query($conn, "SELECT jam FROM booking_blocked_slots WHERE tanggal = '{$tgl_esc}'");
+    $blockedJams = [];
+    if ($blockedRes) {
+        while ($bRow = mysqli_fetch_assoc($blockedRes)) {
+            $blockedJams[] = $bRow['jam'];
+        }
+    }
+
     $slot_status = [];
     foreach ($all_slots as $sl) {
+        $isBlocked = in_array($sl, $blockedJams);
         $slot_status[] = [
-            'time'    => $sl,
-            'booked'  => isset($booked[$sl]) ? $booked[$sl] : 0,
-            'available' => !isset($booked[$sl]),
+            'time'      => $sl,
+            'booked'    => isset($booked[$sl]) ? $booked[$sl] : 0,
+            'available' => !isset($booked[$sl]) && !$isBlocked,
+            'blocked'   => $isBlocked,
         ];
     }
 
@@ -906,7 +927,7 @@ function loadSlots(tanggal) {
             hint.className = avail.length > 0 ? 'slot-hint' : 'slot-hint warn';
             hintTxt.textContent = avail.length > 0
                 ? avail.length + ' jam tersedia di tanggal ini'
-                : 'Semua slot penuh! Pilih tanggal lain.';
+                : 'Tidak ada slot tersedia! Coba tanggal lain.';
             hint.style.display = 'flex';
         })
         .catch(function() {
@@ -923,7 +944,11 @@ function renderSlots(slots, select) {
     slots.forEach(function(s) {
         var opt = document.createElement('option');
         opt.value = s.time;
-        if (s.available) {
+        if (s.blocked) {
+            opt.textContent = s.time + ' WIB  🚫 Tidak Tersedia';
+            opt.disabled    = true;
+            opt.classList.add('booked-slot');
+        } else if (s.available) {
             opt.textContent = s.time + ' WIB  ✅ Tersedia';
         } else {
             opt.textContent = s.time + ' WIB  ❌ Penuh';

@@ -125,6 +125,16 @@ if ($conn) {
         UNIQUE KEY uk_bkpg_sec_key (section, `key`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+    // Tabel untuk jam yang diblokir oleh admin
+    mysqli_query($conn, "CREATE TABLE IF NOT EXISTS booking_blocked_slots (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        tanggal DATE NOT NULL,
+        jam VARCHAR(10) NOT NULL,
+        alasan VARCHAR(255) DEFAULT NULL,
+        created_at DATETIME DEFAULT NOW(),
+        UNIQUE KEY uk_tanggal_jam (tanggal, jam)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
     // Pastikan tabel orders ada & kolom lengkap
     mysqli_query($conn, "CREATE TABLE IF NOT EXISTS orders (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -497,6 +507,8 @@ if ($action === 'save_profil') {
                'tl_5_year','tl_5_title','tl_5_text',
                // Badge toko
                'store_est_date','store_est_title',
+               // Teks teknologi / perkembangan
+               'tech_text',
     ];
     foreach ($fields as $f) {
         if ($f === 'store_image') {
@@ -506,6 +518,15 @@ if ($action === 'save_profil') {
         }
     }
     header('Location: cms.php?tab=profil&saved=1'); exit;
+}
+
+/* ── 14. Section Titles ── */
+if ($action === 'save_section') {
+    $fields = ['layanan_title','layanan_subtitle','harga_title','harga_subtitle',
+               'produk_title','produk_subtitle',
+               'testi_label','testi_title','testi_subtitle','testi_rating','testi_rating_label'];
+    foreach ($fields as $f) setContent($conn, 'section', $f, $_POST[$f] ?? '');
+    header('Location: cms.php?tab=section_titles&saved=1'); exit;
 }
 
 /* ── Logout ── */
@@ -530,6 +551,34 @@ if ($action === 'save_footer') {
                'link_home','link_services','link_product','link_about','link_booking'];
     foreach ($fields as $f) setFooter($conn, $f, $_POST[$f] ?? '');
     header('Location: cms.php?tab=footer&saved=1'); exit;
+}
+
+/* ── 13. Blokir / Buka Jam ── */
+if ($action === 'block_slot' && isset($_POST['tanggal_blokir'], $_POST['jam_blokir'])) {
+    $tbl = mysqli_real_escape_string($conn, trim($_POST['tanggal_blokir']));
+    $jbl = mysqli_real_escape_string($conn, trim($_POST['jam_blokir']));
+    $aln = mysqli_real_escape_string($conn, trim($_POST['alasan_blokir'] ?? ''));
+    mysqli_query($conn, "INSERT IGNORE INTO booking_blocked_slots (tanggal, jam, alasan) VALUES ('$tbl','$jbl','$aln')");
+    header('Location: cms.php?tab=jam_settings&saved=1'); exit;
+}
+if ($action === 'unblock_slot' && isset($_GET['id'])) {
+    mysqli_query($conn, "DELETE FROM booking_blocked_slots WHERE id=".(int)$_GET['id']);
+    header('Location: cms.php?tab=jam_settings&saved=1'); exit;
+}
+if ($action === 'block_bulk' && !empty($_POST['tanggal_bulk']) && !empty($_POST['jam_bulk'])) {
+    $tbl = mysqli_real_escape_string($conn, trim($_POST['tanggal_bulk']));
+    $jams = (array)$_POST['jam_bulk'];
+    $aln  = mysqli_real_escape_string($conn, trim($_POST['alasan_bulk'] ?? ''));
+    foreach ($jams as $j) {
+        $j = mysqli_real_escape_string($conn, trim($j));
+        if ($j) mysqli_query($conn, "INSERT IGNORE INTO booking_blocked_slots (tanggal, jam, alasan) VALUES ('$tbl','$j','$aln')");
+    }
+    header('Location: cms.php?tab=jam_settings&saved=1'); exit;
+}
+if ($action === 'unblock_all_date' && isset($_GET['tanggal'])) {
+    $tbl = mysqli_real_escape_string($conn, trim($_GET['tanggal']));
+    mysqli_query($conn, "DELETE FROM booking_blocked_slots WHERE tanggal='$tbl'");
+    header('Location: cms.php?tab=jam_settings&saved=1'); exit;
 }
 
 /* ── 12. Booking Page Content ── */
@@ -620,6 +669,8 @@ $profil = [
     // Badge toko
     'store_est_date'  => getProfil($conn,'profil','store_est_date',  'Est. 15 Juli 2023'),
     'store_est_title' => getProfil($conn,'profil','store_est_title', 'NISWÀ BEAUTY'),
+    // Teks teknologi & perkembangan
+    'tech_text'       => getProfil($conn,'profil','tech_text',       'Niswà Beauty juga terus mengikuti perkembangan zaman. Berawal dari promosi sederhana melalui Story WhatsApp, kini hadir lebih luas lewat Instagram dan TikTok — termasuk penggunaan sistem pembayaran digital QRIS sejak awal tahun 2025. Hingga saat ini, Niswà Beauty terus berkembang untuk memberikan pengalaman kecantikan terbaik bagi setiap pelanggan.'),
 ];
 
 // Navbar
@@ -631,6 +682,21 @@ $navbar = [
     'menu_product'  => getNavbar($conn, 'menu_product',  'Product'),
     'menu_about'    => getNavbar($conn, 'menu_about',    'About'),
     'menu_booking'  => getNavbar($conn, 'menu_booking',  'Booking'),
+];
+
+// Section Titles
+$sec_data = [
+    'layanan_title'      => getContent($conn,'section','layanan_title',      'Layanan Kami'),
+    'layanan_subtitle'   => getContent($conn,'section','layanan_subtitle',   'Klik layanan untuk melihat contoh hasil'),
+    'harga_title'        => getContent($conn,'section','harga_title',        'Daftar Harga'),
+    'harga_subtitle'     => getContent($conn,'section','harga_subtitle',     'Harga transparan, kualitas terjamin (Harga tergantung panjang rambut)'),
+    'produk_title'       => getContent($conn,'section','produk_title',       'Press On Nail Collection'),
+    'produk_subtitle'    => getContent($conn,'section','produk_subtitle',    'Press On Nails premium untuk tampil cantik instan'),
+    'testi_label'        => getContent($conn,'section','testi_label',        'Kata Mereka'),
+    'testi_title'        => getContent($conn,'section','testi_title',        'Testimoni Pelanggan'),
+    'testi_subtitle'     => getContent($conn,'section','testi_subtitle',     'Kepercayaan pelanggan adalah kebanggaan kami'),
+    'testi_rating'       => getContent($conn,'section','testi_rating',       '5.0'),
+    'testi_rating_label' => getContent($conn,'section','testi_rating_label', 'Berdasarkan ulasan Google Maps'),
 ];
 
 // Footer
@@ -1274,6 +1340,7 @@ input[type=file]{display:none;}
         <small>CMS ADMIN PANEL</small>
     </div>
     <ul class="nav-list" style="margin-top:8px;">
+        <li><a href="cms.php?tab=section_titles" onclick="closeDrawer()"><i class="fa-solid fa-pen-ruler"></i> Judul Section</a></li>
         <li><a href="cms.php?tab=hero"         onclick="closeDrawer()"><i class="fa-solid fa-image"></i> Hero & Slider</a></li>
         <li><a href="cms.php?tab=services"     onclick="closeDrawer()"><i class="fa-solid fa-scissors"></i> Layanan</a></li>
         <li><a href="cms.php?tab=prices"       onclick="closeDrawer()"><i class="fa-solid fa-tag"></i> Daftar Harga</a></li>
@@ -1284,6 +1351,7 @@ input[type=file]{display:none;}
         <li><a href="cms.php?tab=navbar"       onclick="closeDrawer()"><i class="fa-solid fa-bars"></i> Navbar</a></li>
         <li><a href="cms.php?tab=footer"       onclick="closeDrawer()"><i class="fa-solid fa-grip-lines"></i> Footer</a></li>
         <li><a href="cms.php?tab=booking_page" onclick="closeDrawer()"><i class="fa-solid fa-calendar-alt"></i> Halaman Booking</a></li>
+        <li><a href="cms.php?tab=jam_settings" onclick="closeDrawer()"><i class="fa-solid fa-clock"></i> Atur Jam</a></li>
         <li><a href="cms.php?tab=orders" onclick="closeDrawer()"><i class="fa-solid fa-receipt"></i> Pesanan Masuk</a></li>
     </ul>
     <div class="mobile-drawer-user">
@@ -1303,6 +1371,7 @@ input[type=file]{display:none;}
     </div>
     <div class="sidebar-nav-wrap">
     <ul class="nav-list" style="margin-top:8px;">
+        <li><a href="cms.php?tab=section_titles" class="<?= $activeTab==='section_titles' ? 'active':'' ?>"><i class="fa-solid fa-pen-ruler"></i> Judul Section</a></li>
         <li><a href="cms.php?tab=hero"         class="<?= $activeTab==='hero'         ? 'active':'' ?>"><i class="fa-solid fa-image"></i> Hero & Slider</a></li>
         <li><a href="cms.php?tab=services"     class="<?= $activeTab==='services'     ? 'active':'' ?>"><i class="fa-solid fa-scissors"></i> Layanan</a></li>
         <li><a href="cms.php?tab=prices"       class="<?= $activeTab==='prices'       ? 'active':'' ?>"><i class="fa-solid fa-tag"></i> Daftar Harga</a></li>
@@ -1313,6 +1382,7 @@ input[type=file]{display:none;}
         <li><a href="cms.php?tab=navbar"       class="<?= $activeTab==='navbar'       ? 'active':'' ?>"><i class="fa-solid fa-bars"></i> Navbar</a></li>
         <li><a href="cms.php?tab=footer"       class="<?= $activeTab==='footer'       ? 'active':'' ?>"><i class="fa-solid fa-grip-lines"></i> Footer</a></li>
         <li><a href="cms.php?tab=booking_page" class="<?= $activeTab==='booking_page' ? 'active':'' ?>"><i class="fa-solid fa-calendar-alt"></i> Halaman Booking</a></li>
+        <li><a href="cms.php?tab=jam_settings" class="<?= $activeTab==='jam_settings' ? 'active':'' ?>"><i class="fa-solid fa-clock"></i> Atur Jam</a></li>
         <li><a href="cms.php?tab=orders"         class="<?= $activeTab==='orders'         ? 'active':'' ?>"><i class="fa-solid fa-receipt"></i> Pesanan Masuk</a></li>
     </ul>
     </div><!-- /.sidebar-nav-wrap -->
@@ -1372,6 +1442,7 @@ input[type=file]{display:none;}
 
         <!-- Tab Nav -->
         <div class="tab-nav">
+            <a href="cms.php?tab=section_titles" class="<?= $activeTab==='section_titles' ? 'active':'' ?>"><i class="fa-solid fa-pen-ruler"></i> Judul</a>
             <a href="cms.php?tab=hero"         class="<?= $activeTab==='hero'         ? 'active':'' ?>"><i class="fa-solid fa-image"></i> Hero</a>
             <a href="cms.php?tab=services"     class="<?= $activeTab==='services'     ? 'active':'' ?>"><i class="fa-solid fa-scissors"></i> Layanan</a>
             <a href="cms.php?tab=prices"       class="<?= $activeTab==='prices'       ? 'active':'' ?>"><i class="fa-solid fa-tag"></i> Harga</a>
@@ -1382,11 +1453,111 @@ input[type=file]{display:none;}
             <a href="cms.php?tab=navbar"       class="<?= $activeTab==='navbar'       ? 'active':'' ?>"><i class="fa-solid fa-bars"></i> Navbar</a>
             <a href="cms.php?tab=footer"       class="<?= $activeTab==='footer'       ? 'active':'' ?>"><i class="fa-solid fa-grip-lines"></i> Footer</a>
             <a href="cms.php?tab=booking_page" class="<?= $activeTab==='booking_page' ? 'active':'' ?>"><i class="fa-solid fa-calendar-alt"></i> Booking</a>
+            <a href="cms.php?tab=jam_settings" class="<?= $activeTab==='jam_settings' ? 'active':'' ?>"><i class="fa-solid fa-clock"></i> Atur Jam</a>
             <a href="cms.php?tab=orders"       class="<?= $activeTab==='orders'       ? 'active':'' ?>"><i class="fa-solid fa-receipt"></i> Pesanan</a>
         </div>
 
+<?php /* ════════ TAB: SECTION TITLES ════════ */ ?>
+<?php if ($activeTab === 'section_titles'): ?>
+
+        <div class="cms-card">
+            <div class="cms-card-header">
+                <i class="fa-solid fa-pen-ruler"></i>
+                <h3>Judul & Subjudul Setiap Section</h3>
+            </div>
+            <div class="cms-card-body">
+                <form method="POST" action="cms.php?action=save_section">
+
+                    <!-- LAYANAN -->
+                    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:14px;">
+                        <i class="fa-solid fa-scissors" style="margin-right:5px;color:var(--primary);"></i>Section Layanan
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Judul Section Layanan</label>
+                            <input type="text" name="layanan_title" value="<?= htmlspecialchars($sec_data['layanan_title']) ?>" placeholder="Layanan Kami">
+                        </div>
+                        <div class="form-group">
+                            <label>Subjudul Section Layanan</label>
+                            <input type="text" name="layanan_subtitle" value="<?= htmlspecialchars($sec_data['layanan_subtitle']) ?>" placeholder="Klik layanan untuk melihat contoh hasil">
+                        </div>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
+
+                    <!-- HARGA -->
+                    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:14px;">
+                        <i class="fa-solid fa-tag" style="margin-right:5px;color:var(--primary);"></i>Section Daftar Harga
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Judul Section Harga</label>
+                            <input type="text" name="harga_title" value="<?= htmlspecialchars($sec_data['harga_title']) ?>" placeholder="Daftar Harga">
+                        </div>
+                        <div class="form-group">
+                            <label>Subjudul Section Harga</label>
+                            <input type="text" name="harga_subtitle" value="<?= htmlspecialchars($sec_data['harga_subtitle']) ?>" placeholder="Harga transparan, kualitas terjamin">
+                        </div>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
+
+                    <!-- PRODUK -->
+                    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:14px;">
+                        <i class="fa-solid fa-box-open" style="margin-right:5px;color:var(--primary);"></i>Section Produk (Press On Nail)
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Judul Section Produk</label>
+                            <input type="text" name="produk_title" value="<?= htmlspecialchars($sec_data['produk_title']) ?>" placeholder="Press On Nail Collection">
+                        </div>
+                        <div class="form-group">
+                            <label>Subjudul Section Produk</label>
+                            <input type="text" name="produk_subtitle" value="<?= htmlspecialchars($sec_data['produk_subtitle']) ?>" placeholder="Press On Nails premium untuk tampil cantik instan">
+                        </div>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
+
+                    <!-- TESTIMONI -->
+                    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:14px;">
+                        <i class="fa-solid fa-comment-dots" style="margin-right:5px;color:var(--primary);"></i>Section Testimoni
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Label Kecil (di atas judul)</label>
+                            <input type="text" name="testi_label" value="<?= htmlspecialchars($sec_data['testi_label']) ?>" placeholder="Kata Mereka">
+                        </div>
+                        <div class="form-group">
+                            <label>Judul Section Testimoni</label>
+                            <input type="text" name="testi_title" value="<?= htmlspecialchars($sec_data['testi_title']) ?>" placeholder="Testimoni Pelanggan">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Subjudul Section Testimoni</label>
+                        <input type="text" name="testi_subtitle" value="<?= htmlspecialchars($sec_data['testi_subtitle']) ?>" placeholder="Kepercayaan pelanggan adalah kebanggaan kami">
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-star" style="margin-right:4px;color:#f59e0b;"></i>Rating (angka di badge)</label>
+                            <input type="text" name="testi_rating" value="<?= htmlspecialchars($sec_data['testi_rating']) ?>" placeholder="5.0">
+                            <small style="font-size:11px;color:var(--text-lt);">Contoh: 5.0 / 4.9 / 4.8</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Label Rating</label>
+                            <input type="text" name="testi_rating_label" value="<?= htmlspecialchars($sec_data['testi_rating_label']) ?>" placeholder="Berdasarkan ulasan Google Maps">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-primary-cms">
+                        <i class="fa-solid fa-floppy-disk"></i> Simpan Semua Judul
+                    </button>
+                </form>
+            </div>
+        </div>
+
 <?php /* ════════ TAB: HERO ════════ */ ?>
-<?php if ($activeTab === 'hero'): ?>
+<?php elseif ($activeTab === 'hero'): ?>
 
         <div style="display:grid;grid-template-columns:1fr 380px;gap:20px;align-items:start;">
             <div class="cms-card">
@@ -1686,32 +1857,73 @@ input[type=file]{display:none;}
                     <i class="fa-solid fa-eye" style="margin-right:5px;"></i>Preview (tampilan website)
                 </div>
                 <?php
+                // ── Helper: ambil harga terendah dari string harga ──
+                function cmsLowestPrice($s) {
+                    preg_match_all('/[\d.]+/', $s, $m);
+                    $n = array_map(fn($x) => (int)str_replace('.','', $x), $m[0]);
+                    return $n ? min($n) : 0;
+                }
+
                 // Show DB prices if any, else show defaults
                 $displayPrices = [];
                 if ($pricesRows && mysqli_num_rows($pricesRows) > 0) {
                     mysqli_data_seek($pricesRows, 0);
-                    while ($r = mysqli_fetch_assoc($pricesRows)) $displayPrices[$r['category']][] = $r;
+                    while ($r = mysqli_fetch_assoc($pricesRows)) {
+                        $displayPrices[$r['category']][] = [
+                            'name'  => $r['name'],
+                            'price' => $r['price'],
+                            'desc'  => $r['description'] ?? '',
+                            'image' => $r['image'] ?? '',
+                        ];
+                    }
                 } else {
                     foreach ($defaultPriceList as $cat => $items)
                         foreach ($items as $item)
-                            $displayPrices[$cat][] = $item;
+                            $displayPrices[$cat][] = ['name'=>$item['name'],'price'=>$item['price'],'desc'=>'','image'=>''];
                 }
-                // Urutkan kategori sesuai catOrder di index.php
+
+                // Urutkan kategori sama persis dengan index.php
                 $catOrder = ["Brow & Lash","Treatment Spa","Henna Series","Nail Art & Services","Rambut"];
                 $sortedDisplay = [];
                 foreach ($catOrder as $c) { if (isset($displayPrices[$c])) $sortedDisplay[$c] = $displayPrices[$c]; }
                 foreach ($displayPrices as $c => $v) { if (!isset($sortedDisplay[$c])) $sortedDisplay[$c] = $v; }
-                $displayPrices = $sortedDisplay;
-                foreach ($displayPrices as $cat => $items): ?>
+
+                // Urutkan item tiap kategori dari harga terendah (sama dengan index.php)
+                foreach ($sortedDisplay as $cat => &$items) {
+                    usort($items, fn($a,$b) => cmsLowestPrice($a['price']) - cmsLowestPrice($b['price']));
+                }
+                unset($items);
+
+                // Bangun array card — Rambut dipecah 6 & 7, Nail Art dipecah 6 & 6 (sama dengan index.php)
+                $previewCards = [];
+                foreach ($sortedDisplay as $cat => $items) {
+                    if ($cat === 'Rambut') {
+                        $previewCards[] = ['cat'=>$cat, 'label'=>'Rambut', 'badge'=>'≤ Rp 100rb', 'items'=>array_slice($items, 0, 6)];
+                        $previewCards[] = ['cat'=>$cat, 'label'=>'Rambut', 'badge'=>'> Rp 100rb',  'items'=>array_slice($items, 6)];
+                    } elseif ($cat === 'Nail Art & Services') {
+                        $previewCards[] = ['cat'=>$cat, 'label'=>'Nail Art & Services', 'badge'=>'≤ Rp 50rb', 'items'=>array_slice($items, 0, 6)];
+                        $previewCards[] = ['cat'=>$cat, 'label'=>'Nail Art & Services', 'badge'=>'> Rp 50rb',  'items'=>array_slice($items, 6)];
+                    } else {
+                        $previewCards[] = ['cat'=>$cat, 'label'=>$cat, 'badge'=>'', 'items'=>$items];
+                    }
+                }
+
+                foreach ($previewCards as $card):
+                    if (empty($card['items'])) continue; ?>
                 <div class="price-preview-card" style="margin-bottom:12px;">
                     <div class="price-preview-header">
-                        <span><?= htmlspecialchars($cat) ?></span>
-                        <span class="badge"><?= count($items) ?> layanan</span>
+                        <span><?= htmlspecialchars($card['label']) ?></span>
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <?php if ($card['badge']): ?>
+                            <span style="background:var(--primary);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;"><?= htmlspecialchars($card['badge']) ?></span>
+                            <?php endif; ?>
+                            <span class="badge"><?= count($card['items']) ?> layanan</span>
+                        </div>
                     </div>
                     <table class="price-preview-table">
                         <thead><tr><th>Layanan</th><th>Harga</th></tr></thead>
                         <tbody>
-                        <?php foreach ($items as $item): ?>
+                        <?php foreach ($card['items'] as $item): ?>
                         <tr>
                             <td style="display:flex;align-items:center;gap:8px;">
                                 <?php if(!empty($item['image'])): ?>
@@ -1719,9 +1931,16 @@ input[type=file]{display:none;}
                                 <?php else: ?>
                                 <span style="width:32px;height:32px;background:var(--cream);border-radius:6px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid var(--border);"><i class="fa-solid fa-image" style="font-size:11px;color:var(--border);"></i></span>
                                 <?php endif; ?>
-                                <?= htmlspecialchars($item['name']) ?>
+                                <span>
+                                    <?= htmlspecialchars($item['name']) ?>
+                                    <?php if(!empty($item['image'])): ?>
+                                    <i class="fa-solid fa-image" style="font-size:9px;color:var(--text-lt);margin-left:3px;"></i>
+                                    <?php else: ?>
+                                    <i class="fa-solid fa-circle-info" style="font-size:9px;color:var(--text-lt);margin-left:3px;"></i>
+                                    <?php endif; ?>
+                                </span>
                             </td>
-                            <td><?= htmlspecialchars($item['price']) ?></td>
+                            <td style="font-weight:600;color:var(--primary);"><?= htmlspecialchars($item['price']) ?></td>
                         </tr>
                         <?php endforeach; ?>
                         </tbody>
@@ -2281,6 +2500,16 @@ input[type=file]{display:none;}
                             <label><i class="fa-solid fa-smile" style="margin-right:4px;color:var(--primary);"></i>Value 4</label>
                             <input type="text" name="value_item_4" value="<?= htmlspecialchars($profil['value_item_4'] ?? 'Kepuasan Pelanggan') ?>" placeholder="Kepuasan Pelanggan">
                         </div>
+                    </div>
+
+                    <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
+                    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:16px;">
+                        <i class="fa-solid fa-mobile-screen" style="margin-right:5px;color:var(--primary);"></i>Teks Perkembangan Teknologi
+                        <span style="font-weight:400;text-transform:none;font-size:11px;color:var(--text-lt);margin-left:6px;">(tampil di bagian bawah section Tentang Toko)</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Paragraf Teknologi & Perkembangan</label>
+                        <textarea name="tech_text" rows="4" placeholder="Niswà Beauty juga terus mengikuti perkembangan zaman..."><?= htmlspecialchars($profil['tech_text']) ?></textarea>
                     </div>
 
                     <button type="submit" class="btn-primary-cms">
@@ -2963,6 +3192,272 @@ input[type=file]{display:none;}
                 </div>
             </div>
         </div>
+
+<?php /* ════════ TAB: ATUR JAM ════════ */ ?>
+<?php elseif ($activeTab === 'jam_settings'): ?>
+
+<?php
+// Load time_slots dari CMS
+$rawSlots = getBookingPage($conn, 'time_slots', "09:00\n10:00\n11:00\n13:00\n14:00\n15:00\n16:00\n17:00\n18:00\n19:00\n20:00");
+$allSlots  = array_values(array_filter(array_map('trim', explode("\n", $rawSlots))));
+
+// Load blocked slots dari DB
+$blockedRows = $conn ? mysqli_query($conn, "SELECT * FROM booking_blocked_slots ORDER BY tanggal ASC, jam ASC") : null;
+
+// Kelompokkan blocked per tanggal
+$blockedByDate = [];
+if ($blockedRows) {
+    while ($br = mysqli_fetch_assoc($blockedRows)) {
+        $blockedByDate[$br['tanggal']][] = $br;
+    }
+}
+
+// Load booking yang sudah ada untuk info booked slots
+$bookedSlots = [];
+$bkRes = $conn ? mysqli_query($conn, "SELECT date, time, COUNT(*) as cnt FROM bookings GROUP BY date, time") : null;
+if ($bkRes) {
+    while ($bRow = mysqli_fetch_assoc($bkRes)) {
+        $bookedSlots[$bRow['date']][$bRow['time']] = (int)$bRow['cnt'];
+    }
+}
+$selectedDate = $_GET['filter_date'] ?? date('Y-m-d');
+?>
+
+<div class="cms-card" style="margin-bottom:20px;">
+    <div class="cms-card-header">
+        <i class="fa-solid fa-clock"></i>
+        <h3>Pengaturan Ketersediaan Jam</h3>
+        <div class="ms-auto">
+            <span style="font-size:12px;color:var(--text-lt);"><i class="fa-solid fa-circle-info" style="margin-right:4px;"></i>Blokir jam agar tidak bisa dipesan customer</span>
+        </div>
+    </div>
+    <div class="cms-card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
+
+            <!-- Kiri: Form blokir jam -->
+            <div>
+                <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:14px;">
+                    <i class="fa-solid fa-ban" style="margin-right:5px;color:var(--danger);"></i>Blokir Jam (Tidak Tersedia)
+                </div>
+
+                <form method="POST" action="cms.php?action=block_bulk">
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-calendar" style="margin-right:4px;"></i>Tanggal</label>
+                        <input type="date" name="tanggal_bulk" id="blockDateInput" value="<?= htmlspecialchars($selectedDate) ?>" min="<?= date('Y-m-d') ?>" required style="max-width:220px;">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-clock" style="margin-right:4px;"></i>Pilih Jam yang Ingin Diblokir</label>
+                        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;">
+                            <?php foreach ($allSlots as $sl): ?>
+                            <label style="display:inline-flex;align-items:center;gap:6px;background:#faf5f0;border:1.5px solid var(--border);border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;transition:.2s;" class="slot-check-wrap">
+                                <input type="checkbox" name="jam_bulk[]" value="<?= htmlspecialchars($sl) ?>" style="accent-color:var(--danger);width:14px;height:14px;">
+                                <span style="font-weight:600;color:var(--text);"><?= htmlspecialchars($sl) ?></span>
+                                <span style="font-size:10px;color:var(--text-lt);">WIB</span>
+                            </label>
+                            <?php endforeach; ?>
+                        </div>
+                        <div style="margin-top:8px;display:flex;gap:10px;">
+                            <button type="button" onclick="checkAllSlots(true)" style="background:none;border:none;color:var(--danger);font-size:12px;font-weight:600;cursor:pointer;padding:0;"><i class="fa-solid fa-check-square" style="margin-right:3px;"></i>Pilih Semua</button>
+                            <button type="button" onclick="checkAllSlots(false)" style="background:none;border:none;color:var(--text-lt);font-size:12px;font-weight:600;cursor:pointer;padding:0;"><i class="fa-regular fa-square" style="margin-right:3px;"></i>Reset</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-comment" style="margin-right:4px;"></i>Alasan (opsional)</label>
+                        <input type="text" name="alasan_bulk" placeholder="cth: Libur, Full booking, Maintenance..." style="max-width:320px;">
+                    </div>
+                    <button type="submit" class="btn-primary-cms" style="background:linear-gradient(135deg,#ef4444,#dc2626);">
+                        <i class="fa-solid fa-ban"></i> Blokir Jam Dipilih
+                    </button>
+                </form>
+
+                <hr style="border:none;border-top:1px solid var(--border);margin:24px 0;">
+
+                <!-- Filter tanggal untuk lihat status -->
+                <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:14px;">
+                    <i class="fa-solid fa-calendar-day" style="margin-right:5px;color:var(--primary);"></i>Lihat Status Jam per Tanggal
+                </div>
+                <form method="GET" action="cms.php" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                    <input type="hidden" name="tab" value="jam_settings">
+                    <input type="date" name="filter_date" value="<?= htmlspecialchars($selectedDate) ?>" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;">
+                    <button type="submit" class="btn-primary-cms" style="padding:9px 18px;font-size:13px;">
+                        <i class="fa-solid fa-search"></i> Lihat
+                    </button>
+                </form>
+
+                <?php if ($selectedDate): ?>
+                <div style="margin-top:16px;">
+                    <?php
+                    $ts = strtotime($selectedDate);
+                    $bulanId = ['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+                    $tglFmt = date('d', $ts).' '.$bulanId[(int)date('m',$ts)].' '.date('Y',$ts);
+                    ?>
+                    <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;">
+                        Status Jam — <?= $tglFmt ?>
+                        <?php if (isset($blockedByDate[$selectedDate])): ?>
+                        <a href="cms.php?tab=jam_settings&action=unblock_all_date&tanggal=<?= urlencode($selectedDate) ?>"
+                           onclick="return confirm('Buka semua jam yang diblokir di tanggal ini?')"
+                           style="font-size:11px;color:var(--danger);margin-left:10px;text-decoration:none;background:rgba(239,68,68,.1);padding:3px 10px;border-radius:6px;font-weight:600;">
+                            <i class="fa-solid fa-lock-open"></i> Buka Semua
+                        </a>
+                        <?php endif; ?>
+                    </div>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                        <?php
+                        $blockedOnDate = array_column($blockedByDate[$selectedDate] ?? [], 'id', 'jam');
+                        foreach ($allSlots as $sl):
+                            $isBlocked = isset($blockedOnDate[$sl]);
+                            $isBooked  = isset($bookedSlots[$selectedDate][$sl]);
+                            $cnt       = $bookedSlots[$selectedDate][$sl] ?? 0;
+                        ?>
+                        <div style="background:<?= $isBlocked ? 'rgba(239,68,68,.08)' : ($isBooked ? 'rgba(245,158,11,.08)' : 'rgba(16,185,129,.08)') ?>;
+                             border:1.5px solid <?= $isBlocked ? 'rgba(239,68,68,.3)' : ($isBooked ? 'rgba(245,158,11,.3)' : 'rgba(16,185,129,.3)') ?>;
+                             border-radius:10px;padding:8px 14px;font-size:13px;display:flex;align-items:center;gap:8px;min-width:120px;">
+                            <span style="width:8px;height:8px;border-radius:50%;background:<?= $isBlocked ? '#ef4444' : ($isBooked ? '#f59e0b' : '#10b981') ?>;flex-shrink:0;"></span>
+                            <div>
+                                <div style="font-weight:700;color:var(--text);"><?= htmlspecialchars($sl) ?> WIB</div>
+                                <div style="font-size:10px;color:<?= $isBlocked ? '#ef4444' : ($isBooked ? '#d97706' : '#10b981') ?>;font-weight:600;">
+                                    <?php if ($isBlocked): ?>
+                                    <i class="fa-solid fa-ban"></i> DIBLOKIR
+                                    <?php elseif ($isBooked): ?>
+                                    <i class="fa-solid fa-user"></i> <?= $cnt ?> booking
+                                    <?php else: ?>
+                                    <i class="fa-solid fa-check"></i> TERSEDIA
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                            <?php if ($isBlocked): ?>
+                            <a href="cms.php?tab=jam_settings&action=unblock_slot&id=<?= $blockedOnDate[$sl] ?>"
+                               title="Buka jam ini" onclick="return confirm('Buka jam <?= $sl ?> di tanggal ini?')"
+                               style="margin-left:auto;background:rgba(16,185,129,.15);color:#10b981;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;text-decoration:none;flex-shrink:0;">
+                                <i class="fa-solid fa-lock-open"></i>
+                            </a>
+                            <?php endif; ?>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                    <div style="margin-top:10px;display:flex;gap:12px;font-size:11.5px;color:var(--text-lt);">
+                        <span><span style="width:8px;height:8px;border-radius:50%;background:#10b981;display:inline-block;margin-right:4px;"></span>Tersedia</span>
+                        <span><span style="width:8px;height:8px;border-radius:50%;background:#f59e0b;display:inline-block;margin-right:4px;"></span>Ada booking</span>
+                        <span><span style="width:8px;height:8px;border-radius:50%;background:#ef4444;display:inline-block;margin-right:4px;"></span>Diblokir admin</span>
+                    </div>
+                </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- Kanan: Tabel semua jam yang diblokir -->
+            <div>
+                <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:14px;">
+                    <i class="fa-solid fa-list" style="margin-right:5px;color:var(--primary);"></i>Daftar Jam yang Diblokir
+                </div>
+
+                <?php if (!empty($blockedByDate)): ?>
+                <div style="display:flex;flex-direction:column;gap:12px;">
+                    <?php foreach ($blockedByDate as $tgl => $rows):
+                        $ts2 = strtotime($tgl);
+                        $tglFmt2 = date('d', $ts2).' '.$bulanId[(int)date('m',$ts2)].' '.date('Y',$ts2);
+                        $isToday = ($tgl === date('Y-m-d'));
+                        $isPast  = ($tgl < date('Y-m-d'));
+                    ?>
+                    <div style="background:<?= $isPast ? '#f9f5f2' : '#fff' ?>;border:1.5px solid <?= $isPast ? 'var(--border)' : 'rgba(239,68,68,.2)' ?>;border-radius:12px;overflow:hidden;">
+                        <div style="padding:10px 14px;background:<?= $isPast ? 'var(--cream)' : 'rgba(239,68,68,.06)' ?>;border-bottom:1px solid <?= $isPast ? 'var(--border)' : 'rgba(239,68,68,.15)' ?>;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+                            <div style="font-weight:700;font-size:13px;color:<?= $isPast ? 'var(--text-lt)' : 'var(--text)' ?>;">
+                                <i class="fa-solid fa-calendar" style="margin-right:6px;color:<?= $isPast ? 'var(--text-lt)' : 'var(--danger)' ?>;"></i>
+                                <?= $tglFmt2 ?>
+                                <?php if ($isToday): ?><span style="background:#ef4444;color:#fff;font-size:10px;padding:2px 8px;border-radius:10px;margin-left:6px;font-weight:700;">HARI INI</span><?php endif; ?>
+                                <?php if ($isPast): ?><span style="font-size:10px;color:var(--text-lt);margin-left:6px;">(lampau)</span><?php endif; ?>
+                            </div>
+                            <div style="display:flex;gap:6px;align-items:center;">
+                                <span style="font-size:11px;color:var(--text-lt);"><?= count($rows) ?> jam diblokir</span>
+                                <a href="cms.php?tab=jam_settings&action=unblock_all_date&tanggal=<?= urlencode($tgl) ?>"
+                                   onclick="return confirm('Buka semua jam di <?= $tglFmt2 ?>?')"
+                                   class="btn-danger-cms" style="font-size:11px;padding:4px 10px;">
+                                    <i class="fa-solid fa-lock-open"></i> Buka Semua
+                                </a>
+                            </div>
+                        </div>
+                        <div style="padding:10px 14px;display:flex;flex-wrap:wrap;gap:6px;">
+                            <?php foreach ($rows as $br): ?>
+                            <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:5px 10px;font-size:12px;">
+                                <i class="fa-solid fa-ban" style="color:#ef4444;font-size:10px;"></i>
+                                <span style="font-weight:700;color:var(--text);"><?= htmlspecialchars($br['jam']) ?></span>
+                                <?php if (!empty($br['alasan'])): ?>
+                                <span style="color:var(--text-lt);font-size:10px;">(<?= htmlspecialchars($br['alasan']) ?>)</span>
+                                <?php endif; ?>
+                                <a href="cms.php?tab=jam_settings&action=unblock_slot&id=<?= $br['id'] ?>"
+                                   onclick="return confirm('Buka jam <?= $br['jam'] ?> di <?= $tglFmt2 ?>?')"
+                                   style="color:#10b981;font-size:10px;text-decoration:none;display:flex;align-items:center;margin-left:2px;" title="Buka jam ini">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </a>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <?php else: ?>
+                <div class="empty-cms" style="padding:40px 20px;">
+                    <i class="fa-solid fa-clock" style="color:var(--border);font-size:36px;display:block;margin-bottom:12px;"></i>
+                    <p style="font-size:13px;color:var(--text-lt);">Belum ada jam yang diblokir.<br>Semua jam tersedia untuk booking.</p>
+                </div>
+                <?php endif; ?>
+
+                <!-- Info: jam yang sudah ada booking hari ini -->
+                <?php if (!empty($bookedSlots)): ?>
+                <div style="margin-top:20px;background:#fdfaf7;border:1px solid var(--border);border-radius:12px;padding:14px 16px;">
+                    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:10px;">
+                        <i class="fa-solid fa-calendar-check" style="margin-right:4px;color:var(--primary);"></i>Jam dengan Booking Aktif (7 hari ke depan)
+                    </div>
+                    <?php
+                    $upcomingBooked = [];
+                    foreach ($bookedSlots as $tgl => $jams) {
+                        if ($tgl >= date('Y-m-d') && $tgl <= date('Y-m-d', strtotime('+7 days'))) {
+                            $upcomingBooked[$tgl] = $jams;
+                        }
+                    }
+                    if (empty($upcomingBooked)):
+                    ?>
+                    <p style="font-size:12px;color:var(--text-lt);">Tidak ada booking aktif 7 hari ke depan.</p>
+                    <?php else: ?>
+                    <?php foreach ($upcomingBooked as $tgl => $jams):
+                        $ts3 = strtotime($tgl);
+                        $tglFmt3 = date('d', $ts3).' '.$bulanId[(int)date('m',$ts3)].' '.date('Y',$ts3);
+                    ?>
+                    <div style="margin-bottom:8px;font-size:12px;">
+                        <span style="font-weight:700;color:var(--text);"><?= $tglFmt3 ?>:</span>
+                        <?php foreach ($jams as $jam => $cnt): ?>
+                        <span style="display:inline-flex;align-items:center;gap:4px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);border-radius:6px;padding:2px 8px;margin-left:4px;font-size:11px;font-weight:600;color:#d97706;">
+                            <i class="fa-solid fa-user" style="font-size:9px;"></i><?= htmlspecialchars($jam) ?> (<?= $cnt ?>)
+                        </span>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
+                <?php endif; ?>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+function checkAllSlots(check) {
+    document.querySelectorAll('.slot-check-wrap input[type=checkbox]').forEach(function(cb) {
+        cb.checked = check;
+    });
+}
+// Sinkronkan tanggal filter dengan tanggal blokir
+document.addEventListener('DOMContentLoaded', function() {
+    var dateInput  = document.getElementById('blockDateInput');
+    if (!dateInput) return;
+    dateInput.addEventListener('change', function() {
+        // Auto-redirect untuk update status panel kanan
+        var url = new URL(window.location);
+        url.searchParams.set('filter_date', this.value);
+        // Tidak auto-redirect agar tidak ganggu form
+    });
+});
+</script>
 
 <?php /* ════════ TAB: ORDERS ════════ */ ?>
 <?php elseif ($activeTab === 'orders'): ?>

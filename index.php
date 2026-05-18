@@ -125,6 +125,25 @@ $profil = [
     ),
 ];
 
+// ── Section Titles (bisa diedit dari CMS) ──
+$sec = [
+    // Layanan
+    'layanan_title'    => getContent($conn,'section','layanan_title',   'Layanan Kami'),
+    'layanan_subtitle' => getContent($conn,'section','layanan_subtitle','Klik layanan untuk melihat contoh hasil'),
+    // Harga
+    'harga_title'      => getContent($conn,'section','harga_title',    'Daftar Harga'),
+    'harga_subtitle'   => getContent($conn,'section','harga_subtitle', 'Harga transparan, kualitas terjamin (Harga tergantung panjang rambut)'),
+    // Produk
+    'produk_title'     => getContent($conn,'section','produk_title',   'Press On Nail Collection'),
+    'produk_subtitle'  => getContent($conn,'section','produk_subtitle','Press On Nails premium untuk tampil cantik instan'),
+    // Testimoni
+    'testi_label'         => getContent($conn,'section','testi_label',         'Kata Mereka'),
+    'testi_title'         => getContent($conn,'section','testi_title',         'Testimoni Pelanggan'),
+    'testi_subtitle'      => getContent($conn,'section','testi_subtitle',      'Kepercayaan pelanggan adalah kebanggaan kami'),
+    'testi_rating'        => getContent($conn,'section','testi_rating',        '5.0'),
+    'testi_rating_label'  => getContent($conn,'section','testi_rating_label',  'Berdasarkan ulasan Google Maps'),
+];
+
 // ── Services ──
 $servicesRows  = $conn ? mysqli_fetch_all(mysqli_query($conn, "SELECT * FROM cms_services ORDER BY sort_order, id"), MYSQLI_ASSOC) : [];
 // Fallback jika tabel kosong
@@ -761,9 +780,9 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
 <section id="layanan" class="services-clean">
     <div class="container">
         <div class="text-center mb-5">
-            <h2 class="services-title">Layanan Kami</h2>
+            <h2 class="services-title"><?= esc($sec['layanan_title']) ?></h2>
             <div class="title-line"></div>
-            <p class="text-muted mt-2" style="font-size:14px;">Klik layanan untuk melihat contoh hasil</p>
+            <p class="text-muted mt-2" style="font-size:14px;"><?= esc($sec['layanan_subtitle']) ?></p>
         </div>
         <div class="row g-4">
             <?php foreach ($services as $idx => $svc):
@@ -899,9 +918,9 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
 <section id="harga" class="price-list-section py-5">
     <div class="container">
         <div class="text-center mb-5" data-aos="fade-up">
-            <h2 class="services-title">Daftar <span style="color:#8B6F5E;">Harga</span></h2>
+            <h2 class="services-title"><?= esc($sec['harga_title']) ?></h2>
             <div class="title-line"></div>
-            <p class="text-muted mt-2">Harga transparan, kualitas terjamin (Harga tergantung panjang rambut)</p>
+            <p class="text-muted mt-2"><?= esc($sec['harga_subtitle']) ?></p>
         </div>
 
         <div class="price-cards-grid">
@@ -1202,9 +1221,9 @@ document.addEventListener('keydown', function(e) {
 <section id="produk" class="section-product">
     <div class="container">
         <div class="product-section-title" data-aos="fade-up">
-            <h2>Press On Nail <span>Collection</span></h2>
+            <h2><?= esc($sec['produk_title']) ?></h2>
             <div class="title-line"></div>
-            <p>Press On Nails premium untuk tampil cantik instan <i class="fa-solid fa-sparkles" style="color:#D6C1A3;font-size:0.9em;"></i></p>
+            <p><?= esc($sec['produk_subtitle']) ?> <i class="fa-solid fa-sparkles" style="color:#D6C1A3;font-size:0.9em;"></i></p>
         </div>
 
         <!-- Filter Buttons -->
@@ -1553,15 +1572,15 @@ document.addEventListener('keydown', function(e) {
     <div class="container">
         <div class="row justify-content-center mb-5">
             <div class="col-lg-8 text-center">
-                <div class="section-label" data-aos="fade-up"><span>Kata Mereka</span></div>
-                <h2 class="section-title" data-aos="fade-up" data-aos-delay="150">Testimoni <span style="color:var(--cream-accent);">Pelanggan</span></h2>
-                <p class="text-muted" data-aos="fade-up" data-aos-delay="250" style="font-size:15px;">Kepercayaan pelanggan adalah kebanggaan kami</p>
+                <div class="section-label" data-aos="fade-up"><span><?= esc($sec['testi_label']) ?></span></div>
+                <h2 class="section-title" data-aos="fade-up" data-aos-delay="150"><?= esc($sec['testi_title']) ?></h2>
+                <p class="text-muted" data-aos="fade-up" data-aos-delay="250" style="font-size:15px;"><?= esc($sec['testi_subtitle']) ?></p>
                 <div class="testimoni-rating-badge" data-aos="fade-up" data-aos-delay="350">
-                    <div class="testimoni-score">5.0</div>
+                    <div class="testimoni-score"><?= esc($sec['testi_rating']) ?></div>
                     <div class="testimoni-stars">
                         <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
                     </div>
-                    <div class="testimoni-rating-label">Berdasarkan ulasan Google Maps</div>
+                    <div class="testimoni-rating-label"><?= esc($sec['testi_rating_label']) ?></div>
                     <a href="<?= esc($kontak['maps_link']) ?>" target="_blank" class="review-write-btn ms-3">
                         <i class="fab fa-google"></i> Tulis Ulasan
                     </a>

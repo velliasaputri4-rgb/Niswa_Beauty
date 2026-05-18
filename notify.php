@@ -25,11 +25,31 @@ function kirimWA(string $nomor, string $pesan): bool {
     }
     if (empty($nomor)) return false;
 
-    // Jika token belum diisi, skip (tidak error fatal)
+    // Jika token belum diisi, skip
     if (FONNTE_TOKEN === 'ISI_TOKEN_FONNTE_KAMU_DISINI') return false;
 
-    // Kirim via file_get_contents (tidak butuh cURL)
-    $data = http_build_query(['target' => $nomor, 'message' => $pesan]);
+    $url     = 'https://api.fonnte.com/send';
+    $payload = ['target' => $nomor, 'message' => $pesan];
+
+    // ── Coba cURL dulu (lebih reliable di semua hosting) ──
+    if (function_exists('curl_init')) {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => $payload,
+            CURLOPT_HTTPHEADER     => ['Authorization: ' . FONNTE_TOKEN],
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 15,
+            CURLOPT_SSL_VERIFYPEER => false,
+        ]);
+        $result = curl_exec($ch);
+        $err    = curl_error($ch);
+        curl_close($ch);
+        if ($result !== false && empty($err)) return true;
+    }
+
+    // ── Fallback: file_get_contents ──
+    $data = http_build_query($payload);
     $opts = [
         'http' => [
             'method'  => 'POST',
@@ -37,11 +57,15 @@ function kirimWA(string $nomor, string $pesan): bool {
                          "Content-Type: application/x-www-form-urlencoded\r\n" .
                          "Content-Length: " . strlen($data) . "\r\n",
             'content' => $data,
-            'timeout' => 10,
+            'timeout' => 15,
             'ignore_errors' => true,
-        ]
+        ],
+        'ssl' => [
+            'verify_peer'      => false,
+            'verify_peer_name' => false,
+        ],
     ];
-    $result = @file_get_contents('https://api.fonnte.com/send', false, stream_context_create($opts));
+    $result = @file_get_contents($url, false, stream_context_create($opts));
     return $result !== false;
 }
 
@@ -254,4 +278,43 @@ function notifyAdminOrder(array $d): void {
     $pesan .= "Segera proses dan konfirmasi ke customer! 💬";
 
     kirimWA(ADMIN_WA, $pesan);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  DEBUG — Test koneksi Fonnte (panggil dari browser sekali)
+//  Hapus atau komentari setelah berhasil!
+//  Akses: notify.php?test=1&nomor=628xxxxxxxxx
+// ═══════════════════════════════════════════════════════════════
+if (isset($_GET['test']) && $_GET['test'] === '1') {
+    $nomor = $_GET['nomor'] ?? ADMIN_WA;
+    echo "<pre style='font-family:monospace;font-size:14px;padding:20px;'>";
+    echo "=== NISWÀ BEAUTY — Fonnte Debug ===\n\n";
+    echo "Token  : " . FONNTE_TOKEN . "\n";
+    echo "Target : " . $nomor . "\n";
+    echo "cURL   : " . (function_exists('curl_init') ? '✅ Available' : '❌ Not found') . "\n";
+    echo "fopen  : " . (ini_get('allow_url_fopen') ? '✅ On' : '❌ Off') . "\n\n";
+
+    // Test kirim
+    $ok = kirimWA($nomor, "🧪 Test notifikasi dari *" . SALON_NAME . "*\nJika pesan ini masuk, berarti sistem WA sudah berjalan! ✅");
+    echo "Hasil  : " . ($ok ? "✅ Terkirim (cek WA)" : "❌ Gagal") . "\n";
+
+    // Coba langsung cURL dan tampilkan response mentah
+    if (function_exists('curl_init')) {
+        $ch = curl_init('https://api.fonnte.com/send');
+        curl_setopt_array($ch, [
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => ['target' => $nomor, 'message' => 'test'],
+            CURLOPT_HTTPHEADER     => ['Authorization: ' . FONNTE_TOKEN],
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 15,
+            CURLOPT_SSL_VERIFYPEER => false,
+        ]);
+        $raw = curl_exec($ch);
+        $err = curl_error($ch);
+        curl_close($ch);
+        echo "\nResponse Fonnte:\n" . ($raw ?: "(kosong)") . "\n";
+        if ($err) echo "cURL Error: " . $err . "\n";
+    }
+    echo "</pre>";
+    exit;
 }
