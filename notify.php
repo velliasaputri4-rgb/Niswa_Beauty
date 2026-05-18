@@ -200,6 +200,7 @@ function notifyCustomerOrder(array $d): void {
     $pesan .= "🛒 *Produk:*   {$d['product_name']}\n";
     $pesan .= "🔢 *Qty:*      {$d['qty']} pcs\n";
     $pesan .= "💰 *Harga:*    {$d['product_price']}\n";
+    $pesan .= "🚚 *Ongkir:*   Rp 5.000 (Jepara)\n";
     $pesan .= "💳 *Total:*    *{$d['total']}*\n";
     $pesan .= "━━━━━━━━━━━━━━━━━━━━\n";
     $pesan .= "🚚 *Pengiriman ke:*\n";
@@ -238,6 +239,7 @@ function notifyAdminOrder(array $d): void {
     $pesan .= "🛒 *Produk:*   {$d['product_name']}\n";
     $pesan .= "🔢 *Qty:*      {$d['qty']} pcs\n";
     $pesan .= "💰 *Harga:*    {$d['product_price']}\n";
+    $pesan .= "🚚 *Ongkir:*   Rp 5.000 (Jepara)\n";
     $pesan .= "💳 *Total:*    *{$d['total']}*\n";
     $pesan .= "━━━━━━━━━━━━━━━━━━━━\n";
     $pesan .= "🚚 *Kirim ke:*\n";

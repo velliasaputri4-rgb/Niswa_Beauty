@@ -1842,8 +1842,8 @@ document.addEventListener('keydown', function(e) {
                 <div class="cod-shipping-info">
                     <i class="fas fa-truck" style="font-size:20px;flex-shrink:0;"></i>
                     <div>
-                        <div style="font-weight:700;font-size:12.5px;">Ongkos Kirim</div>
-                        <div style="font-size:11.5px;margin-top:1px;">Akan dikonfirmasi tim kami via WhatsApp sesuai lokasi pengiriman.</div>
+                        <div style="font-weight:700;font-size:12.5px;">Ongkos Kirim — Jepara</div>
+                        <div style="font-size:11.5px;margin-top:1px;">Flat <strong>Rp 5.000</strong> untuk seluruh wilayah Jepara.</div>
                     </div>
                 </div>
 
@@ -1863,8 +1863,8 @@ document.addEventListener('keydown', function(e) {
                         <span id="summaryMinBuyText"></span>
                     </div>
                     <div style="display:flex;justify-content:space-between;color:#888;margin-bottom:7px;">
-                        <span>Ongkos Kirim</span>
-                        <span style="color:#10b981;font-weight:600;font-size:11.5px;background:#f0faf5;padding:2px 8px;border-radius:8px;">Konfirmasi WA</span>
+                        <span>Ongkos Kirim (Jepara)</span>
+                        <span style="color:#10b981;font-weight:700;font-size:12px;">Rp 5.000</span>
                     </div>
                     <div style="display:flex;justify-content:space-between;color:#888;margin-bottom:7px;">
                         <span>Metode Bayar</span>
@@ -1872,10 +1872,9 @@ document.addEventListener('keydown', function(e) {
                     </div>
                     <div style="border-top:1.5px dashed #e8ddd4;margin:10px 0;"></div>
                     <div style="display:flex;justify-content:space-between;font-weight:800;color:#2d1f17;font-size:15px;">
-                        <span>Total Produk</span>
+                        <span>Total (+ Ongkir)</span>
                         <span id="summaryTotal" style="color:#8B6F5E;">-</span>
                     </div>
-                    <div style="font-size:10.5px;color:#aaa;text-align:right;margin-top:3px;">*belum termasuk ongkos kirim</div>
                 </div>
 
                 <button type="submit" class="btn-cod-submit" id="btnCodSubmit">
@@ -2001,11 +2000,12 @@ function updateOrderSummary(){
     var oriPrice=parseInt(modal.dataset.oriPrice)||0;
     var disc=parseInt(modal.dataset.disc)||0;
     var minBuy=parseInt(modal.dataset.minBuy)||0;
+    var ongkir=5000;
     var subtotal=oriPrice*qty;
     // Diskon hanya aktif jika subtotal >= minBuy (atau minBuy=0)
     var discActive=disc>0&&(minBuy===0||subtotal>=minBuy);
     var discAmt=discActive?Math.round(subtotal*disc/100):0;
-    var total=subtotal-discAmt;
+    var total=subtotal-discAmt+ongkir;
     document.getElementById('summarySubtotal').textContent=fmtRp(subtotal);
     var discRow=document.getElementById('summaryDiscRow');
     var minBuyRow=document.getElementById('summaryMinBuyRow');
@@ -2111,7 +2111,8 @@ document.getElementById('orderForm').addEventListener('submit',function(e){
                 + '📱 *WhatsApp Customer:* ' + (data.whatsapp || '') + '\n'
                 + '📍 *Alamat:* ' + (data.alamat || '') + '\n'
                 + '📦 *Produk:* ' + (data.product || '') + '\n'
-                + '💰 *Total:* ' + (data.total || '') + '\n'
+                + '💰 *Total Produk:* ' + (data.total || '') + '\n'
+                + '🚚 *Ongkos Kirim:* Rp 5.000 (Jepara)\n'
                 + '💵 *Pembayaran:* Bayar di Tempat (COD)\n'
                 + '━━━━━━━━━━━━━━━━━━━━\n'
                 + '⏰ ' + new Date().toLocaleString('id-ID') + '\n\n'
