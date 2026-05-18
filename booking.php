@@ -673,7 +673,7 @@ $pageTitle = "Booking Appointment — NISWÀ BEAUTY";
                                     <div class="input-group mt-2">
                                         <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
                                         <textarea class="form-control" name="alamat_hs" id="alamatHsInput" rows="2"
-                                                  style="text-align:center; padding-top: 18px;"
+                                                  style="padding-top:18px;"
                                                   placeholder="Tulis alamat lengkap Anda (jalan, RT/RW, kelurahan, kota)"><?= htmlspecialchars($_POST['alamat_hs'] ?? '') ?></textarea>
                                     </div>
                                 </div>

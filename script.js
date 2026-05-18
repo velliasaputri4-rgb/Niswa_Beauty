@@ -395,18 +395,21 @@ if (document.getElementById('galleryMasonry')) {
 
 document.addEventListener('DOMContentLoaded', function() {
     const serviceFilterBtns = document.querySelectorAll('.services-filter-buttons .filter-btn');
-    const serviceItems = document.querySelectorAll('[data-category]');
-    
+    // Batasi hanya elemen di dalam section layanan, bukan .product-card
+    const servicesSection = document.querySelector('.services-section, #layanan');
+    const serviceItems = servicesSection
+        ? servicesSection.querySelectorAll('[data-category]')
+        : [];
+
     serviceFilterBtns.forEach(btn => {
         btn.addEventListener('click', function() {
             const filterValue = this.dataset.filter;
-            
-            // Update active
+
             serviceFilterBtns.forEach(b => b.classList.remove('active'));
             this.classList.add('active');
-            
-            // Filter services
+
             serviceItems.forEach(item => {
+                if (item.classList.contains('product-card')) return; // skip product cards
                 if (filterValue === '*' || item.dataset.category === filterValue) {
                     item.style.display = 'block';
                     item.style.opacity = '0';
@@ -417,9 +420,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, 100);
                 } else {
                     item.style.opacity = '0';
-                    setTimeout(() => {
-                        item.style.display = 'none';
-                    }, 300);
+                    setTimeout(() => { item.style.display = 'none'; }, 300);
                 }
             });
         });
