@@ -314,8 +314,8 @@ function buildPesanCustomerOrder(array $d): string {
     if (!empty($d['catatan'])) {
         $pesan .= "📝 *Catatan:*  {$d['catatan']}\n";
     }
-    $pesan .= "\n⚠️ *Status:* Menunggu konfirmasi\n\n";
-    $pesan .= "Tim kami akan menghubungi kamu dalam *< 1 jam* untuk konfirmasi pengiriman. 😊\n\n";
+    $pesan .= "\nJika ada pertanyaan, perubahan pesanan, atau kendala lainnya, kakak bisa langsung menghubungi admin kami kapan saja 🤍\n\n";
+    $pesan .= "Terima kasih telah mempercayai Niswa Beauty 🌸 Semoga produk yang kakak pesan bisa membuat penampilan semakin cantik, elegan, dan percaya diri ✨💅💕\n\n";
     $pesan .= "📍 " . SALON_ADDRESS . "\n";
     $pesan .= "✨ *" . SALON_NAME . "* — Premium Beauty Experience";
 
