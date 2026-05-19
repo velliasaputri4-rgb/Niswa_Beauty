@@ -1,18 +1,18 @@
 <?php
 session_start();
 
-// Proteksi: wajib login
+// Proteksi: wajib login DAN harus role admin
 if (!isset($_SESSION['user'])) {
     header("Location: login.php");
     exit;
 }
-
-// Koneksi langsung (tanpa require)
-$conn = mysqli_connect("localhost", "root", "", "salon_db");
-if (!$conn) {
-    die('<div style="font-family:sans-serif;padding:40px;text-align:center;"><h2 style="color:#e11d48;">Database tidak dapat terhubung</h2><p>Pastikan MySQL berjalan dan database <strong>salon_db</strong> sudah dibuat.</p><p style="color:#999;font-size:13px;">Error: ' . mysqli_connect_error() . '</p></div>');
+if (($_SESSION['user_role'] ?? '') !== 'admin') {
+    // User biasa tidak boleh akses dashboard
+    header("Location: index.php");
+    exit;
 }
-mysqli_set_charset($conn, 'utf8mb4');
+
+require_once __DIR__ . '/db.php';
 
 // Pastikan tabel bookings ada
 mysqli_query($conn, "CREATE TABLE IF NOT EXISTS bookings (

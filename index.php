@@ -9,9 +9,8 @@ $userName   = $_SESSION['user'] ?? '';
 /* ══════════════════════════════════════════════
    DATABASE CONNECTION
 ══════════════════════════════════════════════ */
-$conn = @mysqli_connect("localhost", "root", "", "salon_db");
+require_once __DIR__ . '/db.php';
 if ($conn) {
-    mysqli_set_charset($conn, 'utf8mb4');
 
     // Pastikan tabel orders ada
     mysqli_query($conn, "CREATE TABLE IF NOT EXISTS orders (

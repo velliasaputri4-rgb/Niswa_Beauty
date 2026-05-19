@@ -1,8 +1,7 @@
 <?php
 session_start();
 
-$conn = @mysqli_connect("localhost", "root", "", "salon_db");
-if ($conn) mysqli_set_charset($conn, 'utf8mb4');
+require_once __DIR__ . '/db.php';
 
 function getProfil($conn, $section, $key, $default = '') {
     if (!$conn) return $default;

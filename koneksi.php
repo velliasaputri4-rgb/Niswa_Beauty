@@ -1,13 +1,5 @@
 <?php
-$host = "localhost";
-$user = "root";      // default XAMPP
-$pass = "";          // default XAMPP kosong
-$db   = "salon_db"; // nama database kamu
-
-$conn = mysqli_connect($host, $user, $pass, $db);
-
-// cek koneksi
-if (!$conn) {
-    die("Koneksi gagal: " . mysqli_connect_error());
-}
+// koneksi.php — alias db.php untuk backward compatibility
+// Selalu gunakan db.php sebagai sumber koneksi tunggal
+require_once __DIR__ . '/db.php';
 ?>

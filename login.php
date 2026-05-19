@@ -2,8 +2,12 @@
 session_start();
 
 // Jika sudah login sebagai admin, redirect ke dashboard
-if (isset($_SESSION['user']) && ($_SESSION['user_role'] ?? '') === 'admin') {
-    header("Location: dashboard.php");
+if (isset($_SESSION['user'])) {
+    if (($_SESSION['user_role'] ?? '') === 'admin') {
+        header("Location: dashboard.php");
+    } else {
+        header("Location: index.php");
+    }
     exit;
 }
 

@@ -13,13 +13,9 @@ if (!function_exists('getNavbar')) {
     }
 }
 
-/* ── Buat koneksi DB jika belum ada (misalnya navbar di-include dari halaman non-CMS) ── */
+/* ── Gunakan koneksi yang sudah ada dari halaman pemanggil ── */
 if (!isset($conn) || !$conn) {
-    $conn = @mysqli_connect("localhost", "root", "", "salon_db");
-    if ($conn) mysqli_set_charset($conn, 'utf8mb4');
-    $navbarLocalConn = true; // flag bahwa koneksi dibuat di sini
-} else {
-    $navbarLocalConn = false;
+    require_once __DIR__ . '/db.php';
 }
 
 /* ── Ambil nilai dari DB, fallback ke default ── */
@@ -30,10 +26,7 @@ $nav_product  = getNavbar($conn, 'menu_product',  'Product');
 $nav_about    = getNavbar($conn, 'menu_about',    'About');
 $nav_book_btn = getNavbar($conn, 'btn_book_text', 'Book Now');
 
-/* ── Tutup koneksi lokal jika dibuat di sini ── */
-if (!empty($navbarLocalConn) && $conn) {
-    // Biarkan terbuka — akan dipakai oleh halaman yang include navbar ini
-}
+
 ?>
 <nav class="navbar navbar-expand-lg fixed-top" id="mainNav">
     <div class="container">

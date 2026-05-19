@@ -1,18 +1,21 @@
 <?php
 session_start();
 
-/* ── Auth Guard ── */
+/* ── Auth Guard: wajib login DAN harus role admin ── */
 if (!isset($_SESSION['user'])) {
     header("Location: login.php");
     exit;
 }
+if (($_SESSION['user_role'] ?? '') !== 'admin') {
+    header("Location: index.php");
+    exit;
+}
 
-/* ── DB Connection ── */
-$conn = mysqli_connect("localhost", "root", "", "salon_db");
+/* ── DB Connection via db.php ── */
+require_once __DIR__ . '/db.php';
 if (!$conn) {
     die('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Error</title><style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#fdfaf7;margin:0;}.box{text-align:center;padding:40px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.1);max-width:440px;}h2{color:#e11d48;}p{color:#666;font-size:14px;margin:10px 0;}code{background:#f5f5f5;padding:3px 8px;border-radius:6px;font-size:13px;}</style></head><body><div class="box"><h2>⚠️ Database Error</h2><p>Tidak dapat terhubung ke database <strong>salon_db</strong>.</p><p>Pastikan MySQL sudah berjalan dan database sudah dibuat.</p><p><code>' . mysqli_connect_error() . '</code></p><a href="dashboard.php" style="display:inline-block;margin-top:16px;padding:10px 24px;background:#8B6F5E;color:#fff;border-radius:30px;text-decoration:none;font-size:14px;">← Kembali</a></div></body></html>');
 }
-if ($conn) mysqli_set_charset($conn, 'utf8mb4');
 
 /* ══════════════════════════════════════════════
    ENSURE ALL TABLES EXIST

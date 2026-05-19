@@ -6,8 +6,7 @@ session_start();
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-$conn = mysqli_connect("localhost", "root", "", "salon_db");
-mysqli_set_charset($conn, 'utf8mb4');
+require_once __DIR__ . '/db.php';
 
 if (!$conn) {
     die("Koneksi gagal: " . mysqli_connect_error());

@@ -1,12 +1,8 @@
 <?php
 session_start();
-
-$conn = mysqli_connect("localhost", "root", "", "salon_db");
-mysqli_set_charset($conn, 'utf8mb4');
+require_once __DIR__ . '/db.php';
 
 // ── AUTO-FIX: tambah kolom role jika belum ada ───────────────
-// Masalah umum: tabel users dibuat dari proses-register.php lama
-// tanpa kolom role, sehingga SELECT role selalu NULL → login gagal.
 $cekRole = mysqli_query($conn, "SHOW COLUMNS FROM users LIKE 'role'");
 if ($cekRole && mysqli_num_rows($cekRole) === 0) {
     mysqli_query($conn, "ALTER TABLE users ADD COLUMN role ENUM('user','admin') NOT NULL DEFAULT 'user'");
@@ -16,13 +12,15 @@ mysqli_query($conn, "UPDATE users SET role = 'user' WHERE role IS NULL OR role =
 
 $email    = trim($_POST['email']    ?? '');
 $password = trim($_POST['password'] ?? '');
-$redirect = trim($_POST['redirect'] ?? 'product.php');
+$redirect = trim($_POST['redirect'] ?? 'index.php');
 
-if (!preg_match('/^[a-zA-Z0-9_\-\.\/]+\.php$/', $redirect)) {
-    $redirect = 'product.php';
+// Validasi redirect: hanya izinkan file .php di root, tanpa path berbahaya
+if (!preg_match('/^[a-zA-Z0-9_\-\.\/]+\.php$/', $redirect) || str_contains($redirect, '..')) {
+    $redirect = 'index.php';
 }
-if ($redirect === 'dashboard.php') {
-    $redirect = 'product.php';
+// User biasa tidak boleh diarahkan ke dashboard/cms
+if (in_array($redirect, ['dashboard.php', 'cms.php'])) {
+    $redirect = 'index.php';
 }
 
 if (empty($email) || empty($password)) {
