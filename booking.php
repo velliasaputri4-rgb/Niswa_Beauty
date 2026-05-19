@@ -921,9 +921,9 @@ function loadSlots(tanggal) {
             var avail = data.slots.filter(function(s){ return s.available; });
             hint.className = avail.length > 0 ? 'slot-hint' : 'slot-hint warn';
             hintTxt.textContent = avail.length > 0
-                ? avail.length + ' jam tersedia di tanggal ini'
+                ? ''
                 : 'Tidak ada slot tersedia! Coba tanggal lain.';
-            hint.style.display = 'flex';
+            hint.style.display = avail.length > 0 ? 'none' : 'flex';
         })
         .catch(function() {
             // Fallback: tampilkan semua slot tanpa status
@@ -944,7 +944,7 @@ function renderSlots(slots, select) {
             opt.disabled    = true;
             opt.classList.add('booked-slot');
         } else if (s.available) {
-            opt.textContent = s.time + ' WIB  \u2713 Tersedia';
+            opt.textContent = s.time + ' WIB';
         } else {
             opt.textContent = s.time + ' WIB  \u00d7 Penuh';
             opt.disabled    = true;
