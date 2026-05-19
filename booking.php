@@ -25,6 +25,7 @@ $fixColumns = [
     "catatan"        => "ALTER TABLE bookings ADD COLUMN catatan TEXT",
     "jenis_layanan"  => "ALTER TABLE bookings ADD COLUMN jenis_layanan VARCHAR(20) DEFAULT 'datang'",
     "alamat_hs"      => "ALTER TABLE bookings ADD COLUMN alamat_hs TEXT",
+    "status"         => "ALTER TABLE bookings ADD COLUMN status VARCHAR(20) DEFAULT 'booked'",
 ];
 foreach ($fixColumns as $col => $sql) {
     $cek = mysqli_query($conn, "SHOW COLUMNS FROM bookings LIKE '$col'");
@@ -65,13 +66,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($jam))      $errors[] = 'Jam wajib dipilih.';
     if ($jenis_layanan === 'home_service' && empty($alamat_hs)) $errors[] = 'Alamat lengkap wajib diisi untuk Home Service.';
 
-    // Cek apakah jam diblokir admin
+    // Cek apakah jam diblokir admin atau sudah ada booking
     if (empty($errors) && !empty($tanggal) && !empty($jam)) {
         $tglEsc = mysqli_real_escape_string($conn, $tanggal);
         $jamEsc = mysqli_real_escape_string($conn, $jam);
+
+        // Cek diblokir admin
         $blkChk = mysqli_query($conn, "SELECT id FROM booking_blocked_slots WHERE tanggal='$tglEsc' AND jam='$jamEsc' LIMIT 1");
         if ($blkChk && mysqli_num_rows($blkChk) > 0) {
-            $errors[] = "Jam $jam WIB di tanggal tersebut tidak tersedia. Silakan pilih jam lain.";
+            $errors[] = "Jam $jam WIB di tanggal tersebut tidak tersedia (diblokir). Silakan pilih jam lain.";
+        }
+
+        // Cek sudah ada booking di jam & tanggal yang sama (hanya status booked)
+        if (empty($errors)) {
+            $bkChk = mysqli_query($conn, "SELECT id FROM bookings WHERE date='$tglEsc' AND time='$jamEsc' AND status='booked' LIMIT 1");
+            if ($bkChk && mysqli_num_rows($bkChk) > 0) {
+                $errors[] = "Jam $jam WIB di tanggal tersebut sudah dipesan. Silakan pilih jam lain yang tersedia.";
+            }
         }
     }
 
@@ -215,11 +226,11 @@ if (isset($_GET['check_slots']) && !empty($_GET['tanggal'])) {
     if (empty($raw_slots)) $raw_slots = "09:00\n10:00\n11:00\n13:00\n14:00\n15:00\n16:00\n17:00\n18:00\n19:00\n20:00";
     $all_slots = array_values(array_filter(array_map('trim', explode("\n", $raw_slots))));
 
-    // Ambil jam yang sudah dipesan
+    // Ambil jam yang sudah dipesan (hanya status booked / aktif)
     $tgl_esc = mysqli_real_escape_string($conn, $tgl);
     $res = mysqli_query($conn,
         "SELECT time, COUNT(*) as cnt FROM bookings
-         WHERE date = '{$tgl_esc}'
+         WHERE date = '{$tgl_esc}' AND status = 'booked'
          GROUP BY time"
     );
     $booked = [];
@@ -281,6 +292,15 @@ $bk = [
     'max_jumlah_orang'  => bkGet($conn, 'max_jumlah_orang',  '10'),
     'show_catatan'      => bkGet($conn, 'show_catatan',      '1'),
     'show_jumlah_orang' => bkGet($conn, 'show_jumlah_orang', '1'),
+    'wa_notice_text'    => bkGet($conn, 'wa_notice_text',    'Setelah booking berhasil, tim kami akan menghubungi Anda dalam waktu <1 jam untuk konfirmasi jadwal.'),
+    // ── Home Service ──
+    'hs_enabled'            => bkGet($conn, 'hs_enabled',            '1'),
+    'hs_label_datang'       => bkGet($conn, 'hs_label_datang',       'Datang ke Tempat'),
+    'hs_desc_datang'        => bkGet($conn, 'hs_desc_datang',        'Kunjungi salon kami'),
+    'hs_label_hs'           => bkGet($conn, 'hs_label_hs',           'Home Service'),
+    'hs_desc_hs'            => bkGet($conn, 'hs_desc_hs',            'Beautician ke lokasi Anda'),
+    'hs_badge_text'         => bkGet($conn, 'hs_badge_text',         'Biaya tambahan home service berlaku sesuai jarak'),
+    'hs_alamat_placeholder' => bkGet($conn, 'hs_alamat_placeholder', 'Tulis alamat lengkap Anda (jalan, RT/RW, kelurahan, kota)'),
 ];
 
 function parseServicesGrouped($raw) {
@@ -490,7 +510,7 @@ $pageTitle = "Booking Appointment — NISWÀ BEAUTY";
         font-family: 'Poppins', sans-serif;
     }
     .jenis-layanan-card input[type=radio] { display: none; }
-    .jenis-layanan-card .jl-icon { font-size: 26px; display: block; margin-bottom: 5px; }
+    .jenis-layanan-card .jl-icon { font-size: 26px; display: block; margin-bottom: 5px; color: #8B6F5E; }
     .jenis-layanan-card .jl-label { font-size: 12.5px; font-weight: 600; color: #5a3e35; display: block; }
     .jenis-layanan-card .jl-desc  { font-size: 10.5px; color: #999; margin-top: 3px; display: block; }
     .jenis-layanan-card:hover { border-color: #c9a08a; background: #fdf6f2; }
@@ -538,7 +558,7 @@ $pageTitle = "Booking Appointment — NISWÀ BEAUTY";
     <span style="color:#fff;font-size:14px;font-weight:500;display:inline-flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;">
         <span style="display:inline-flex;align-items:center;gap:7px;">
             <i class="fas fa-user-circle" style="font-size:18px;"></i>
-            Hai, <strong style="font-size:15px;"><?= htmlspecialchars($_SESSION['user']) ?></strong>! 👋
+            Hai, <strong style="font-size:15px;"><?= htmlspecialchars($_SESSION['user']) ?></strong>! <i class="fas fa-hand-sparkles" style="font-size:14px;"></i>
         </span>
         <span style="opacity:0.5;font-size:16px;">|</span>
         <a href="logout.php" style="color:#fff;text-decoration:none;font-size:12px;display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.2);padding:4px 14px;border-radius:20px;transition:background 0.2s;"
@@ -664,10 +684,7 @@ $pageTitle = "Booking Appointment — NISWÀ BEAUTY";
                                     <i class="fas fa-circle-notch fa-spin"></i>
                                     <span id="slotHintText">Mengecek ketersediaan...</span>
                                 </div>
-                                <div style="display:flex;align-items:center;gap:12px;margin-top:7px;font-size:11.5px;color:#888;font-family:'Poppins',sans-serif;">
-                                    <span><span class="slot-indicator slot-available"></span>Tersedia</span>
-                                    <span><span class="slot-indicator slot-booked"></span>Penuh</span>
-                                </div>
+
                             </div>
 
 
@@ -677,25 +694,27 @@ $pageTitle = "Booking Appointment — NISWÀ BEAUTY";
                                 <div class="jenis-layanan-wrap">
                                     <label class="jenis-layanan-card <?= (($_POST['jenis_layanan']??'datang')==='datang') ? 'selected' : '' ?>" onclick="pilihJenis(this,'datang')">
                                         <input type="radio" name="jenis_layanan" value="datang" <?= (($_POST['jenis_layanan']??'datang')==='datang') ? 'checked' : '' ?>>
-                                        <span class="jl-icon">🏪</span>
-                                        <span class="jl-label">Datang ke Tempat</span>
-                                        <span class="jl-desc">Kunjungi salon kami</span>
+                                        <span class="jl-icon"><i class="fas fa-store"></i></span>
+                                        <span class="jl-label"><?= htmlspecialchars($bk['hs_label_datang']) ?></span>
+                                        <span class="jl-desc"><?= htmlspecialchars($bk['hs_desc_datang']) ?></span>
                                     </label>
+                                    <?php if ($bk['hs_enabled'] != '0'): ?>
                                     <label class="jenis-layanan-card <?= (($_POST['jenis_layanan']??'')==='home_service') ? 'selected' : '' ?>" onclick="pilihJenis(this,'home_service')">
                                         <input type="radio" name="jenis_layanan" value="home_service" <?= (($_POST['jenis_layanan']??'')==='home_service') ? 'checked' : '' ?>>
-                                        <span class="jl-icon">🏠</span>
-                                        <span class="jl-label">Home Service</span>
-                                        <span class="jl-desc">Beautician ke lokasi Anda</span>
+                                        <span class="jl-icon"><i class="fas fa-home"></i></span>
+                                        <span class="jl-label"><?= htmlspecialchars($bk['hs_label_hs']) ?></span>
+                                        <span class="jl-desc"><?= htmlspecialchars($bk['hs_desc_hs']) ?></span>
                                     </label>
+                                    <?php endif; ?>
                                 </div>
                                 <!-- Alamat Home Service -->
                                 <div id="alamatHomeService" style="display:<?= (($_POST['jenis_layanan']??'')==='home_service') ? 'block' : 'none' ?>">
-                                    <div class="home-service-badge-wrap"><span class="home-service-badge"><i class="fas fa-info-circle"></i> Biaya tambahan home service berlaku sesuai jarak</span></div>
+                                    <div class="home-service-badge-wrap"><span class="home-service-badge"><i class="fas fa-info-circle"></i> <?= htmlspecialchars($bk['hs_badge_text']) ?></span></div>
                                     <div class="input-group mt-2">
                                         <span class="input-group-text"><i class="fas fa-map-marker-alt"></i></span>
                                         <textarea class="form-control" name="alamat_hs" id="alamatHsInput" rows="2"
                                                   style="padding-top:18px;"
-                                                  placeholder="Tulis alamat lengkap Anda (jalan, RT/RW, kelurahan, kota)"><?= htmlspecialchars($_POST['alamat_hs'] ?? '') ?></textarea>
+                                                  placeholder="<?= htmlspecialchars($bk['hs_alamat_placeholder']) ?>"><?= htmlspecialchars($_POST['alamat_hs'] ?? '') ?></textarea>
                                     </div>
                                 </div>
                             </div>
@@ -724,7 +743,7 @@ $pageTitle = "Booking Appointment — NISWÀ BEAUTY";
                             <div class="col-12">
                                 <div style="background:#fdf6f2;border:1.5px solid #e5d5cc;border-radius:12px;padding:12px 16px;display:flex;align-items:flex-start;gap:10px;font-family:'Poppins',sans-serif;font-size:12.5px;color:#6d3a28;">
                                     <i class="fab fa-whatsapp" style="font-size:18px;color:#8B6F5E;margin-top:1px;flex-shrink:0;"></i>
-                                    <span>Setelah booking berhasil, tim kami akan <strong>menghubungi Anda</strong> dalam waktu &lt;1 jam untuk konfirmasi jadwal.</span>
+                                    <span><?= htmlspecialchars($bk['wa_notice_text']) ?></span>
                                 </div>
                             </div>
 
@@ -787,7 +806,7 @@ $pageTitle = "Booking Appointment — NISWÀ BEAUTY";
             <div class="check-icon">
                 <i class="fas fa-check" style="font-size:32px;"></i>
             </div>
-            <h5 style="font-weight:800;font-size:20px;margin:0 0 5px;font-family:'Playfair Display',serif;">Booking Berhasil! 🎉</h5>
+            <h5 style="font-weight:800;font-size:20px;margin:0 0 5px;font-family:'Playfair Display',serif;">Booking Berhasil! <i class="fas fa-star" style="font-size:18px;"></i></h5>
             <p style="color:rgba(255,255,255,0.85);font-size:13px;margin:0;font-family:'Poppins',sans-serif;">
                 Tim kami akan segera menghubungi Anda
             </p>
@@ -799,24 +818,24 @@ $pageTitle = "Booking Appointment — NISWÀ BEAUTY";
             <!-- Detail booking -->
             <div class="wa-detail-box">
                 <div class="wa-detail-row">
-                    <span>📋 ID Booking</span>
+                    <span><i class="fas fa-hashtag me-1"></i> ID Booking</span>
                     <strong>#<?= $booking_id ?? '' ?></strong>
                 </div>
                 <div class="wa-detail-row">
-                    <span>💆 Layanan</span>
+                    <span><i class="fas fa-spa me-1"></i> Layanan</span>
                     <strong><?= htmlspecialchars($_POST['layanan'] ?? '') ?></strong>
                 </div>
                 <div class="wa-detail-row">
-                    <span>📅 Tanggal</span>
+                    <span><i class="fas fa-calendar-alt me-1"></i> Tanggal</span>
                     <strong id="modalDateFmt"><?= htmlspecialchars($_POST['tanggal'] ?? '') ?></strong>
                 </div>
                 <div class="wa-detail-row">
-                    <span>📍 Jenis</span>
-                    <strong><?= (($_POST['jenis_layanan']??'datang')==='home_service') ? '🏠 Home Service' : '🏪 Datang ke Tempat' ?></strong>
+                    <span><i class="fas fa-map-marker-alt me-1"></i> Jenis</span>
+                    <strong><?= (($_POST['jenis_layanan']??'datang')==='home_service') ? '<i class="fas fa-home me-1"></i> Home Service' : '<i class="fas fa-store me-1"></i> Datang ke Tempat' ?></strong>
                 </div>
                 <?php if (($_POST['jenis_layanan']??'')==='home_service' && !empty($_POST['alamat_hs'])): ?>
                 <div class="wa-detail-row">
-                    <span>🗺️ Alamat</span>
+                    <span><i class="fas fa-route me-1"></i> Alamat</span>
                     <strong style="font-size:11px;text-align:right;max-width:60%;"><?= htmlspecialchars($_POST['alamat_hs'] ?? '') ?></strong>
                 </div>
                 <?php endif; ?>
@@ -921,13 +940,13 @@ function renderSlots(slots, select) {
         var opt = document.createElement('option');
         opt.value = s.time;
         if (s.blocked) {
-            opt.textContent = s.time + ' WIB  🚫 Tidak Tersedia';
+            opt.textContent = s.time + ' WIB  — Tidak Tersedia';
             opt.disabled    = true;
             opt.classList.add('booked-slot');
         } else if (s.available) {
-            opt.textContent = s.time + ' WIB  ✅ Tersedia';
+            opt.textContent = s.time + ' WIB  \u2713 Tersedia';
         } else {
-            opt.textContent = s.time + ' WIB  ❌ Penuh';
+            opt.textContent = s.time + ' WIB  \u00d7 Penuh';
             opt.disabled    = true;
             opt.classList.add('booked-slot');
         }

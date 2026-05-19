@@ -581,13 +581,60 @@ if ($action === 'unblock_all_date' && isset($_GET['tanggal'])) {
     header('Location: cms.php?tab=jam_settings&saved=1'); exit;
 }
 
+/* ── Release booking (buka kembali jam agar bisa dipesan ulang) ── */
+if ($action === 'release_booking' && isset($_GET['id'])) {
+    // AUTO-FIX kolom status jika belum ada
+    $chkSt = mysqli_query($conn, "SHOW COLUMNS FROM bookings LIKE 'status'");
+    if ($chkSt && mysqli_num_rows($chkSt) === 0) {
+        mysqli_query($conn, "ALTER TABLE bookings ADD COLUMN status VARCHAR(20) DEFAULT 'booked'");
+    }
+    mysqli_query($conn, "UPDATE bookings SET status='released' WHERE id=".(int)$_GET['id']);
+    header('Location: cms.php?tab=jam_settings&released=1'); exit;
+}
+
+/* ── Cancel booking (batalkan, jam terbuka kembali) ── */
+if ($action === 'cancel_booking' && isset($_GET['id'])) {
+    $chkSt = mysqli_query($conn, "SHOW COLUMNS FROM bookings LIKE 'status'");
+    if ($chkSt && mysqli_num_rows($chkSt) === 0) {
+        mysqli_query($conn, "ALTER TABLE bookings ADD COLUMN status VARCHAR(20) DEFAULT 'booked'");
+    }
+    mysqli_query($conn, "UPDATE bookings SET status='cancelled' WHERE id=".(int)$_GET['id']);
+    header('Location: cms.php?tab=jam_settings&cancelled=1'); exit;
+}
+
+/* ── Aktifkan kembali booking yang pernah di-release/cancel ── */
+if ($action === 'restore_booking' && isset($_GET['id'])) {
+    $chkSt = mysqli_query($conn, "SHOW COLUMNS FROM bookings LIKE 'status'");
+    if ($chkSt && mysqli_num_rows($chkSt) === 0) {
+        mysqli_query($conn, "ALTER TABLE bookings ADD COLUMN status VARCHAR(20) DEFAULT 'booked'");
+    }
+    $bkId  = (int)$_GET['id'];
+    // Cek dulu apakah jam sudah ada booking lain yang aktif
+    $bkRow = mysqli_fetch_assoc(mysqli_query($conn, "SELECT date, time FROM bookings WHERE id=$bkId LIMIT 1"));
+    if ($bkRow) {
+        $tE = mysqli_real_escape_string($conn, $bkRow['date']);
+        $jE = mysqli_real_escape_string($conn, $bkRow['time']);
+        $conflict = mysqli_fetch_assoc(mysqli_query($conn, "SELECT id FROM bookings WHERE date='$tE' AND time='$jE' AND status='booked' AND id!=$bkId LIMIT 1"));
+        if ($conflict) {
+            header('Location: cms.php?tab=jam_settings&conflict=1'); exit;
+        }
+    }
+    mysqli_query($conn, "UPDATE bookings SET status='booked' WHERE id=$bkId");
+    header('Location: cms.php?tab=jam_settings&restored=1'); exit;
+}
+
 /* ── 12. Booking Page Content ── */
 if ($action === 'save_booking_page') {
     $fields = ['page_title','page_subtitle','form_title',
                'services_list','time_slots',
                'sidebar_address','sidebar_whatsapp','sidebar_hours',
                'perk_1','perk_2','perk_3','perk_4',
-               'max_jumlah_orang','show_catatan','show_jumlah_orang'];
+               'max_jumlah_orang','show_catatan','show_jumlah_orang',
+               'wa_notice_text',
+               /* ── Home Service ── */
+               'hs_enabled','hs_label_datang','hs_desc_datang',
+               'hs_label_hs','hs_desc_hs','hs_badge_text',
+               'hs_alamat_placeholder'];
     foreach ($fields as $f) setBookingPage($conn, $f, $_POST[$f] ?? '');
     header('Location: cms.php?tab=booking_page&saved=1'); exit;
 }
@@ -738,6 +785,16 @@ $booking_page = [
     'max_jumlah_orang'   => getBookingPage($conn, 'max_jumlah_orang',   '10'),
     'show_catatan'       => getBookingPage($conn, 'show_catatan',       '1'),
     'show_jumlah_orang'  => getBookingPage($conn, 'show_jumlah_orang',  '1'),
+    // Teks notifikasi WA di bawah form
+    'wa_notice_text'     => getBookingPage($conn, 'wa_notice_text',     'Setelah booking berhasil, tim kami akan menghubungi Anda dalam waktu <1 jam untuk konfirmasi jadwal.'),
+    // ── Pengaturan Home Service ──
+    'hs_enabled'            => getBookingPage($conn, 'hs_enabled',            '1'),
+    'hs_label_datang'       => getBookingPage($conn, 'hs_label_datang',       'Datang ke Tempat'),
+    'hs_desc_datang'        => getBookingPage($conn, 'hs_desc_datang',        'Kunjungi salon kami'),
+    'hs_label_hs'           => getBookingPage($conn, 'hs_label_hs',           'Home Service'),
+    'hs_desc_hs'            => getBookingPage($conn, 'hs_desc_hs',            'Beautician ke lokasi Anda'),
+    'hs_badge_text'         => getBookingPage($conn, 'hs_badge_text',         'Biaya tambahan home service berlaku sesuai jarak'),
+    'hs_alamat_placeholder' => getBookingPage($conn, 'hs_alamat_placeholder', 'Tulis alamat lengkap Anda (jalan, RT/RW, kelurahan, kota)'),
 ];
 
 // Auto-update services_list jika masih berisi data lama (flat list tanpa grup)
@@ -3027,6 +3084,146 @@ input[type=file]{display:none;}
                             </div>
                         </div>
 
+                        <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
+
+                        <!-- ── Pengaturan Home Service ── -->
+                        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:14px;">
+                            <i class="fas fa-home" style="margin-right:5px;color:var(--primary);"></i>Pengaturan Jenis Layanan (Home Service)
+                        </div>
+
+                        <!-- Toggle aktif/nonaktif Home Service -->
+                        <div style="background:var(--cream);border:1.5px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+                            <div>
+                                <div style="font-size:13px;font-weight:600;color:var(--text);">Aktifkan Opsi Home Service</div>
+                                <div style="font-size:11px;color:var(--text-lt);margin-top:2px;">Jika dinonaktifkan, pelanggan tidak bisa memilih Home Service saat booking.</div>
+                            </div>
+                            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;flex-shrink:0;">
+                                <input type="hidden" name="hs_enabled" value="0">
+                                <input type="checkbox" name="hs_enabled" value="1" <?= $booking_page['hs_enabled'] != '0' ? 'checked' : '' ?> style="width:18px;height:18px;accent-color:var(--primary);">
+                                <span style="font-weight:600;">Aktif</span>
+                            </label>
+                        </div>
+
+                        <!-- Label & Deskripsi kartu "Datang ke Tempat" -->
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label><i class="fas fa-store" style="margin-right:4px;"></i>Label — Datang ke Tempat</label>
+                                <input type="text" name="hs_label_datang" value="<?= htmlspecialchars($booking_page['hs_label_datang']) ?>" placeholder="Datang ke Tempat">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label><i class="fas fa-align-left" style="margin-right:4px;"></i>Deskripsi — Datang ke Tempat</label>
+                                <input type="text" name="hs_desc_datang" value="<?= htmlspecialchars($booking_page['hs_desc_datang']) ?>" placeholder="Kunjungi salon kami">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label><i class="fas fa-home" style="margin-right:4px;"></i>Label — Home Service</label>
+                                <input type="text" name="hs_label_hs" value="<?= htmlspecialchars($booking_page['hs_label_hs']) ?>" placeholder="Home Service">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label><i class="fas fa-align-left" style="margin-right:4px;"></i>Deskripsi — Home Service</label>
+                                <input type="text" name="hs_desc_hs" value="<?= htmlspecialchars($booking_page['hs_desc_hs']) ?>" placeholder="Beautician ke lokasi Anda">
+                            </div>
+                        </div>
+
+                        <!-- Badge biaya tambahan -->
+                        <div class="form-group">
+                            <label><i class="fas fa-info-circle" style="margin-right:4px;"></i>Teks Badge Biaya Tambahan Home Service</label>
+                            <input type="text" name="hs_badge_text" value="<?= htmlspecialchars($booking_page['hs_badge_text']) ?>" placeholder="Biaya tambahan home service berlaku sesuai jarak">
+                            <small style="font-size:11px;color:var(--text-lt);margin-top:4px;display:block;">
+                                <i class="fa-solid fa-circle-info" style="margin-right:3px;"></i>
+                                Muncul sebagai badge info di bawah kartu Home Service saat dipilih.
+                            </small>
+                        </div>
+                        <!-- Preview badge -->
+                        <div style="background:#fdf6f2;border:1.5px dashed #c9a898;border-radius:10px;padding:9px 14px;display:flex;align-items:center;gap:8px;font-size:12px;color:#6d3a28;margin-bottom:16px;">
+                            <i class="fas fa-info-circle" style="flex-shrink:0;color:#8B6F5E;"></i>
+                            <span id="hsBadgePreview"><?= htmlspecialchars($booking_page['hs_badge_text']) ?></span>
+                        </div>
+                        <script>
+                        (function(){
+                            var inp = document.querySelector('input[name="hs_badge_text"]');
+                            var pv  = document.getElementById('hsBadgePreview');
+                            if (inp && pv) inp.addEventListener('input', function(){ pv.textContent = inp.value; });
+                        })();
+                        </script>
+
+                        <!-- Placeholder textarea alamat -->
+                        <div class="form-group">
+                            <label><i class="fas fa-map-marker-alt" style="margin-right:4px;"></i>Placeholder Kolom Alamat Home Service</label>
+                            <input type="text" name="hs_alamat_placeholder" value="<?= htmlspecialchars($booking_page['hs_alamat_placeholder']) ?>" placeholder="Tulis alamat lengkap Anda (jalan, RT/RW, kelurahan, kota)">
+                            <small style="font-size:11px;color:var(--text-lt);margin-top:4px;display:block;">Teks abu-abu yang muncul di dalam kolom alamat sebelum diisi pelanggan.</small>
+                        </div>
+
+                        <!-- Preview kartu jenis layanan -->
+                        <div style="background:var(--cream);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:4px;">
+                            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-lt);margin-bottom:10px;"><i class="fa-solid fa-eye" style="margin-right:4px;"></i>Preview Kartu Jenis Layanan</div>
+                            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                                <div style="flex:1;min-width:130px;border:2px solid var(--primary);border-radius:10px;padding:12px 14px;text-align:center;background:#fff;">
+                                    <div style="font-size:20px;margin-bottom:4px;"><i class="fas fa-store"></i></div>
+                                    <div style="font-size:12px;font-weight:700;color:var(--primary);" id="prevLabelDatang"><?= htmlspecialchars($booking_page['hs_label_datang']) ?></div>
+                                    <div style="font-size:10px;color:var(--text-lt);margin-top:2px;" id="prevDescDatang"><?= htmlspecialchars($booking_page['hs_desc_datang']) ?></div>
+                                </div>
+                                <div style="flex:1;min-width:130px;border:2px solid #d1c0b8;border-radius:10px;padding:12px 14px;text-align:center;background:#fff;" id="prevCardHs">
+                                    <div style="font-size:20px;margin-bottom:4px;"><i class="fas fa-home"></i></div>
+                                    <div style="font-size:12px;font-weight:700;color:var(--text);" id="prevLabelHs"><?= htmlspecialchars($booking_page['hs_label_hs']) ?></div>
+                                    <div style="font-size:10px;color:var(--text-lt);margin-top:2px;" id="prevDescHs"><?= htmlspecialchars($booking_page['hs_desc_hs']) ?></div>
+                                </div>
+                            </div>
+                        </div>
+                        <small style="font-size:10px;color:var(--text-lt);display:block;margin-bottom:16px;"><i class="fa-solid fa-eye" style="margin-right:3px;"></i>Preview tampilan kartu pilihan jenis layanan di halaman booking</small>
+                        <script>
+                        (function(){
+                            var fields = {
+                                'hs_label_datang': 'prevLabelDatang',
+                                'hs_desc_datang':  'prevDescDatang',
+                                'hs_label_hs':     'prevLabelHs',
+                                'hs_desc_hs':      'prevDescHs',
+                            };
+                            Object.keys(fields).forEach(function(n){
+                                var inp = document.querySelector('input[name="' + n + '"]');
+                                var pv  = document.getElementById(fields[n]);
+                                if (inp && pv) inp.addEventListener('input', function(){ pv.textContent = inp.value; });
+                            });
+                            // Toggle preview card HS saat checkbox berubah
+                            var chk = document.querySelector('input[name="hs_enabled"][value="1"]');
+                            var card = document.getElementById('prevCardHs');
+                            if (chk && card) {
+                                function syncCard(){ card.style.opacity = chk.checked ? '1' : '0.35'; }
+                                chk.addEventListener('change', syncCard);
+                                syncCard();
+                            }
+                        })();
+                        </script>
+
+                        <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
+
+                        <!-- ── Notifikasi WhatsApp ── -->
+                        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:14px;">
+                            <i class="fab fa-whatsapp" style="margin-right:5px;color:#22c55e;"></i>Teks Notifikasi WhatsApp (di bawah form)
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fab fa-whatsapp" style="margin-right:4px;color:#22c55e;"></i>Teks info WA yang muncul di bawah form booking</label>
+                            <textarea name="wa_notice_text" rows="3" placeholder="Setelah booking berhasil, tim kami akan menghubungi Anda dalam waktu <1 jam untuk konfirmasi jadwal."><?= htmlspecialchars($booking_page['wa_notice_text']) ?></textarea>
+                            <small style="font-size:11px;color:var(--text-lt);margin-top:4px;display:block;">
+                                <i class="fa-solid fa-circle-info" style="margin-right:3px;"></i>
+                                Teks ini tampil di kotak notifikasi WhatsApp tepat di bawah form, sebelum tombol "Konfirmasi Booking".
+                            </small>
+                        </div>
+                        <!-- Preview notice -->
+                        <div style="background:#fdf6f2;border:1.5px solid #e5d5cc;border-radius:12px;padding:12px 16px;display:flex;align-items:flex-start;gap:10px;font-size:12.5px;color:#6d3a28;margin-bottom:4px;">
+                            <i class="fab fa-whatsapp" style="font-size:18px;color:#8B6F5E;margin-top:1px;flex-shrink:0;"></i>
+                            <span id="waNoticePreview"><?= htmlspecialchars($booking_page['wa_notice_text']) ?></span>
+                        </div>
+                        <small style="font-size:10px;color:var(--text-lt);display:block;margin-bottom:16px;"><i class="fa-solid fa-eye" style="margin-right:3px;"></i>Preview tampilan notice di halaman booking</small>
+                        <script>
+                        (function(){
+                            var ta = document.querySelector('textarea[name="wa_notice_text"]');
+                            var pv = document.getElementById('waNoticePreview');
+                            if (ta && pv) {
+                                ta.addEventListener('input', function(){ pv.textContent = ta.value; });
+                            }
+                        })();
+                        </script>
+
                         <div style="margin-top:24px;">
                             <button type="submit" class="btn-primary-cms">
                                 <i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan Halaman Booking
@@ -3197,6 +3394,13 @@ input[type=file]{display:none;}
 <?php elseif ($activeTab === 'jam_settings'): ?>
 
 <?php
+// AUTO-FIX kolom status di bookings
+$chkStJ = mysqli_query($conn, "SHOW COLUMNS FROM bookings LIKE 'status'");
+if ($chkStJ && mysqli_num_rows($chkStJ) === 0) {
+    mysqli_query($conn, "ALTER TABLE bookings ADD COLUMN status VARCHAR(20) DEFAULT 'booked'");
+    mysqli_query($conn, "UPDATE bookings SET status='booked' WHERE status IS NULL OR status=''");
+}
+
 // Load time_slots dari CMS
 $rawSlots = getBookingPage($conn, 'time_slots', "09:00\n10:00\n11:00\n13:00\n14:00\n15:00\n16:00\n17:00\n18:00\n19:00\n20:00");
 $allSlots  = array_values(array_filter(array_map('trim', explode("\n", $rawSlots))));
@@ -3212,16 +3416,155 @@ if ($blockedRows) {
     }
 }
 
-// Load booking yang sudah ada untuk info booked slots
+// Load booking yang sudah ada (hanya status booked)
 $bookedSlots = [];
-$bkRes = $conn ? mysqli_query($conn, "SELECT date, time, COUNT(*) as cnt FROM bookings GROUP BY date, time") : null;
+$bkRes = $conn ? mysqli_query($conn, "SELECT date, time, COUNT(*) as cnt FROM bookings WHERE status='booked' GROUP BY date, time") : null;
 if ($bkRes) {
     while ($bRow = mysqli_fetch_assoc($bkRes)) {
         $bookedSlots[$bRow['date']][$bRow['time']] = (int)$bRow['cnt'];
     }
 }
+
+// Load semua booking aktif (7 hari ke depan) dengan detail lengkap untuk panel kelola
+$managableBookings = [];
+$mbRes = $conn ? mysqli_query($conn,
+    "SELECT id, name, phone, service, date, time, jumlah_orang, jenis_layanan, status, catatan
+     FROM bookings
+     WHERE date >= CURDATE() AND date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+     ORDER BY date ASC, time ASC"
+) : null;
+if ($mbRes) {
+    while ($mbRow = mysqli_fetch_assoc($mbRes)) {
+        $managableBookings[$mbRow['date']][] = $mbRow;
+    }
+}
+
 $selectedDate = $_GET['filter_date'] ?? date('Y-m-d');
 ?>
+
+<?php // ── Flash notifications ── ?>
+<?php if (isset($_GET['released'])): ?>
+<div style="background:rgba(16,185,129,.1);border:1.5px solid rgba(16,185,129,.35);border-radius:10px;padding:12px 18px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:13px;color:#065f46;">
+    <i class="fa-solid fa-lock-open" style="color:#10b981;font-size:16px;"></i>
+    <strong>Jam berhasil di-release!</strong> Jam tersebut kini bisa dipesan kembali oleh customer.
+</div>
+<?php elseif (isset($_GET['cancelled'])): ?>
+<div style="background:rgba(239,68,68,.08);border:1.5px solid rgba(239,68,68,.3);border-radius:10px;padding:12px 18px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:13px;color:#7f1d1d;">
+    <i class="fa-solid fa-ban" style="color:#ef4444;font-size:16px;"></i>
+    <strong>Booking dibatalkan!</strong> Jam tersebut kini tersedia untuk dipesan kembali.
+</div>
+<?php elseif (isset($_GET['restored'])): ?>
+<div style="background:rgba(139,111,94,.1);border:1.5px solid rgba(139,111,94,.35);border-radius:10px;padding:12px 18px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:13px;color:#3b1a0d;">
+    <i class="fa-solid fa-rotate-left" style="color:#8B6F5E;font-size:16px;"></i>
+    <strong>Booking diaktifkan kembali!</strong> Jam tersebut kembali terkunci untuk pelanggan ini.
+</div>
+<?php elseif (isset($_GET['conflict'])): ?>
+<div style="background:rgba(245,158,11,.1);border:1.5px solid rgba(245,158,11,.35);border-radius:10px;padding:12px 18px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:13px;color:#78350f;">
+    <i class="fa-solid fa-triangle-exclamation" style="color:#f59e0b;font-size:16px;"></i>
+    <strong>Tidak bisa diaktifkan!</strong> Jam tersebut sudah dipesan oleh pelanggan lain.
+</div>
+<?php endif; ?>
+
+<?php // ── PANEL KELOLA BOOKING TERJADWAL (30 hari ke depan) ── ?>
+<?php if (!empty($managableBookings)): ?>
+<div class="cms-card" style="margin-bottom:20px;">
+    <div class="cms-card-header">
+        <i class="fa-solid fa-calendar-check"></i>
+        <h3>Kelola Booking Terjadwal</h3>
+        <div class="ms-auto">
+            <span style="font-size:12px;color:var(--text-lt);">
+                <i class="fa-solid fa-circle-info" style="margin-right:4px;"></i>
+                Release = jam bisa dipesan ulang &nbsp;|&nbsp; Batal = booking dibatalkan
+            </span>
+        </div>
+    </div>
+    <div class="cms-card-body" style="padding:0;">
+        <?php foreach ($managableBookings as $tglMb => $rows):
+            $tsMb    = strtotime($tglMb);
+            $tglFmtMb = date('d', $tsMb).' '.$bulanId[(int)date('m',$tsMb)].' '.date('Y',$tsMb);
+            $isTodayMb = ($tglMb === date('Y-m-d'));
+        ?>
+        <div style="border-bottom:1px solid var(--border);">
+            <!-- Header tanggal -->
+            <div style="padding:10px 18px;background:<?= $isTodayMb ? 'rgba(139,111,94,.08)' : 'var(--cream)' ?>;display:flex;align-items:center;gap:10px;">
+                <i class="fa-solid fa-calendar" style="color:var(--primary);"></i>
+                <span style="font-weight:700;font-size:13px;color:var(--text);"><?= $tglFmtMb ?></span>
+                <?php if ($isTodayMb): ?>
+                <span style="background:var(--primary);color:#fff;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700;">HARI INI</span>
+                <?php endif; ?>
+                <span style="font-size:11px;color:var(--text-lt);margin-left:auto;"><?= count($rows) ?> booking</span>
+            </div>
+            <!-- Baris tiap booking -->
+            <?php foreach ($rows as $bk2):
+                $isBooked2    = ($bk2['status'] === 'booked');
+                $isReleased2  = ($bk2['status'] === 'released');
+                $isCancelled2 = ($bk2['status'] === 'cancelled');
+                $rowBg = $isBooked2 ? '#fff' : ($isReleased2 ? 'rgba(16,185,129,.04)' : 'rgba(239,68,68,.03)');
+                $statusBg    = $isBooked2 ? '#f59e0b' : ($isReleased2 ? '#10b981' : '#ef4444');
+                $statusLabel = $isBooked2 ? 'AKTIF' : ($isReleased2 ? 'RELEASED' : 'BATAL');
+                $statusIcon  = $isBooked2 ? 'fa-lock' : ($isReleased2 ? 'fa-lock-open' : 'fa-ban');
+            ?>
+            <div style="padding:12px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:<?= $rowBg ?>;border-top:1px solid var(--border);">
+                <!-- Jam badge -->
+                <div style="background:<?= $isBooked2 ? 'var(--primary)' : '#e0e0e0' ?>;color:<?= $isBooked2 ? '#fff' : '#888' ?>;font-size:14px;font-weight:800;border-radius:8px;padding:6px 14px;min-width:64px;text-align:center;flex-shrink:0;">
+                    <?= htmlspecialchars($bk2['time']) ?>
+                </div>
+                <!-- Info booking -->
+                <div style="flex:1;min-width:160px;">
+                    <div style="font-weight:700;font-size:13px;color:var(--text);">
+                        <?= htmlspecialchars($bk2['name']) ?>
+                        <span style="font-weight:400;font-size:11px;color:var(--text-lt);margin-left:6px;">
+                            <i class="fab fa-whatsapp" style="color:#22c55e;"></i> <?= htmlspecialchars($bk2['phone']) ?>
+                        </span>
+                    </div>
+                    <div style="font-size:11.5px;color:var(--text-lt);margin-top:2px;">
+                        <i class="fas fa-spa" style="margin-right:4px;color:var(--primary);"></i><?= htmlspecialchars($bk2['service']) ?>
+                        &nbsp;·&nbsp;
+                        <?php if ($bk2['jenis_layanan'] === 'home_service'): ?>
+                        <i class="fas fa-home" style="color:#8B6F5E;"></i> Home Service
+                        <?php else: ?>
+                        <i class="fas fa-store" style="color:#8B6F5E;"></i> Datang
+                        <?php endif; ?>
+                        &nbsp;·&nbsp;
+                        <i class="fas fa-users" style="margin-right:2px;"></i><?= (int)($bk2['jumlah_orang'] ?: 1) ?> orang
+                        &nbsp;·&nbsp; ID #<?= $bk2['id'] ?>
+                    </div>
+                </div>
+                <!-- Status badge -->
+                <span style="background:<?= $statusBg ?>;color:#fff;font-size:10px;font-weight:700;border-radius:20px;padding:3px 10px;display:flex;align-items:center;gap:5px;flex-shrink:0;">
+                    <i class="fa-solid <?= $statusIcon ?>"></i> <?= $statusLabel ?>
+                </span>
+                <!-- Tombol aksi -->
+                <div style="display:flex;gap:6px;flex-shrink:0;">
+                    <?php if ($isBooked2): ?>
+                    <!-- Tombol Release: jam dibuka, booking tetap tercatat -->
+                    <a href="cms.php?tab=jam_settings&action=release_booking&id=<?= $bk2['id'] ?>"
+                       onclick="return confirm('Release booking #<?= $bk2['id'] ?> (<?= htmlspecialchars($bk2['name']) ?>, jam <?= $bk2['time'] ?>)?\n\nJam ini akan TERBUKA dan bisa dipesan customer lain.\nData booking tetap tersimpan dengan status RELEASED.')"
+                       style="background:rgba(16,185,129,.12);color:#059669;border:1.5px solid rgba(16,185,129,.3);border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:5px;white-space:nowrap;">
+                        <i class="fa-solid fa-lock-open"></i> Release
+                    </a>
+                    <!-- Tombol Batalkan: booking dibatalkan -->
+                    <a href="cms.php?tab=jam_settings&action=cancel_booking&id=<?= $bk2['id'] ?>"
+                       onclick="return confirm('Batalkan booking #<?= $bk2['id'] ?> (<?= htmlspecialchars($bk2['name']) ?>, jam <?= $bk2['time'] ?>)?\n\nJam ini akan TERBUKA dan bisa dipesan kembali.\nStatus booking akan diubah menjadi DIBATALKAN.')"
+                       style="background:rgba(239,68,68,.1);color:#dc2626;border:1.5px solid rgba(239,68,68,.3);border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:5px;white-space:nowrap;">
+                        <i class="fa-solid fa-ban"></i> Batalkan
+                    </a>
+                    <?php elseif ($isReleased2 || $isCancelled2): ?>
+                    <!-- Tombol Aktifkan Kembali -->
+                    <a href="cms.php?tab=jam_settings&action=restore_booking&id=<?= $bk2['id'] ?>"
+                       onclick="return confirm('Aktifkan kembali booking #<?= $bk2['id'] ?>?\n\nJam ini akan TERKUNCI kembali untuk <?= htmlspecialchars($bk2['name']) ?>.\nPastikan tidak ada booking lain di jam yang sama.')"
+                       style="background:rgba(139,111,94,.1);color:#8B6F5E;border:1.5px solid rgba(139,111,94,.3);border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:5px;white-space:nowrap;">
+                        <i class="fa-solid fa-rotate-left"></i> Aktifkan
+                    </a>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+        <?php endforeach; ?>
+    </div>
+</div>
+<?php endif; ?>
 
 <div class="cms-card" style="margin-bottom:20px;">
     <div class="cms-card-header">
@@ -3247,18 +3590,60 @@ $selectedDate = $_GET['filter_date'] ?? date('Y-m-d');
                     </div>
                     <div class="form-group">
                         <label><i class="fa-solid fa-clock" style="margin-right:4px;"></i>Pilih Jam yang Ingin Diblokir</label>
+                        <?php
+                        // Hitung jam yang sudah ter-booking & diblokir di tanggal yang dipilih
+                        $bookedOnBlockDate  = $bookedSlots[$selectedDate] ?? [];
+                        $blockedOnBlockDate = array_column($blockedByDate[$selectedDate] ?? [], 'jam');
+                        $hasBookedSlots     = !empty($bookedOnBlockDate);
+                        ?>
+                        <?php if ($hasBookedSlots): ?>
+                        <div style="background:rgba(245,158,11,.08);border:1.5px solid rgba(245,158,11,.3);border-radius:10px;padding:10px 14px;margin-bottom:10px;margin-top:6px;font-size:12.5px;color:#92400e;display:flex;align-items:flex-start;gap:8px;">
+                            <i class="fa-solid fa-triangle-exclamation" style="color:#f59e0b;font-size:15px;flex-shrink:0;margin-top:2px;"></i>
+                            <div>
+                                <strong>Ada <?= count($bookedOnBlockDate) ?> jam yang sudah dipesan</strong> di tanggal ini.
+                                Jam bertanda <span style="background:#f59e0b;color:#fff;border-radius:4px;padding:1px 6px;font-size:11px;font-weight:700;">BOOKED</span> otomatis tidak bisa dipilih customer di form booking.
+                                Blokir jika ingin menandai secara eksplisit juga.
+                                <br><button type="button" onclick="checkBookedSlots()" style="margin-top:6px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);color:#92400e;border-radius:6px;padding:4px 12px;font-size:11.5px;font-weight:700;cursor:pointer;">
+                                    <i class="fa-solid fa-lock" style="margin-right:3px;"></i>Pilih & Blokir Semua Jam BOOKED
+                                </button>
+                            </div>
+                        </div>
+                        <?php endif; ?>
                         <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;">
-                            <?php foreach ($allSlots as $sl): ?>
-                            <label style="display:inline-flex;align-items:center;gap:6px;background:#faf5f0;border:1.5px solid var(--border);border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;transition:.2s;" class="slot-check-wrap">
-                                <input type="checkbox" name="jam_bulk[]" value="<?= htmlspecialchars($sl) ?>" style="accent-color:var(--danger);width:14px;height:14px;">
-                                <span style="font-weight:600;color:var(--text);"><?= htmlspecialchars($sl) ?></span>
+                            <?php foreach ($allSlots as $sl):
+                                $isSlotBooked  = isset($bookedOnBlockDate[$sl]);
+                                $isSlotBlocked = in_array($sl, $blockedOnBlockDate);
+                                $slotCnt       = $bookedOnBlockDate[$sl] ?? 0;
+                            ?>
+                            <label style="display:inline-flex;align-items:center;gap:6px;
+                                background:<?= $isSlotBlocked ? 'rgba(239,68,68,.08)' : ($isSlotBooked ? 'rgba(245,158,11,.08)' : '#faf5f0') ?>;
+                                border:1.5px solid <?= $isSlotBlocked ? 'rgba(239,68,68,.4)' : ($isSlotBooked ? 'rgba(245,158,11,.5)' : 'var(--border)') ?>;
+                                border-radius:8px;padding:6px 12px;font-size:13px;
+                                cursor:<?= $isSlotBlocked ? 'not-allowed' : 'pointer' ?>;
+                                transition:.2s;opacity:<?= $isSlotBlocked ? '.7' : '1' ?>;"
+                                class="slot-check-wrap<?= $isSlotBooked ? ' booked-slot-label' : '' ?>"
+                                data-booked="<?= $isSlotBooked ? '1' : '0' ?>"
+                                title="<?= $isSlotBlocked ? 'Sudah diblokir admin' : ($isSlotBooked ? "Sudah ada {$slotCnt} booking — otomatis tidak bisa dipilih customer" : 'Tersedia') ?>">
+                                <input type="checkbox" name="jam_bulk[]" value="<?= htmlspecialchars($sl) ?>"
+                                    style="accent-color:var(--danger);width:14px;height:14px;"
+                                    <?= $isSlotBlocked ? 'disabled' : '' ?>
+                                    class="<?= $isSlotBooked ? 'booked-slot-cb' : '' ?>">
+                                <span style="font-weight:600;color:<?= $isSlotBlocked ? '#ef4444' : ($isSlotBooked ? '#d97706' : 'var(--text)') ?>;"><?= htmlspecialchars($sl) ?></span>
                                 <span style="font-size:10px;color:var(--text-lt);">WIB</span>
+                                <?php if ($isSlotBooked && !$isSlotBlocked): ?>
+                                <span style="background:#f59e0b;color:#fff;font-size:9px;font-weight:700;border-radius:4px;padding:1px 5px;letter-spacing:.3px;">BOOKED <?= $slotCnt ?>x</span>
+                                <?php elseif ($isSlotBlocked): ?>
+                                <span style="background:#ef4444;color:#fff;font-size:9px;font-weight:700;border-radius:4px;padding:1px 5px;letter-spacing:.3px;"><i class="fa-solid fa-ban" style="font-size:8px;"></i> BLOKIR</span>
+                                <?php endif; ?>
                             </label>
                             <?php endforeach; ?>
                         </div>
-                        <div style="margin-top:8px;display:flex;gap:10px;">
+                        <div style="margin-top:8px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
                             <button type="button" onclick="checkAllSlots(true)" style="background:none;border:none;color:var(--danger);font-size:12px;font-weight:600;cursor:pointer;padding:0;"><i class="fa-solid fa-check-square" style="margin-right:3px;"></i>Pilih Semua</button>
                             <button type="button" onclick="checkAllSlots(false)" style="background:none;border:none;color:var(--text-lt);font-size:12px;font-weight:600;cursor:pointer;padding:0;"><i class="fa-regular fa-square" style="margin-right:3px;"></i>Reset</button>
+                            <?php if ($hasBookedSlots): ?>
+                            <button type="button" onclick="checkBookedSlots()" style="background:none;border:none;color:#d97706;font-size:12px;font-weight:600;cursor:pointer;padding:0;"><i class="fa-solid fa-user-clock" style="margin-right:3px;"></i>Pilih Yang Sudah Booked</button>
+                            <?php endif; ?>
                         </div>
                     </div>
                     <div class="form-group">
@@ -3405,18 +3790,18 @@ $selectedDate = $_GET['filter_date'] ?? date('Y-m-d');
                 <?php if (!empty($bookedSlots)): ?>
                 <div style="margin-top:20px;background:#fdfaf7;border:1px solid var(--border);border-radius:12px;padding:14px 16px;">
                     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:10px;">
-                        <i class="fa-solid fa-calendar-check" style="margin-right:4px;color:var(--primary);"></i>Jam dengan Booking Aktif (7 hari ke depan)
+                        <i class="fa-solid fa-calendar-check" style="margin-right:4px;color:var(--primary);"></i>Jam Terkunci (Booking Aktif, 30 hari ke depan)
                     </div>
                     <?php
                     $upcomingBooked = [];
                     foreach ($bookedSlots as $tgl => $jams) {
-                        if ($tgl >= date('Y-m-d') && $tgl <= date('Y-m-d', strtotime('+7 days'))) {
+                        if ($tgl >= date('Y-m-d') && $tgl <= date('Y-m-d', strtotime('+30 days'))) {
                             $upcomingBooked[$tgl] = $jams;
                         }
                     }
                     if (empty($upcomingBooked)):
                     ?>
-                    <p style="font-size:12px;color:var(--text-lt);">Tidak ada booking aktif 7 hari ke depan.</p>
+                    <p style="font-size:12px;color:var(--text-lt);">Tidak ada booking aktif 30 hari ke depan.</p>
                     <?php else: ?>
                     <?php foreach ($upcomingBooked as $tgl => $jams):
                         $ts3 = strtotime($tgl);
@@ -3443,7 +3828,15 @@ $selectedDate = $_GET['filter_date'] ?? date('Y-m-d');
 <script>
 function checkAllSlots(check) {
     document.querySelectorAll('.slot-check-wrap input[type=checkbox]').forEach(function(cb) {
-        cb.checked = check;
+        if (!cb.disabled) cb.checked = check;
+    });
+}
+function checkBookedSlots() {
+    document.querySelectorAll('.slot-check-wrap input[type=checkbox]').forEach(function(cb) {
+        if (!cb.disabled) cb.checked = false;
+    });
+    document.querySelectorAll('.booked-slot-cb').forEach(function(cb) {
+        if (!cb.disabled) cb.checked = true;
     });
 }
 // Sinkronkan tanggal filter dengan tanggal blokir

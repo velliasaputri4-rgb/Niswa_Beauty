@@ -219,9 +219,8 @@ function buildPesanCustomerBooking(array $d, array $availableSlots = []): string
     if (!empty($d['catatan'])) {
         $pesan .= "📝 *Catatan:*   {$d['catatan']}\n";
     }
-    $pesan .= "\n⚠️ *Status:* Menunggu konfirmasi tim kami\n";
-    $pesan .= "⚠️ Jika jam yang kamu pilih ternyata penuh, tim kami akan konfirmasi dan menawarkan jam lain. 😊\n\n";
-    $pesan .= "Tim kami akan menghubungi kamu dalam *< 1 jam*.\n\n";
+    $pesan .= "\nJika ada perubahan jadwal, pertanyaan, atau kebutuhan lainnya, jangan ragu untuk menghubungi admin kami kapan saja 🤍\n\n";
+    $pesan .= "Terima kasih sudah memilih Niswa Beauty sebagai partner kecantikan kakak 🌸 Kami tidak sabar untuk memberikan pelayanan terbaik dan membuat kakak tampil lebih cantik, percaya diri, dan glowing ✨💅💕\n\n";
     $pesan .= "📍 " . SALON_ADDRESS . "\n";
     $pesan .= "✨ *" . SALON_NAME . "* — Premium Beauty Experience";
 
