@@ -285,7 +285,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order']) && !empty($_
     }
 
     $harga_num = (int) preg_replace('/[^0-9]/', '', $product_price);
-    $total     = 'Rp ' . number_format($harga_num * $qty, 0, ',', '.');
+    $ongkir    = 5000;
+    $total     = 'Rp ' . number_format(($harga_num * $qty) + $ongkir, 0, ',', '.');
 
     $errors = [];
     if (empty($nama))     $errors[] = 'Nama wajib diisi.';
