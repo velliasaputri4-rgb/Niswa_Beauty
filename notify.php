@@ -11,7 +11,7 @@
 define('FONNTE_TOKEN',  '6cFhenDoFG7BtihBhJZD');   // Dari dashboard fonnte.com
 define('ADMIN_WA',      '628971440805');                   // Nomor WA admin (tanpa +)
 define('SALON_NAME',    'NISWÀ BEAUTY');
-define('SALON_ADDRESS', 'Jl. Watulumpang, Bangsri, Jepara');
+define('SALON_ADDRESS', 'Jl. Lkr Kecamatan, Bangsri, Jepara 59453');
 
 // ──────────────────────────────────────────────────────────────
 //  TIMEOUT — Turunkan agar tidak lama nunggu response Fonnte
