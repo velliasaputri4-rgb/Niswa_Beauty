@@ -1682,29 +1682,25 @@ input[type=file]{display:none;}
                             </div>
                         </div>
 
-                        <div class="grid-3" style="margin-top:8px;">
-                            <?php foreach ([1,2,3] as $n):
-                                $imgVal = $hero["img$n"]; ?>
-                            <div class="form-group">
-                                <label><i class="fa-regular fa-image" style="margin-right:4px;"></i>Gambar Slider <?= $n ?></label>
-                                <label class="img-upload-box" for="hero_img<?= $n ?>_input">
-                                    <i class="fa-solid fa-cloud-arrow-up"></i>
-                                    <p>Upload gambar<?= $n === 1 ? '<br><small style="color:var(--text-lt);">Gambar utama</small>' : '' ?></p>
-                                </label>
-                                <input type="file" id="hero_img<?= $n ?>_input" name="hero_img<?= $n ?>" accept="image/*" onchange="previewImg(this,'prev_hero<?= $n ?>')">
-                                <?php if ($imgVal): ?>
-                                <div style="position:relative;margin-top:10px;">
-                                    <img src="<?= htmlspecialchars($imgVal) ?>" class="prev-thumb" id="prev_hero<?= $n ?>" style="display:block;margin-top:0;">
-                                    <a href="cms.php?action=delete_hero_img&n=<?= $n ?>" onclick="return confirm('Hapus foto ini?')"
-                                       style="position:absolute;top:6px;right:6px;background:rgba(239,68,68,.9);color:#fff;border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:13px;text-decoration:none;" title="Hapus foto">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </a>
-                                </div>
-                                <?php else: ?>
-                                <img src="" class="prev-thumb" id="prev_hero<?= $n ?>">
-                                <?php endif; ?>
+                        <div class="form-group" style="margin-top:8px;">
+                            <?php $imgVal = $hero['img1']; ?>
+                            <label><i class="fa-regular fa-image" style="margin-right:4px;"></i>Gambar Hero</label>
+                            <label class="img-upload-box" for="hero_img1_input">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                                <p>Upload gambar<br><small style="color:var(--text-lt);">Gambar utama hero</small></p>
+                            </label>
+                            <input type="file" id="hero_img1_input" name="hero_img1" accept="image/*" onchange="previewImg(this,'prev_hero1')">
+                            <?php if ($imgVal): ?>
+                            <div style="position:relative;margin-top:10px;">
+                                <img src="<?= htmlspecialchars($imgVal) ?>" class="prev-thumb" id="prev_hero1" style="display:block;margin-top:0;">
+                                <a href="cms.php?action=delete_hero_img&n=1" onclick="return confirm('Hapus foto ini?')"
+                                   style="position:absolute;top:6px;right:6px;background:rgba(239,68,68,.9);color:#fff;border-radius:6px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:13px;text-decoration:none;" title="Hapus foto">
+                                    <i class="fa-solid fa-trash"></i>
+                                </a>
                             </div>
-                            <?php endforeach; ?>
+                            <?php else: ?>
+                            <img src="" class="prev-thumb" id="prev_hero1">
+                            <?php endif; ?>
                         </div>
 
                         <button type="submit" class="btn-primary-cms">
