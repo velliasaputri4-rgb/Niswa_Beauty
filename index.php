@@ -1797,7 +1797,7 @@ $catLabels = ['simple' => 'Simple', 'glam' => 'Glam', 'wedding' => 'Wedding'];
 
     <!-- Tombol konfirmasi -->
     <div style="padding:0 18px 18px;">
-        <button id="qpAddBtn" onclick="qpConfirmAdd()" style="width:100%;padding:13px;border:none;border-radius:14px;background:linear-gradient(135deg,#8B6F5E,#C4A882);color:#fff;font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 4px 16px rgba(139,111,94,0.30);transition:transform .15s;" onmousedown="this.style.transform='scale(.97)'" onmouseup="this.style.transform='scale(1)'" onmouseleave="this.style.transform='scale(1)'">
+        <button id="qpAddBtn" onclick="qpConfirmAdd()" class="qp-add-btn" ontouchstart="this.classList.add('qp-add-btn--press')" ontouchend="this.classList.remove('qp-add-btn--press')" ontouchcancel="this.classList.remove('qp-add-btn--press')" onmousedown="this.classList.add('qp-add-btn--press')" onmouseup="this.classList.remove('qp-add-btn--press')" onmouseleave="this.classList.remove('qp-add-btn--press')">
             <i class="fas fa-cart-plus"></i>
             <span id="qpAddBtnText">Tambah ke Keranjang</span>
         </button>
@@ -1805,6 +1805,24 @@ $catLabels = ['simple' => 'Simple', 'glam' => 'Glam', 'wedding' => 'Wedding'];
 </div>
 
 <!-- ══ COD PAYMENT GATEWAY STYLES ══ -->
+<style>
+.qp-add-btn {
+    width:100%; padding:13px; border:none; border-radius:14px;
+    background: linear-gradient(135deg,#8B6F5E,#C4A882);
+    color:#fff; font-family:'Poppins',sans-serif; font-size:14px; font-weight:700;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; gap:9px;
+    box-shadow:0 4px 16px rgba(139,111,94,0.30);
+    transition:transform .15s, box-shadow .15s;
+    -webkit-tap-highlight-color: transparent;
+}
+.qp-add-btn--press {
+    transform: scale(.97);
+    box-shadow: 0 2px 8px rgba(139,111,94,0.20);
+}
+.qp-add-btn--confirmed {
+    background: linear-gradient(135deg,#6e5549,#b89e85) !important;
+}
+</style>
 <style>
 .cod-payment-section { margin-bottom:14px; }
 .cod-payment-label { font-size:13px;font-weight:600;margin-bottom:10px;display:block;color:#2d1f17; }
@@ -2859,12 +2877,12 @@ document.addEventListener('DOMContentLoaded',function(){NiswaCart.init();});
     window.qpConfirmAdd = function(){
         var btn = document.getElementById('qpAddBtn');
         var txt = document.getElementById('qpAddBtnText');
-        btn.style.background = 'linear-gradient(135deg,#6e5549,#b89e85)';
+        btn.classList.add('qp-add-btn--confirmed');
         txt.textContent = '✓ Ditambahkan!';
         setTimeout(function(){
             NiswaCart.addWithQty(_name, _price, _img, _type, _disc, _minBuy, _qty);
             closeQtyPicker();
-            btn.style.background = '';
+            btn.classList.remove('qp-add-btn--confirmed');
             txt.textContent = 'Tambah ke Keranjang';
         }, 380);
     };
