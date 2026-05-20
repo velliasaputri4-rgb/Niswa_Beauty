@@ -302,7 +302,7 @@ function buildPesanCustomerOrder(array $d): string {
     $pesan .= "📦 *DETAIL PESANAN #{$d['order_id']}*\n\n";
     $pesan .= "🛒 *Produk:*   {$d['product_name']}\n";
     $pesan .= "🔢 *Qty:*      {$d['qty']} pcs\n";
-    $pesan .= "💰 *Harga:*    {$d['product_price']}\n";
+    $pesan .= "💰 *Subtotal:* {$d['product_price']}\n";
     $pesan .= "🚚 *Ongkir:*   Rp 5.000 (Jepara)\n";
     $pesan .= "💳 *Total:*    *{$d['total']}*\n\n";
     $pesan .= "🚚 *Pengiriman ke:*\n";
@@ -332,7 +332,7 @@ function buildPesanAdminOrder(array $d): string {
     $pesan .= "📱 *WA:*       {$d['whatsapp']}\n\n";
     $pesan .= "🛒 *Produk:*   {$d['product_name']}\n";
     $pesan .= "🔢 *Qty:*      {$d['qty']} pcs\n";
-    $pesan .= "💰 *Harga:*    {$d['product_price']}\n";
+    $pesan .= "💰 *Subtotal:* {$d['product_price']}\n";
     $pesan .= "🚚 *Ongkir:*   Rp 5.000 (Jepara)\n";
     $pesan .= "💳 *Total:*    *{$d['total']}*\n\n";
     $pesan .= "🚚 *Kirim ke:*\n";

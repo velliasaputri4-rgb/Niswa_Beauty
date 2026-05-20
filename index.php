@@ -290,9 +290,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order']) && !empty($_
     $ongkir    = 5000;
     // product_price dari cart sudah merupakan total semua item (tidak perlu dikali qty lagi)
     // product_price dari beli langsung adalah harga satuan, perlu dikali qty
-    $is_cart   = isset($_POST['is_cart']) && $_POST['is_cart'] == '1';
+    $is_cart   = !empty($_POST['is_cart']) && $_POST['is_cart'] == '1';
     $subtotal  = $is_cart ? $harga_num : ($harga_num * $qty);
+    // Kalau product_price sudah include ongkir (dikirim oleh updateOrderSummary JS),
+    // gunakan langsung. Deteksi: jika is_cart=0 dan harga_num > harga_satuan*qty,
+    // artinya sudah include ongkir. Tapi cara paling aman: selalu hitung ulang di sini.
     $total     = 'Rp ' . number_format($subtotal + $ongkir, 0, ',', '.');
+    // Harga satuan untuk ditampilkan di pesan WA
+    $harga_satuan = $is_cart ? '' : ('Rp ' . number_format($harga_num, 0, ',', '.'));
+    $subtotal_fmt = 'Rp ' . number_format($subtotal, 0, ',', '.');
 
     $errors = [];
     if (empty($nama))     $errors[] = 'Nama wajib diisi.';
@@ -330,11 +336,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order']) && !empty($_
                     'whatsapp'       => $whatsapp,
                     'alamat'         => $alamat,
                     'product_name'   => $product_name,
-                    'product_price'  => $product_price,
+                    'product_price'  => $subtotal_fmt,
                     'qty'            => $qty,
                     'total'          => $total,
                     'catatan'        => $catatan,
                     'payment_method' => $payment_method,
+                    'is_cart'        => $is_cart,
                 ]);
             }
 
@@ -346,11 +353,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order']) && !empty($_
                     'whatsapp'       => $whatsapp,
                     'alamat'         => $alamat,
                     'product_name'   => $product_name,
-                    'product_price'  => $product_price,
+                    'product_price'  => $subtotal_fmt,
                     'qty'            => $qty,
                     'total'          => $total,
                     'catatan'        => $catatan,
                     'payment_method' => $payment_method,
+                    'is_cart'        => $is_cart,
                 ]);
             }
 
@@ -1834,7 +1842,7 @@ $catLabels = ['simple' => 'Simple', 'glam' => 'Glam', 'wedding' => 'Wedding'];
                 <input type="hidden" name="product_price" id="inputProductPrice">
                 <input type="hidden" name="product_image" id="inputProductImage">
                 <input type="hidden" name="payment_method" id="inputPaymentMethod" value="COD">
-                <input type="hidden" name="is_cart" id="inputIsCart" value="0">
+                <input type="hidden" name="is_cart" id="inputIsCart" value="">
 
                 <div id="orderError" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:10px 14px;font-size:13px;color:#dc2626;margin-bottom:14px;">
                     <i class="fas fa-exclamation-circle me-1"></i> <span id="orderErrorText"></span>
@@ -2146,6 +2154,8 @@ function handleBeli(name,price,img,disc,minBuy){
     document.getElementById('orderForm').reset();
     document.getElementById('inputProductName').value=name;
     document.getElementById('inputProductImage').value=img||'';
+    var isCartEl=document.getElementById('inputIsCart');
+    if(isCartEl)isCartEl.value='0';
 
     var priceEl=document.getElementById('modalProductPrice');
     var oriEl=document.getElementById('modalProductPriceOri');
