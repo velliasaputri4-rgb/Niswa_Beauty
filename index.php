@@ -1299,7 +1299,7 @@ $catLabels = ['simple' => 'Simple', 'glam' => 'Glam', 'wedding' => 'Wedding'];
                             <button class="btn-beli" onclick="handleBeli('<?= addslashes($p['name']) ?>','<?= addslashes($p['price']) ?>','<?= addslashes($p['image'] ?? $p['img'] ?? '') ?>',<?= $pDisc ?>,<?= $pMinBuy ?>)">
                                 <i class="fas fa-shopping-bag me-1"></i> Beli Sekarang
                             </button>
-                            <button class="btn-add-cart" onclick="NiswaCart.add('<?= addslashes($p['name']) ?>','<?= addslashes($p['price']) ?>','<?= addslashes($p['image'] ?? $p['img'] ?? '') ?>','Produk',<?= $pDisc ?>,<?= $pMinBuy ?>)">
+                            <button class="btn-add-cart" onclick="openQtyPicker('<?= addslashes($p['name']) ?>','<?= addslashes($p['price']) ?>','<?= addslashes($p['image'] ?? $p['img'] ?? '') ?>','Produk',<?= $pDisc ?>,<?= $pMinBuy ?>)">
                                 <i class="fas fa-cart-plus"></i> + Keranjang
                             </button>
                         </div>
@@ -1713,6 +1713,39 @@ $catLabels = ['simple' => 'Simple', 'glam' => 'Glam', 'wedding' => 'Wedding'];
     </div>
 </div>
 <style>@keyframes ppFadeIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}</style>
+
+<!-- ══ QTY PICKER MODAL ══ -->
+<div id="qtyPickerOverlay" onclick="closeQtyPicker()" style="display:none;position:fixed;inset:0;z-index:10010;background:rgba(0,0,0,0.45);backdrop-filter:blur(2px);"></div>
+<div id="qtyPickerSheet" style="display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(30px);z-index:10011;background:#fff;border-radius:20px;box-shadow:0 12px 48px rgba(0,0,0,0.22);padding:0;width:92%;max-width:400px;opacity:0;transition:transform .28s cubic-bezier(.32,1,.6,1),opacity .25s ease;">
+
+    <!-- Info produk -->
+    <div style="display:flex;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid #f0e8df;">
+        <img id="qpImg" src="" alt="" style="width:60px;height:60px;object-fit:cover;border-radius:12px;border:1.5px solid #f0e8df;flex-shrink:0;">
+        <div style="flex:1;min-width:0;">
+            <div id="qpName" style="font-family:'Poppins',sans-serif;font-weight:700;font-size:14px;color:#2d1f17;line-height:1.4;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+            <div id="qpPrice" style="font-family:'Poppins',sans-serif;font-weight:800;font-size:17px;color:#8B6F5E;"></div>
+        </div>
+        <button onclick="closeQtyPicker()" style="background:#f5ede6;border:none;border-radius:50%;width:30px;height:30px;font-size:17px;color:#8B6F5E;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;">&times;</button>
+    </div>
+
+    <!-- Stepper + subtotal -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px;">
+        <div style="display:flex;align-items:center;gap:0;background:#f8f4f0;border-radius:50px;padding:3px;border:1.5px solid #ede0d4;">
+            <button onclick="qpChangeQty(-1)" style="width:38px;height:38px;border:none;background:transparent;border-radius:50%;font-size:22px;font-weight:700;color:#8B6F5E;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;" onmousedown="this.style.background='#ede0d4'" onmouseup="this.style.background='transparent'" onmouseleave="this.style.background='transparent'">−</button>
+            <span id="qpQtyVal" style="font-family:'Poppins',sans-serif;font-size:16px;font-weight:700;color:#2d1f17;min-width:38px;text-align:center;user-select:none;">1</span>
+            <button onclick="qpChangeQty(1)" style="width:38px;height:38px;border:none;background:transparent;border-radius:50%;font-size:22px;font-weight:700;color:#8B6F5E;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;" onmousedown="this.style.background='#ede0d4'" onmouseup="this.style.background='transparent'" onmouseleave="this.style.background='transparent'">+</button>
+        </div>
+        <div id="qpSubtotal" style="font-family:'Poppins',sans-serif;font-size:15px;font-weight:800;color:#2d1f17;"></div>
+    </div>
+
+    <!-- Tombol konfirmasi -->
+    <div style="padding:0 18px 18px;">
+        <button id="qpAddBtn" onclick="qpConfirmAdd()" style="width:100%;padding:13px;border:none;border-radius:14px;background:linear-gradient(135deg,#8B6F5E,#C4A882);color:#fff;font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 4px 16px rgba(139,111,94,0.30);transition:transform .15s;" onmousedown="this.style.transform='scale(.97)'" onmouseup="this.style.transform='scale(1)'" onmouseleave="this.style.transform='scale(1)'">
+            <i class="fas fa-cart-plus"></i>
+            <span id="qpAddBtnText">Tambah ke Keranjang</span>
+        </button>
+    </div>
+</div>
 
 <!-- ══ COD PAYMENT GATEWAY STYLES ══ -->
 <style>
@@ -2407,7 +2440,21 @@ var NiswaCart=(function(){
         var existing=items.find(function(i){return i.name===name&&i.type===type;});
         if(existing){existing.qty++;existing.selected=true;}
         else{items.push({name:name,price:finalPrice,oriPrice:price,numPrice:numPrice,oriNum:oriNum,disc:disc,minBuy:minBuy,img:img||'',type:type||'Produk',qty:1,selected:true});}
-        save();render();showToast(name,img);openCart();
+        save();render();showToast(name,img);
+    }
+    function addWithQty(name,price,img,type,disc,minBuy,qty){
+        qty=parseInt(qty)||1;
+        disc=parseInt(disc)||0;
+        minBuy=parseInt(minBuy)||0;
+        var oriNum=parsePrice(price);
+        var meetsMin=(minBuy===0||(oriNum*qty>=minBuy));
+        var discAmt=meetsMin?Math.round(oriNum*disc/100):0;
+        var numPrice=oriNum-discAmt;
+        var finalPrice=(disc>0&&meetsMin)?fmt(numPrice):price;
+        var existing=items.find(function(i){return i.name===name&&i.type===type;});
+        if(existing){existing.qty+=qty;existing.selected=true;}
+        else{items.push({name:name,price:finalPrice,oriPrice:price,numPrice:numPrice,oriNum:oriNum,disc:disc,minBuy:minBuy,img:img||'',type:type||'Produk',qty:qty,selected:true});}
+        save();render();showToast(name,img);
     }
     function setQty(idx,qty){
         if(qty<1){if(confirm('Hapus "'+items[idx].name+'" dari keranjang?')){remove(idx);}return;}
@@ -2594,10 +2641,94 @@ var NiswaCart=(function(){
         var successOverlay=document.getElementById('successOrder');
         if(successOverlay){var obs=new MutationObserver(function(){if(successOverlay.style.display==='flex'){items=items.filter(function(i){return !i.selected;});save();render();}});obs.observe(successOverlay,{attributes:true,attributeFilter:['style']});}
     }
-    return{add:add,remove:remove,setQty:setQty,clear:clear,toggleSelect:toggleSelect,toggleSelectAll:toggleSelectAll,openCart:openCart,closeCart:closeCart,init:init};
+    return{add:add,addWithQty:addWithQty,remove:remove,setQty:setQty,clear:clear,toggleSelect:toggleSelect,toggleSelectAll:toggleSelectAll,openCart:openCart,closeCart:closeCart,init:init};
 })();
 document.addEventListener('DOMContentLoaded',function(){NiswaCart.init();});
 </script>
 
-</body>
-</html>
+<!-- ══ QTY PICKER SCRIPT ══ -->
+<script>
+(function(){
+    var _name='',_price='',_img='',_type='',_disc=0,_minBuy=0,_qty=1,_oriNum=0;
+
+    function parseP(s){var m=(s+'').match(/[\d.]+/g);return m?parseInt(m[0].replace(/\./g,''),10)||0:0;}
+    function fmtP(n){return 'Rp '+n.toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.');}
+
+    function refreshUI(){
+        var subtotalOri = _oriNum * _qty;
+        var discActive  = _disc > 0 && (_minBuy === 0 || subtotalOri >= _minBuy);
+        var discAmt     = discActive ? Math.round(subtotalOri * _disc / 100) : 0;
+        var subtotal    = subtotalOri - discAmt;
+
+        document.getElementById('qpQtyVal').textContent  = _qty;
+        document.getElementById('qpSubtotal').textContent = fmtP(subtotal);
+
+        var priceEl = document.getElementById('qpPrice');
+        if(_disc > 0 && discActive){
+            var perItem = _oriNum - Math.round(_oriNum * _disc / 100);
+            priceEl.textContent = fmtP(perItem);
+        } else {
+            priceEl.textContent = fmtP(_oriNum);
+        }
+
+        document.getElementById('qpAddBtnText').textContent = 'Tambah ' + _qty + ' ke Keranjang';
+    }
+
+    window.openQtyPicker = function(name,price,img,type,disc,minBuy){
+        _name   = name;
+        _price  = price;
+        _img    = img;
+        _type   = type  || 'Produk';
+        _disc   = parseInt(disc)   || 0;
+        _minBuy = parseInt(minBuy) || 0;
+        _oriNum = parseP(price);
+        _qty    = 1;
+
+        document.getElementById('qpImg').src  = img  || '';
+        document.getElementById('qpName').textContent = name;
+
+        refreshUI();
+
+        var overlay = document.getElementById('qtyPickerOverlay');
+        var sheet   = document.getElementById('qtyPickerSheet');
+        overlay.style.display = 'block';
+        sheet.style.display   = 'block';
+        sheet.getBoundingClientRect();
+        overlay.style.opacity = '1';
+        sheet.style.opacity   = '1';
+        sheet.style.transform = 'translateX(-50%) translateY(0)';
+        document.body.style.overflow = 'hidden';
+    };
+
+    window.closeQtyPicker = function(){
+        var overlay = document.getElementById('qtyPickerOverlay');
+        var sheet   = document.getElementById('qtyPickerSheet');
+        sheet.style.opacity   = '0';
+        sheet.style.transform = 'translateX(-50%) translateY(16px)';
+        overlay.style.opacity = '0';
+        setTimeout(function(){
+            sheet.style.display   = 'none';
+            overlay.style.display = 'none';
+            document.body.style.overflow = '';
+        }, 280);
+    };
+
+    window.qpChangeQty = function(delta){
+        _qty = Math.max(1, Math.min(99, _qty + delta));
+        refreshUI();
+    };
+
+    window.qpConfirmAdd = function(){
+        var btn = document.getElementById('qpAddBtn');
+        var txt = document.getElementById('qpAddBtnText');
+        btn.style.background = 'linear-gradient(135deg,#6e5549,#b89e85)';
+        txt.textContent = '✓ Ditambahkan!';
+        setTimeout(function(){
+            NiswaCart.addWithQty(_name, _price, _img, _type, _disc, _minBuy, _qty);
+            closeQtyPicker();
+            btn.style.background = '';
+            txt.textContent = 'Tambah ke Keranjang';
+        }, 380);
+    };
+})();
+</script>
