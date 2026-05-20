@@ -245,7 +245,9 @@ $defaultProducts = [
     ["name"=>"Elegant Nails",         "price"=>"Rp 25.000", "category"=>"wedding", "image"=>"image/WhatsApp Image 2026-05-06 at 11.20.31.jpeg"],
     ["name"=>"Elegant Nails",         "price"=>"Rp 25.000", "category"=>"wedding", "image"=>"image/WhatsApp Image 2026-05-06 at 11.17.28.jpeg"],
 ];
-$products = !empty($productsRows) ? $productsRows : $defaultProducts;
+// Pakai DB hanya jika ada produk DAN punya kolom category yang terisi
+$dbHasCategory = !empty($productsRows) && !empty(array_filter(array_column($productsRows, 'category')));
+$products = $dbHasCategory ? $productsRows : $defaultProducts;
 
 // ── Testimoni ──
 $testiRows = $conn ? mysqli_fetch_all(mysqli_query($conn, "SELECT * FROM cms_testimonials ORDER BY sort_order, id"), MYSQLI_ASSOC) : [];
@@ -1006,12 +1008,11 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
     <div class="price-modal-box">
         <button class="price-modal-close" onclick="closePriceModal(null)"><i class="fa-solid fa-xmark"></i></button>
         <div class="price-modal-cat" id="pmCat"></div>
-        <img id="pmImg" src="" alt="" class="price-modal-img" style="display:none;">
+        <img id="pmImg" src="" alt="" class="price-modal-img" style="display:none;" onerror="this.style.display='none'">
         <div class="price-modal-name" id="pmName"></div>
         <div class="price-modal-price" id="pmPrice"></div>
         <div class="price-modal-divider"></div>
         <div class="price-modal-desc" id="pmDesc"></div>
-        <a id="pmWa" href="#" target="_blank" class="price-modal-wa" style="display:none !important;"></a>
     </div>
 </div>
 
@@ -1086,6 +1087,7 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
     color: #fff; font-weight: 700; font-size: 14px; border-radius: 50px;
     padding: 12px; text-decoration: none; font-family: 'Poppins', sans-serif;
     transition: all .2s; box-shadow: 0 4px 16px rgba(37,211,102,0.3);
+    margin-top: 4px;
 }
 .price-modal-wa:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(37,211,102,0.4); color:#fff; }
 .price-modal-img {
@@ -1175,9 +1177,6 @@ document.querySelectorAll('.price-row-clickable').forEach(function(row) {
             pmImg.src = '';
             pmImg.style.display = 'none';
         }
-        var wa = '<?= $kontak["whatsapp"] ?? "62882006900" ?>';
-        var msg = encodeURIComponent('Halo, saya ingin booking layanan *' + name + '* (' + price + '). Apakah tersedia?');
-        document.getElementById('pmWa').href = 'https://wa.me/' + wa + '?text=' + msg;
         document.getElementById('priceModal').classList.add('open');
         document.body.style.overflow = 'hidden';
     });
@@ -1198,11 +1197,11 @@ document.addEventListener('keydown', function(e) {
 .price-cards-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:20px; }
 .price-card { border-radius:20px; overflow:hidden; box-shadow:0 4px 20px rgba(139,111,94,0.12); border:1px solid rgba(214,193,163,0.3); background:#fff; transition:transform .32s cubic-bezier(0.4,0,0.2,1),box-shadow .32s cubic-bezier(0.4,0,0.2,1); }
 .price-card:hover { transform:translateY(-6px); box-shadow:0 16px 48px rgba(139,111,94,0.22); }
-.price-card-header { display:flex; align-items:center; justify-content:space-between; background:#8B6F5E; padding:16px 20px; gap:8px; }
+.price-card-header { display:flex; align-items:center; justify-content:space-between; background:linear-gradient(135deg,#8B6F5E,#D6C1A3); padding:16px 20px; gap:8px; }
 .price-card-label { font-weight:700; font-size:15px; color:#fff; font-family:'Poppins',sans-serif; flex:1; min-width:0; }
 .price-card-header-right { display:flex; align-items:center; gap:6px; flex-shrink:0; }
 .price-card-badge { font-size:10px; font-weight:700; font-family:'Poppins',sans-serif; color:#8B6F5E; background:#fff; border-radius:20px; padding:3px 10px; white-space:nowrap; }
-.price-acc-count { font-size:11px; color:rgba(255,255,255,0.9); background:rgba(255,255,255,0.2); border-radius:20px; padding:3px 12px; font-weight:500; font-family:'Poppins',sans-serif; white-space:nowrap; flex-shrink:0; }
+.price-acc-count { font-size:11px; color:rgba(255,255,255,0.95); background:rgba(255,255,255,0.25); border-radius:20px; padding:3px 12px; font-weight:600; font-family:'Poppins',sans-serif; white-space:nowrap; flex-shrink:0; }
 .price-acc-body { border-top:1px solid rgba(139,111,94,0.12); overflow-x:hidden; }
 .price-table { width:100%; border-collapse:collapse; background:#fff; font-family:'Poppins',sans-serif; font-size:13.5px; table-layout:fixed; }
 .price-table thead tr { background:#faf5f0; border-bottom:2px solid #f0e8df; }
@@ -1218,6 +1217,16 @@ document.addEventListener('keydown', function(e) {
 </style>
 
 <!-- ══ PRODUK COLLECTION ══ -->
+<?php
+$productsByCategory = ['simple' => [], 'glam' => [], 'wedding' => []];
+foreach ($products as $p) {
+    $cat = strtolower(trim($p['category'] ?? 'simple'));
+    if (isset($productsByCategory[$cat]) && count($productsByCategory[$cat]) < 8) {
+        $productsByCategory[$cat][] = $p;
+    }
+}
+$catLabels = ['simple' => 'Simple', 'glam' => 'Glam', 'wedding' => 'Wedding'];
+?>
 <section id="produk" class="section-product">
     <div class="container">
         <div class="product-section-title" data-aos="fade-up">
@@ -1226,65 +1235,111 @@ document.addEventListener('keydown', function(e) {
             <p><?= esc($sec['produk_subtitle']) ?> <i class="fa-solid fa-sparkles" style="color:#D6C1A3;font-size:0.9em;"></i></p>
         </div>
 
-        <!-- Filter Buttons -->
-        <div class="filter-buttons" data-aos="fade-up" data-aos-delay="100">
-            <button class="active" data-filter="simple">Simple</button>
-            <button data-filter="glam">Glam</button>
-            <button data-filter="wedding">Wedding</button>
+        <!-- Tab Buttons -->
+        <div class="prod-tab-wrap" data-aos="fade-up" data-aos-delay="80">
+            <?php $first = true; foreach ($catLabels as $key => $label): ?>
+            <button class="prod-tab-btn<?= $first ? ' active' : '' ?>" data-tab="<?= $key ?>"><?= $label ?></button>
+            <?php $first = false; endforeach; ?>
         </div>
 
-        <div class="product-grid" data-aos="fade-up" data-aos-delay="150">
-        <?php foreach ($products as $p):
-            $img = esc($p['image'] ?? $p['img'] ?? '');
-            $pName = esc($p['name']);
-            $pPrice = esc($p['price']);
-            $pCat = esc($p['category'] ?? 'simple');
-            $pDisc = (int)($p['discount_pct'] ?? 0);
-            $pMinBuy = (int)($p['min_purchase'] ?? 0);
-        ?>
-            <div class="product-card" data-category="<?= $pCat ?>">
-                <div class="product-card-img-wrap">
-                    <img src="<?= $img ?>" alt="<?= $pName ?>" class="product-img" loading="lazy">
-                    <div class="product-card-overlay">
-                        <button class="btn-preview" onclick="showProductPreview('<?= addslashes($p['name']) ?>','<?= addslashes($p['price']) ?>','<?= addslashes($p['image'] ?? $p['img'] ?? '') ?>')">
-                            <i class="fas fa-eye"></i> Lihat
-                        </button>
-                    </div>
-                    <span class="product-badge-cat"><?= esc(ucfirst($pCat)) ?></span>
-                    <?php if ($pDisc > 0): ?>
-                    <span class="product-badge-disc"><?= $pDisc ?>% OFF</span>
-                    <?php endif; ?>
-                </div>
-                <div class="product-info">
-                    <div class="product-info-top">
-                        <div class="product-name"><?= $pName ?></div>
-                        <div class="product-price"><?= $pPrice ?></div>
-                        <?php if ($pDisc > 0): ?>
-                        <div class="product-disc-info">
-                            <i class="fas fa-tag" style="margin-right:4px;"></i>
-                            Diskon <strong><?= $pDisc ?>%</strong>
-                            <?php if ($pMinBuy > 0): ?>
-                            · Min. beli <strong>Rp <?= number_format($pMinBuy,0,',','.') ?></strong>
-                            <?php endif; ?>
+        <!-- Tab Panels -->
+        <?php $first = true; foreach ($productsByCategory as $catKey => $catProducts): ?>
+        <div class="prod-tab-panel<?= $first ? ' active' : '' ?>" id="panel-<?= $catKey ?>">
+            <?php if (!empty($catProducts)): ?>
+            <div class="product-grid">
+            <?php foreach ($catProducts as $p):
+                $img     = esc($p['image'] ?? $p['img'] ?? '');
+                $pName   = esc($p['name']);
+                $pPrice  = esc($p['price']);
+                $pDisc   = (int)($p['discount_pct'] ?? 0);
+                $pMinBuy = (int)($p['min_purchase'] ?? 0);
+            ?>
+                <div class="product-card" data-category="<?= $catKey ?>">
+                    <div class="product-card-img-wrap">
+                        <img src="<?= $img ?>" alt="<?= $pName ?>" class="product-img" loading="lazy">
+                        <div class="product-card-overlay">
+                            <button class="btn-preview" onclick="showProductPreview('<?= addslashes($p['name']) ?>','<?= addslashes($p['price']) ?>','<?= addslashes($p['image'] ?? $p['img'] ?? '') ?>')">
+                                <i class="fas fa-eye"></i> Lihat
+                            </button>
                         </div>
-                        <?php else: ?>
-                        <div class="product-disc-placeholder"></div>
+                        <span class="product-badge-cat"><?= strtoupper($catLabels[$catKey]) ?></span>
+                        <?php if ($pDisc > 0): ?>
+                        <span class="product-badge-disc"><?= $pDisc ?>% OFF</span>
                         <?php endif; ?>
                     </div>
-                    <div class="product-info-actions">
-                        <button class="btn-beli" onclick="handleBeli('<?= addslashes($p['name']) ?>','<?= addslashes($p['price']) ?>','<?= addslashes($p['image'] ?? $p['img'] ?? '') ?>',<?= $pDisc ?>,<?= $pMinBuy ?>)">
-                            <i class="fas fa-shopping-bag me-1"></i> Beli Sekarang
-                        </button>
-                        <button class="btn-add-cart" onclick="NiswaCart.add('<?= addslashes($p['name']) ?>','<?= addslashes($p['price']) ?>','<?= addslashes($p['image'] ?? $p['img'] ?? '') ?>','Produk',<?= $pDisc ?>,<?= $pMinBuy ?>)">
-                            <i class="fas fa-cart-plus"></i> + Keranjang
-                        </button>
+                    <div class="product-info">
+                        <div class="product-info-top">
+                            <div class="product-name"><?= $pName ?></div>
+                            <div class="product-price"><?= $pPrice ?></div>
+                            <?php if ($pDisc > 0): ?>
+                            <div class="product-disc-info">
+                                <i class="fas fa-tag" style="margin-right:4px;"></i>
+                                Diskon <strong><?= $pDisc ?>%</strong>
+                                <?php if ($pMinBuy > 0): ?>
+                                · Min. beli <strong>Rp <?= number_format($pMinBuy,0,',','.') ?></strong>
+                                <?php endif; ?>
+                            </div>
+                            <?php else: ?>
+                            <div class="product-disc-placeholder"></div>
+                            <?php endif; ?>
+                        </div>
+                        <div class="product-info-actions">
+                            <button class="btn-beli" onclick="handleBeli('<?= addslashes($p['name']) ?>','<?= addslashes($p['price']) ?>','<?= addslashes($p['image'] ?? $p['img'] ?? '') ?>',<?= $pDisc ?>,<?= $pMinBuy ?>)">
+                                <i class="fas fa-shopping-bag me-1"></i> Beli Sekarang
+                            </button>
+                            <button class="btn-add-cart" onclick="NiswaCart.add('<?= addslashes($p['name']) ?>','<?= addslashes($p['price']) ?>','<?= addslashes($p['image'] ?? $p['img'] ?? '') ?>','Produk',<?= $pDisc ?>,<?= $pMinBuy ?>)">
+                                <i class="fas fa-cart-plus"></i> + Keranjang
+                            </button>
+                        </div>
                     </div>
                 </div>
+            <?php endforeach; ?>
             </div>
-        <?php endforeach; ?>
+            <?php endif; ?>
         </div>
+        <?php $first = false; endforeach; ?>
+
     </div>
 </section>
+
+<style>
+.prod-tab-wrap { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-bottom:32px; }
+.prod-tab-btn {
+    border: 1.5px solid #e8ddd4; background: #fff; border-radius: 50px;
+    padding: 9px 28px; font-weight: 600; color: #888; cursor: pointer;
+    font-size: 14px; font-family: 'Poppins', sans-serif;
+    transition: background .22s, color .22s, border-color .22s, box-shadow .22s;
+    box-shadow: 0 2px 8px rgba(139,111,94,0.06); outline: none;
+}
+.prod-tab-btn:hover:not(.active) {
+    background: #f5ede6; color: #8B6F5E; border-color: #D6C1A3;
+    box-shadow: 0 4px 14px rgba(139,111,94,0.13);
+}
+.prod-tab-btn.active {
+    background: linear-gradient(135deg,#8B6F5E,#C4A882);
+    color: #fff; border-color: transparent;
+    box-shadow: 0 4px 16px rgba(139,111,94,0.30);
+}
+.prod-tab-panel { display: none; }
+.prod-tab-panel.active { display: block; animation: tabFadeIn .28s ease; }
+@keyframes tabFadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+</style>
+
+<script>
+(function(){
+    var btns = document.querySelectorAll('.prod-tab-btn');
+    var panels = document.querySelectorAll('.prod-tab-panel');
+    btns.forEach(function(btn){
+        btn.addEventListener('click', function(){
+            btns.forEach(function(b){ b.classList.remove('active'); });
+            panels.forEach(function(p){ p.classList.remove('active'); });
+            btn.classList.add('active');
+            var panel = document.getElementById('panel-' + btn.dataset.tab);
+            if (panel) panel.classList.add('active');
+        });
+    });
+})();
+</script>
 
 <style>
 .section-product { background:#fdfaf7; padding:50px 0; }
@@ -1331,7 +1386,7 @@ document.addEventListener('keydown', function(e) {
         <div class="row justify-content-center mb-4">
             <div class="col-lg-8 text-center">
                 <div class="section-label" data-aos="fade-up"><span>Temukan Kami</span></div>
-                <h2 class="section-title" data-aos="fade-up" data-aos-delay="150">Lokasi <span style="color:var(--cream-accent);">Kami</span></h2>
+                <h2 class="section-title" data-aos="fade-up" data-aos-delay="150">Lokasi <span>Kami</span></h2>
                 <p class="text-muted" data-aos="fade-up" data-aos-delay="250" style="font-size:15px;">Kunjungi kami langsung untuk pengalaman kecantikan terbaik</p>
             </div>
         </div>
@@ -1423,50 +1478,50 @@ document.addEventListener('keydown', function(e) {
 .lokasi-map-box { position: absolute; inset: 0; }
 .lokasi-map-box iframe { width: 100%; height: 100%; }
 
-.lokasi-info-col { background: linear-gradient(160deg,#5A4A42 0%,#8B6F5E 100%); }
+.lokasi-info-col { background: #fff; border-left: 1px solid #EDE5D8; }
 .lokasi-info-box { padding: 40px 36px; height: 100%; display: flex; flex-direction: column; justify-content: center; }
 
 .lokasi-brand { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
-.lokasi-brand-icon { font-size: 32px; color: #D6C1A3; flex-shrink: 0; }
-.lokasi-brand-name { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: #fff; line-height: 1.2; }
-.lokasi-brand-sub { font-size: 12px; color: rgba(255,255,255,0.65); font-family: 'Poppins', sans-serif; letter-spacing: .5px; margin-top: 2px; }
+.lokasi-brand-icon { font-size: 32px; color: #8B6F5E; flex-shrink: 0; }
+.lokasi-brand-name { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: #2d1f17; line-height: 1.2; }
+.lokasi-brand-sub { font-size: 12px; color: #999; font-family: 'Poppins', sans-serif; letter-spacing: .5px; margin-top: 2px; }
 
-.lokasi-divider { border: none; border-top: 1px solid rgba(255,255,255,0.15); margin: 22px 0; }
+.lokasi-divider { border: none; border-top: 1px solid #f0e8df; margin: 22px 0; }
 
 .lokasi-detail-list { display: flex; flex-direction: column; gap: 18px; }
 .lokasi-detail-item { display: flex; align-items: flex-start; gap: 14px; }
 .lokasi-detail-icon {
     width: 38px; height: 38px; border-radius: 10px;
-    background: rgba(255,255,255,0.12);
+    background: #fdf0e8;
     display: flex; align-items: center; justify-content: center;
-    color: #D6C1A3; font-size: 15px; flex-shrink: 0;
+    color: #8B6F5E; font-size: 15px; flex-shrink: 0;
     transition: background .2s;
 }
-.lokasi-detail-item:hover .lokasi-detail-icon { background: rgba(255,255,255,0.22); }
-.lokasi-detail-label { font-size: 10.5px; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: .8px; font-family: 'Poppins', sans-serif; font-weight: 600; margin-bottom: 2px; }
-.lokasi-detail-value { font-size: 13.5px; color: #fff; font-family: 'Poppins', sans-serif; font-weight: 500; line-height: 1.4; }
+.lokasi-detail-item:hover .lokasi-detail-icon { background: #f5e4d4; }
+.lokasi-detail-label { font-size: 10.5px; color: #aaa; text-transform: uppercase; letter-spacing: .8px; font-family: 'Poppins', sans-serif; font-weight: 600; margin-bottom: 2px; }
+.lokasi-detail-value { font-size: 13.5px; color: #2d1f17; font-family: 'Poppins', sans-serif; font-weight: 500; line-height: 1.4; }
 
 .lokasi-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 .lokasi-btn-primary {
     flex: 1; min-width: 130px; text-align: center;
-    background: linear-gradient(135deg,#D6C1A3,#c4a882);
-    color: #3a2e28; border: none; border-radius: 50px;
+    background: linear-gradient(135deg,#6b4f3a,#a07850);
+    color: #fff; border: none; border-radius: 50px;
     padding: 11px 20px; font-size: 13px; font-weight: 700;
     font-family: 'Poppins', sans-serif; text-decoration: none;
-    transition: all .25s; box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    transition: all .25s; box-shadow: 0 4px 16px rgba(107,79,58,0.25);
     display: flex; align-items: center; justify-content: center; gap: 7px;
 }
-.lokasi-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.22); color: #3a2e28; }
+.lokasi-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(107,79,58,0.35); color: #fff; }
 .lokasi-btn-secondary {
     flex: 1; min-width: 130px; text-align: center;
-    background: rgba(255,255,255,0.12); color: #fff;
-    border: 1.5px solid rgba(255,255,255,0.3); border-radius: 50px;
+    background: #fff; color: #2d1f17;
+    border: 1.5px solid #e0d0c0; border-radius: 50px;
     padding: 11px 20px; font-size: 13px; font-weight: 600;
     font-family: 'Poppins', sans-serif; text-decoration: none;
     transition: all .25s;
     display: flex; align-items: center; justify-content: center; gap: 7px;
 }
-.lokasi-btn-secondary:hover { background: rgba(255,255,255,0.22); color: #fff; transform: translateY(-2px); }
+.lokasi-btn-secondary:hover { background: #fdf0e8; border-color: #c4a882; color: #2d1f17; transform: translateY(-2px); }
 
 @media (max-width: 768px) {
     .lokasi-split-wrap { grid-template-columns: 1fr; }
@@ -1474,6 +1529,16 @@ document.addEventListener('keydown', function(e) {
     .lokasi-map-box { position: relative; height: 280px; }
     .lokasi-info-box { padding: 28px 22px; }
 }
+</style>
+
+<style>
+.section-title {
+    font-family: 'Playfair Display', serif !important;
+    font-size: 34px !important;
+    font-weight: 700 !important;
+    color: #2d1f17 !important;
+}
+@media(max-width:576px){ .section-title { font-size: 26px !important; } }
 </style>
 
 <!-- ══ SECTION TESTIMONI ══ -->
@@ -1978,13 +2043,11 @@ document.addEventListener('keydown', function(e) {
 <!-- Product Filter -->
 <script>
 (function(){
-    // Terapkan filter awal: tampilkan hanya "simple" saat load
     document.querySelectorAll(".product-card").forEach(function(card){
         card.style.display = card.dataset.category === "simple" ? "" : "none";
     });
 
-    document.querySelectorAll(".filter-buttons button").forEach(function(btn){
-        btn.addEventListener("click", function(){
+    document.querySelectorAll(".filter-buttons button").forEach(function(btn){\n        btn.addEventListener("click", function(){
             document.querySelectorAll(".filter-buttons button").forEach(function(b){ b.classList.remove("active"); });
             btn.classList.add("active");
             var filter = btn.dataset.filter;
