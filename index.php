@@ -288,7 +288,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order']) && !empty($_
 
     $harga_num = (int) preg_replace('/[^0-9]/', '', $product_price);
     $ongkir    = 5000;
-    $total     = 'Rp ' . number_format(($harga_num * $qty) + $ongkir, 0, ',', '.');
+    // product_price dari cart sudah merupakan total semua item (tidak perlu dikali qty lagi)
+    // product_price dari beli langsung adalah harga satuan, perlu dikali qty
+    $is_cart   = isset($_POST['is_cart']) && $_POST['is_cart'] == '1';
+    $subtotal  = $is_cart ? $harga_num : ($harga_num * $qty);
+    $total     = 'Rp ' . number_format($subtotal + $ongkir, 0, ',', '.');
 
     $errors = [];
     if (empty($nama))     $errors[] = 'Nama wajib diisi.';
@@ -1830,6 +1834,7 @@ $catLabels = ['simple' => 'Simple', 'glam' => 'Glam', 'wedding' => 'Wedding'];
                 <input type="hidden" name="product_price" id="inputProductPrice">
                 <input type="hidden" name="product_image" id="inputProductImage">
                 <input type="hidden" name="payment_method" id="inputPaymentMethod" value="COD">
+                <input type="hidden" name="is_cart" id="inputIsCart" value="0">
 
                 <div id="orderError" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:10px 14px;font-size:13px;color:#dc2626;margin-bottom:14px;">
                     <i class="fas fa-exclamation-circle me-1"></i> <span id="orderErrorText"></span>
@@ -2128,6 +2133,8 @@ function handleBeli(name,price,img,disc,minBuy){
     modal.dataset.disc=disc;
     modal.dataset.minBuy=minBuy;
     modal.dataset.cartMode='0';
+    var isCartEl=document.getElementById('inputIsCart');
+    if(isCartEl)isCartEl.value='0';
     var qtyInputBox=document.querySelector('#qtyField input[type="number"]');
     var qtyCartInfo=document.getElementById('qtyCartInfo');
     if(qtyInputBox){qtyInputBox.style.display='';qtyInputBox.value=1;}
@@ -2546,6 +2553,8 @@ var NiswaCart=(function(){
         // Set modal dataset untuk updateOrderSummary (nonaktifkan auto-update qty untuk cart)
         var modal=document.getElementById('orderModal');
         if(modal){modal.dataset.oriPrice=0;modal.dataset.disc=0;modal.dataset.cartMode='1';}
+        var isCartEl=document.getElementById('inputIsCart');
+        if(isCartEl)isCartEl.value='1';
         var errBox=document.getElementById('orderError');if(errBox)errBox.style.display='none';
         closeCart();
         var orderModal=document.getElementById('orderModal');if(orderModal)orderModal.style.display='flex';
