@@ -2533,6 +2533,7 @@ var NiswaCart=(function(){
         var summaryDiscAmt=document.getElementById('summaryDiscAmt');
         var summaryDiscLabel=document.getElementById('summaryDiscLabel');
         var summaryTotal=document.getElementById('summaryTotal');
+        var ongkir=5000;
         if(summarySubtotal)summarySubtotal.textContent=fmt(oriTot);
         if(summaryDiscRow){
             if(totalDisc>0){
@@ -2541,7 +2542,7 @@ var NiswaCart=(function(){
                 if(summaryDiscAmt)summaryDiscAmt.textContent='- '+fmt(totalDisc);
             } else {summaryDiscRow.style.display='none';}
         }
-        if(summaryTotal)summaryTotal.textContent=total;
+        if(summaryTotal)summaryTotal.textContent=fmt(selTot+ongkir);
         // Set modal dataset untuk updateOrderSummary (nonaktifkan auto-update qty untuk cart)
         var modal=document.getElementById('orderModal');
         if(modal){modal.dataset.oriPrice=0;modal.dataset.disc=0;modal.dataset.cartMode='1';}
