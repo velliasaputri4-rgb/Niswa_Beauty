@@ -1701,6 +1701,45 @@ $catLabels = ['simple' => 'Simple', 'glam' => 'Glam', 'wedding' => 'Wedding'];
     border-radius: 4px;
     transform: none;
 }
+/* Arrow Buttons */
+.testimoni-nav-wrap {
+    position: relative;
+    padding: 0 24px;
+}
+.testimoni-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    background: rgba(255,252,248,0.95);
+    border: 1px solid #D6BFA6;
+    color: #7A5C40;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(74,48,32,.13);
+    transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+    font-size: 15px;
+    user-select: none;
+}
+.testimoni-arrow:hover {
+    background: #8B6F5E;
+    color: #fff;
+    box-shadow: 0 6px 20px rgba(74,48,32,.22);
+    transform: translateY(-50%) scale(1.08);
+}
+.testimoni-arrow-prev { left: -8px; }
+.testimoni-arrow-next { right: -8px; }
+@media (max-width: 599px) {
+    .testimoni-nav-wrap { padding: 0 14px; }
+    .testimoni-arrow { width: 32px; height: 32px; font-size: 12px; }
+    .testimoni-arrow-prev { left: -4px; }
+    .testimoni-arrow-next { right: -4px; }
+}
 </style>
 <section id="testimoni" class="testimoni-section py-5">
     <div class="container">
@@ -1722,28 +1761,36 @@ $catLabels = ['simple' => 'Simple', 'glam' => 'Glam', 'wedding' => 'Wedding'];
             </div>
         </div>
 
-        <div class="testimoni-carousel-wrapper" data-aos="fade-up" data-aos-delay="200">
-            <div class="testimoni-track" id="testimoniTrack">
-                <?php foreach ($testimonials as $t):
-                    $firstLetter = mb_strtoupper(mb_substr($t['name'], 0, 1, 'UTF-8'), 'UTF-8');
-                    $color = $t['avatar_color'] ?? 'linear-gradient(135deg,#f9a8d4,#f472b6)';
-                ?>
-                <div class="testimoni-card">
-                    <div class="testimoni-quote-icon"><i class="fas fa-quote-left"></i></div>
-                    <p class="testimoni-text">"<?= esc($t['text']) ?>"</p>
-                    <div class="testimoni-footer">
-                        <div class="testimoni-avatar" style="background:<?= esc($color) ?>;"><?= $firstLetter ?></div>
-                        <div class="testimoni-user-info">
-                            <div class="testimoni-name"><?= esc($t['name']) ?></div>
-                            <div class="testimoni-stars-sm">
-                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+        <div class="testimoni-nav-wrap" data-aos="fade-up" data-aos-delay="200">
+            <button class="testimoni-arrow testimoni-arrow-prev" id="testimoniPrev" aria-label="Sebelumnya">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="testimoni-carousel-wrapper">
+                <div class="testimoni-track" id="testimoniTrack">
+                    <?php foreach ($testimonials as $t):
+                        $firstLetter = mb_strtoupper(mb_substr($t['name'], 0, 1, 'UTF-8'), 'UTF-8');
+                        $color = $t['avatar_color'] ?? 'linear-gradient(135deg,#f9a8d4,#f472b6)';
+                    ?>
+                    <div class="testimoni-card">
+                        <div class="testimoni-quote-icon"><i class="fas fa-quote-left"></i></div>
+                        <p class="testimoni-text">"<?= esc($t['text']) ?>"</p>
+                        <div class="testimoni-footer">
+                            <div class="testimoni-avatar" style="background:<?= esc($color) ?>;"><?= $firstLetter ?></div>
+                            <div class="testimoni-user-info">
+                                <div class="testimoni-name"><?= esc($t['name']) ?></div>
+                                <div class="testimoni-stars-sm">
+                                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                                </div>
                             </div>
+                            <div class="testimoni-service-tag"><?= esc($t['service_tag']) ?></div>
                         </div>
-                        <div class="testimoni-service-tag"><?= esc($t['service_tag']) ?></div>
                     </div>
+                    <?php endforeach; ?>
                 </div>
-                <?php endforeach; ?>
             </div>
+            <button class="testimoni-arrow testimoni-arrow-next" id="testimoniNext" aria-label="Berikutnya">
+                <i class="fas fa-chevron-right"></i>
+            </button>
         </div>
         <div class="testimoni-dots" id="testimoniDots"></div>
     </div>
@@ -2484,6 +2531,26 @@ function closeProductPreview(){document.getElementById('productPreviewModal').st
             stopAuto(); buildGroups(); startAuto();
         },200);
     });
+
+    /* ── Arrow Buttons ── */
+    var prevBtn=document.getElementById('testimoniPrev');
+    var nextBtn=document.getElementById('testimoniNext');
+    if(prevBtn){
+        prevBtn.addEventListener('click',function(){
+            stopAuto();
+            var total=track.querySelectorAll('.testimoni-group').length;
+            goTo((current-1+total)%total);
+            startAuto();
+        });
+    }
+    if(nextBtn){
+        nextBtn.addEventListener('click',function(){
+            stopAuto();
+            var total=track.querySelectorAll('.testimoni-group').length;
+            goTo((current+1)%total);
+            startAuto();
+        });
+    }
 
     /* ── Touch / Swipe Support ── */
     var touchStartX=0, touchEndX=0;
