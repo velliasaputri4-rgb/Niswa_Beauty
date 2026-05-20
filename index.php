@@ -1773,7 +1773,7 @@ $catLabels = ['simple' => 'Simple', 'glam' => 'Glam', 'wedding' => 'Wedding'];
 
 <!-- ══ QTY PICKER MODAL ══ -->
 <div id="qtyPickerOverlay" onclick="closeQtyPicker()" style="display:none;position:fixed;inset:0;z-index:10010;background:rgba(0,0,0,0.45);backdrop-filter:blur(2px);"></div>
-<div id="qtyPickerSheet" style="display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(30px);z-index:10011;background:#fff;border-radius:20px;box-shadow:0 12px 48px rgba(0,0,0,0.22);padding:0;width:92%;max-width:400px;opacity:0;transition:transform .28s cubic-bezier(.32,1,.6,1),opacity .25s ease;">
+<div id="qtyPickerSheet" style="display:none;position:fixed;top:48%;left:50%;transform:translateX(-50%) translateY(-50%);z-index:10011;background:#fff;border-radius:20px;box-shadow:0 12px 48px rgba(0,0,0,0.22);padding:0;width:92%;max-width:400px;opacity:0;transition:transform .28s cubic-bezier(.32,1,.6,1),opacity .25s ease;">
 
     <!-- Info produk -->
     <div style="display:flex;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid #f0e8df;">
@@ -2852,7 +2852,7 @@ document.addEventListener('DOMContentLoaded',function(){NiswaCart.init();});
         sheet.getBoundingClientRect();
         overlay.style.opacity = '1';
         sheet.style.opacity   = '1';
-        sheet.style.transform = 'translateX(-50%) translateY(0)';
+        sheet.style.transform = 'translateX(-50%) translateY(-50%)';
         document.body.style.overflow = 'hidden';
     };
 
@@ -2860,7 +2860,7 @@ document.addEventListener('DOMContentLoaded',function(){NiswaCart.init();});
         var overlay = document.getElementById('qtyPickerOverlay');
         var sheet   = document.getElementById('qtyPickerSheet');
         sheet.style.opacity   = '0';
-        sheet.style.transform = 'translateX(-50%) translateY(16px)';
+        sheet.style.transform = 'translateX(-50%) translateY(calc(-50% + 16px))';
         overlay.style.opacity = '0';
         setTimeout(function(){
             sheet.style.display   = 'none';
