@@ -168,7 +168,7 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
         /* — Hero header strip — */
         .owner-hero {
             position: relative;
-            background: linear-gradient(135deg, var(--espresso) 0%, var(--mocha) 45%, var(--bronze) 100%);
+            background: linear-gradient(135deg, #6E5F51 0%, #8C7B6B 45%, #A89880 100%);
             padding: 52px 56px 48px;
             display: flex;
             align-items: center;
@@ -181,7 +181,7 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
             top: -60px; right: -60px;
             width: 320px; height: 320px;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(201,169,110,.18) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(255,252,248,.18) 0%, transparent 70%);
         }
         .owner-hero::after {
             content: '';
@@ -233,7 +233,7 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
             font-family: var(--sans);
             font-size: 13px; font-weight: 600;
             letter-spacing: 3px;
-            color: var(--gold-light);
+            color: rgba(255,252,248,.95);
             text-transform: uppercase;
             margin-bottom: 8px;
         }
@@ -276,7 +276,7 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
         .owner-stat:hover { background: rgba(255,252,248,.06); }
         .owner-stat-icon {
             font-size: 14px;
-            color: var(--gold-light);
+            color: rgba(255,252,248,.90);
             margin-bottom: 4px;
             transition: transform .3s cubic-bezier(.34,1.56,.64,1);
         }
