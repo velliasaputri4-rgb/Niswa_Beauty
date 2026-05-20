@@ -303,6 +303,12 @@ function buildPesanCustomerOrder(array $d): string {
     $pesan .= "🛒 *Produk:*   {$d['product_name']}\n";
     $pesan .= "🔢 *Qty:*      {$d['qty']} pcs\n";
     $pesan .= "💰 *Subtotal:* {$d['product_price']}\n";
+    if (!empty($d['disc_amt'])) {
+        $discLabel = ($d['disc_pct'] !== 'cart' && (int)$d['disc_pct'] > 0)
+                     ? "Diskon {$d['disc_pct']}%"
+                     : 'Diskon';
+        $pesan .= "🏷️ *{$discLabel}:* -{$d['disc_amt']}\n";
+    }
     $pesan .= "🚚 *Ongkir:*   Rp 5.000 (Jepara)\n";
     $pesan .= "💳 *Total:*    *{$d['total']}*\n\n";
     $pesan .= "🚚 *Pengiriman ke:*\n";
@@ -333,6 +339,12 @@ function buildPesanAdminOrder(array $d): string {
     $pesan .= "🛒 *Produk:*   {$d['product_name']}\n";
     $pesan .= "🔢 *Qty:*      {$d['qty']} pcs\n";
     $pesan .= "💰 *Subtotal:* {$d['product_price']}\n";
+    if (!empty($d['disc_amt'])) {
+        $discLabel = ($d['disc_pct'] !== 'cart' && (int)$d['disc_pct'] > 0)
+                     ? "Diskon {$d['disc_pct']}%"
+                     : 'Diskon';
+        $pesan .= "🏷️ *{$discLabel}:* -{$d['disc_amt']}\n";
+    }
     $pesan .= "🚚 *Ongkir:*   Rp 5.000 (Jepara)\n";
     $pesan .= "💳 *Total:*    *{$d['total']}*\n\n";
     $pesan .= "🚚 *Kirim ke:*\n";

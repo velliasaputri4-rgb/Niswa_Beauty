@@ -101,6 +101,21 @@ if ($conn) {
         sort_order INT DEFAULT 0
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+    // Tabel diskon global (satu baris saja)
+    mysqli_query($conn, "CREATE TABLE IF NOT EXISTS cms_global_discount (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        enabled TINYINT(1) DEFAULT 0,
+        discount_pct TINYINT UNSIGNED DEFAULT 0,
+        min_purchase INT UNSIGNED DEFAULT 0,
+        label VARCHAR(200) DEFAULT '',
+        updated_at DATETIME DEFAULT NOW() ON UPDATE NOW()
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    // Seed baris default jika kosong
+    $cntGd = (int)(mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM cms_global_discount"))['c'] ?? 0);
+    if ($cntGd === 0) {
+        mysqli_query($conn, "INSERT INTO cms_global_discount (enabled,discount_pct,min_purchase,label) VALUES (0,25,25000,'Beli min. Rp 25.000, hemat 25%!')");
+    }
+
     mysqli_query($conn, "CREATE TABLE IF NOT EXISTS cms_navbar (
         id INT AUTO_INCREMENT PRIMARY KEY,
         section VARCHAR(80) NOT NULL,
@@ -642,6 +657,16 @@ if ($action === 'save_booking_page') {
     header('Location: cms.php?tab=booking_page&saved=1'); exit;
 }
 
+/* ── 13. Global Discount ── */
+if ($action === 'save_global_discount') {
+    $enabled      = isset($_POST['gd_enabled']) ? 1 : 0;
+    $disc_pct     = max(0, min(100, (int)($_POST['gd_discount_pct']  ?? 0)));
+    $min_purchase = max(0, (int)($_POST['gd_min_purchase'] ?? 0));
+    $label        = mysqli_real_escape_string($conn, trim($_POST['gd_label'] ?? ''));
+    mysqli_query($conn, "UPDATE cms_global_discount SET enabled=$enabled, discount_pct=$disc_pct, min_purchase=$min_purchase, label='$label' WHERE id=1");
+    header('Location: cms.php?tab=global_discount&saved=1'); exit;
+}
+
 /* ══════════════════════════════════════════════
    LOAD ALL DATA
 ══════════════════════════════════════════════ */
@@ -884,6 +909,14 @@ $servicesRows  = $conn ? mysqli_query($conn, "SELECT * FROM cms_services ORDER B
 $pricesRows    = $conn ? mysqli_query($conn, "SELECT * FROM cms_prices ORDER BY category, sort_order, id") : null;
 $productsRows  = $conn ? mysqli_query($conn, "SELECT * FROM cms_products ORDER BY sort_order, id") : null;
 $testiRows     = $conn ? mysqli_query($conn, "SELECT * FROM cms_testimonials ORDER BY sort_order, id") : null;
+// Global discount
+$gdRow = $conn ? mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM cms_global_discount WHERE id=1 LIMIT 1")) : null;
+$gd = [
+    'enabled'      => (int)($gdRow['enabled']      ?? 0),
+    'discount_pct' => (int)($gdRow['discount_pct'] ?? 25),
+    'min_purchase' => (int)($gdRow['min_purchase'] ?? 25000),
+    'label'        => $gdRow['label'] ?? 'Beli min. Rp 25.000, hemat 25%!',
+];
 // Stats
 $totalProducts = cmsCount($conn, "SELECT COUNT(*) c FROM cms_products");
 $totalServices = cmsCount($conn, "SELECT COUNT(*) c FROM cms_services");
@@ -1413,6 +1446,7 @@ input[type=file]{display:none;}
         <li><a href="cms.php?tab=booking_page" onclick="closeDrawer()"><i class="fa-solid fa-calendar-alt"></i> Halaman Booking</a></li>
         <li><a href="cms.php?tab=jam_settings" onclick="closeDrawer()"><i class="fa-solid fa-clock"></i> Atur Jam</a></li>
         <li><a href="cms.php?tab=orders" onclick="closeDrawer()"><i class="fa-solid fa-receipt"></i> Pesanan Masuk</a></li>
+        <li><a href="cms.php?tab=global_discount" onclick="closeDrawer()"><i class="fa-solid fa-percent"></i> Diskon Global</a></li>
     </ul>
     <div class="mobile-drawer-user">
         <div class="av"><?= strtoupper(substr($_SESSION['user'], 0, 1)) ?></div>
@@ -1444,6 +1478,7 @@ input[type=file]{display:none;}
         <li><a href="cms.php?tab=booking_page" class="<?= $activeTab==='booking_page' ? 'active':'' ?>"><i class="fa-solid fa-calendar-alt"></i> Halaman Booking</a></li>
         <li><a href="cms.php?tab=jam_settings" class="<?= $activeTab==='jam_settings' ? 'active':'' ?>"><i class="fa-solid fa-clock"></i> Atur Jam</a></li>
         <li><a href="cms.php?tab=orders"         class="<?= $activeTab==='orders'         ? 'active':'' ?>"><i class="fa-solid fa-receipt"></i> Pesanan Masuk</a></li>
+        <li><a href="cms.php?tab=global_discount" class="<?= $activeTab==='global_discount' ? 'active':'' ?>"><i class="fa-solid fa-percent"></i> Diskon Global</a></li>
     </ul>
     </div><!-- /.sidebar-nav-wrap -->
     <div class="sidebar-user">
@@ -1515,6 +1550,7 @@ input[type=file]{display:none;}
             <a href="cms.php?tab=booking_page" class="<?= $activeTab==='booking_page' ? 'active':'' ?>"><i class="fa-solid fa-calendar-alt"></i> Booking</a>
             <a href="cms.php?tab=jam_settings" class="<?= $activeTab==='jam_settings' ? 'active':'' ?>"><i class="fa-solid fa-clock"></i> Atur Jam</a>
             <a href="cms.php?tab=orders"       class="<?= $activeTab==='orders'       ? 'active':'' ?>"><i class="fa-solid fa-receipt"></i> Pesanan</a>
+            <a href="cms.php?tab=global_discount" class="<?= $activeTab==='global_discount' ? 'active':'' ?>"><i class="fa-solid fa-percent"></i> Diskon</a>
         </div>
 
 <?php /* ════════ TAB: SECTION TITLES ════════ */ ?>
@@ -3975,6 +4011,103 @@ $totalOrdersCount = $ordersRows ? mysqli_num_rows($ordersRows) : 0;
                 <?php endif; ?>
             </div>
         </div>
+
+<?php /* ════════ TAB: DISKON GLOBAL ════════ */ ?>
+<?php elseif ($activeTab === 'global_discount'): ?>
+
+<div class="cms-card">
+    <div class="cms-card-header">
+        <i class="fa-solid fa-percent"></i>
+        <h3>Diskon Global</h3>
+        <span style="margin-left:auto;font-size:11px;color:var(--text-lt);">Berlaku untuk semua produk, bisa mix & match</span>
+    </div>
+    <div class="cms-card-body">
+
+        <!-- Info box -->
+        <div style="background:linear-gradient(135deg,#fff8ee,#fdf3e3);border:1.5px solid #f5dbb5;border-radius:12px;padding:14px 18px;margin-bottom:22px;display:flex;gap:12px;align-items:flex-start;">
+            <i class="fa-solid fa-circle-info" style="color:#c97000;font-size:18px;margin-top:2px;flex-shrink:0;"></i>
+            <div style="font-size:12.5px;color:#7a5000;line-height:1.7;">
+                <strong>Cara Kerja Diskon Global:</strong><br>
+                Diskon ini berlaku ketika total belanja dari <em>keranjang</em> mencapai minimal pembelian yang ditentukan — barang boleh <strong>mix & match</strong> antar produk.<br>
+                Contoh: Jika min. beli Rp 25.000 dan diskon 25%, pelanggan bisa beli 2 produk Rp 17.000 + 1 produk Rp 22.000 = Rp 56.000 → dapat diskon 25%.
+            </div>
+        </div>
+
+        <form method="POST" action="cms.php?tab=global_discount">
+            <input type="hidden" name="action" value="save_global_discount">
+
+            <!-- Toggle Aktif -->
+            <div class="form-group" style="display:flex;align-items:center;gap:14px;background:#fdfaf7;border:1.5px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:20px;">
+                <label style="margin:0;text-transform:none;font-size:14px;font-weight:700;color:var(--text);cursor:pointer;flex:1;" for="gdToggle">
+                    <i class="fa-solid fa-toggle-on" style="color:<?= $gd['enabled'] ? 'var(--success)' : 'var(--border)' ?>;margin-right:7px;font-size:16px;" id="gdIcon"></i>
+                    Aktifkan Diskon Global
+                </label>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span id="gdStatusLabel" style="font-size:12px;font-weight:700;color:<?= $gd['enabled'] ? 'var(--success)' : 'var(--text-lt)' ?>;">
+                        <?= $gd['enabled'] ? 'AKTIF' : 'NONAKTIF' ?>
+                    </span>
+                    <input type="checkbox" id="gdToggle" name="gd_enabled" value="1" <?= $gd['enabled'] ? 'checked' : '' ?>
+                        style="width:20px;height:20px;cursor:pointer;accent-color:var(--primary);"
+                        onchange="var on=this.checked;document.getElementById('gdStatusLabel').textContent=on?'AKTIF':'NONAKTIF';document.getElementById('gdStatusLabel').style.color=on?'var(--success)':'var(--text-lt)';document.getElementById('gdIcon').style.color=on?'var(--success)':'var(--border)';">
+                </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" class="grid-2">
+                <div class="form-group">
+                    <label for="gdDisc">Persentase Diskon (%)</label>
+                    <input type="number" id="gdDisc" name="gd_discount_pct" min="0" max="100"
+                        value="<?= $gd['discount_pct'] ?>"
+                        oninput="updateGdPreview()"
+                        placeholder="Contoh: 25">
+                    <div style="font-size:11px;color:var(--text-lt);margin-top:4px;">0 – 100</div>
+                </div>
+                <div class="form-group">
+                    <label for="gdMin">Minimal Total Belanja (Rp)</label>
+                    <input type="number" id="gdMin" name="gd_min_purchase" min="0"
+                        value="<?= $gd['min_purchase'] ?>"
+                        oninput="updateGdPreview()"
+                        placeholder="Contoh: 25000">
+                    <div style="font-size:11px;color:var(--text-lt);margin-top:4px;">0 = tanpa minimal</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="gdLabel">Teks Promo (ditampilkan di banner website)</label>
+                <input type="text" id="gdLabel" name="gd_label"
+                    value="<?= htmlspecialchars($gd['label']) ?>"
+                    oninput="updateGdPreview()"
+                    placeholder="Contoh: Beli min. Rp 25.000, hemat 25%!">
+            </div>
+
+            <!-- Live Preview -->
+            <div id="gdPreviewBox" style="background:linear-gradient(135deg,#8B6F5E,#C4A882);border-radius:14px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px;color:#fff;font-family:'Poppins',sans-serif;">
+                <i class="fa-solid fa-tag" style="font-size:20px;flex-shrink:0;"></i>
+                <div>
+                    <div style="font-size:11px;font-weight:600;opacity:.8;letter-spacing:.5px;text-transform:uppercase;">Promo Aktif</div>
+                    <div id="gdPreviewText" style="font-size:14px;font-weight:700;margin-top:2px;"><?= htmlspecialchars($gd['label']) ?: 'Beli min. Rp 25.000, hemat 25%!' ?></div>
+                    <div id="gdPreviewDetail" style="font-size:11.5px;opacity:.85;margin-top:3px;">
+                        Diskon <strong><?= $gd['discount_pct'] ?>%</strong> · Min. belanja <strong>Rp <?= number_format($gd['min_purchase'],0,',','.') ?></strong>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-primary-cms">
+                <i class="fa-solid fa-floppy-disk"></i> Simpan Pengaturan Diskon
+            </button>
+        </form>
+
+    </div>
+</div>
+
+<script>
+function updateGdPreview() {
+    var pct  = parseInt(document.getElementById('gdDisc').value) || 0;
+    var min  = parseInt(document.getElementById('gdMin').value)  || 0;
+    var lbl  = document.getElementById('gdLabel').value.trim() || ('Beli min. Rp ' + min.toLocaleString('id-ID') + ', hemat ' + pct + '%!');
+    document.getElementById('gdPreviewText').textContent   = lbl;
+    document.getElementById('gdPreviewDetail').innerHTML   = 'Diskon <strong>' + pct + '%</strong> · Min. belanja <strong>Rp ' + min.toLocaleString('id-ID') + '</strong>';
+}
+</script>
 
 <?php endif; ?>
 </div><!-- /.main-wrap -->

@@ -41,6 +41,19 @@ if ($conn) {
         $cek = mysqli_query($conn, "SHOW COLUMNS FROM orders LIKE '$col'");
         if ($cek && mysqli_num_rows($cek) === 0) mysqli_query($conn, $sql);
     }
+    // Tabel diskon global (auto-create dan seed)
+    mysqli_query($conn, "CREATE TABLE IF NOT EXISTS cms_global_discount (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        enabled TINYINT(1) DEFAULT 0,
+        discount_pct TINYINT UNSIGNED DEFAULT 0,
+        min_purchase INT UNSIGNED DEFAULT 0,
+        label VARCHAR(200) DEFAULT '',
+        updated_at DATETIME DEFAULT NOW() ON UPDATE NOW()
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $cntGd = (int)(mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM cms_global_discount"))['c'] ?? 0);
+    if ($cntGd === 0) {
+        mysqli_query($conn, "INSERT INTO cms_global_discount (enabled,discount_pct,min_purchase,label) VALUES (0,25,25000,'Beli min. Rp 25.000, hemat 25%!')");
+    }
 }
 
 /* ══════════════════════════════════════════════
@@ -251,6 +264,17 @@ $products = $dbHasCategory ? $productsRows : $defaultProducts;
 
 // ── Testimoni ──
 $testiRows = $conn ? mysqli_fetch_all(mysqli_query($conn, "SELECT * FROM cms_testimonials ORDER BY sort_order, id"), MYSQLI_ASSOC) : [];
+
+// ── Diskon Global ──
+$gdRow = $conn ? mysqli_fetch_assoc(mysqli_query($conn,
+    "SELECT * FROM cms_global_discount WHERE id=1 LIMIT 1"
+) ?: false) : null;
+$globalDisc = [
+    'enabled'      => (int)($gdRow['enabled']      ?? 0),
+    'discount_pct' => (int)($gdRow['discount_pct'] ?? 0),
+    'min_purchase' => (int)($gdRow['min_purchase'] ?? 0),
+    'label'        => $gdRow['label'] ?? '',
+];
 $defaultTestis = [
     ['name'=>'Ninda Ayu',    'service_tag'=>'Nail Art & Foot Spa',  'text'=>'Nail art-nya bagus banget, hasilnya rapi dan tahan lama! Mbak-mbaknya ramah dan sabar. Foot spa-nya juga bikin kaki lega banget. Pasti balik lagi! 🌟',    'avatar_color'=>'linear-gradient(135deg,#f9a8d4,#f472b6)'],
     ['name'=>'Rizka Amalia', 'service_tag'=>'Lashlift',             'text'=>'Lashlift-nya keren banget, mata jadi keliatan lebih segar dan melek. Tempatnya bersih dan nyaman, harga juga worth it. Recommended banget!',              'avatar_color'=>'linear-gradient(135deg,#6ee7b7,#34d399)'],
@@ -280,25 +304,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order']) && !empty($_
     $product_image  = trim($_POST['product_image']  ?? '');
     $payment_method = trim($_POST['payment_method'] ?? 'COD');
     $user_id        = $_SESSION['user_id']          ?? null;
+    $disc_pct       = trim($_POST['disc_pct']       ?? '');
+    $disc_amt       = trim($_POST['disc_amt']       ?? '');
+    $ori_price_raw  = trim($_POST['ori_price']      ?? '');
 
     // Hanya izinkan COD
     if (!in_array($payment_method, ['COD'])) {
         $payment_method = 'COD';
     }
 
-    $harga_num = (int) preg_replace('/[^0-9]/', '', $product_price);
-    $ongkir    = 5000;
-    // product_price dari cart sudah merupakan total semua item (tidak perlu dikali qty lagi)
-    // product_price dari beli langsung adalah harga satuan, perlu dikali qty
-    $is_cart   = !empty($_POST['is_cart']) && $_POST['is_cart'] == '1';
-    $subtotal  = $is_cart ? $harga_num : ($harga_num * $qty);
-    // Kalau product_price sudah include ongkir (dikirim oleh updateOrderSummary JS),
-    // gunakan langsung. Deteksi: jika is_cart=0 dan harga_num > harga_satuan*qty,
-    // artinya sudah include ongkir. Tapi cara paling aman: selalu hitung ulang di sini.
-    $total     = 'Rp ' . number_format($subtotal + $ongkir, 0, ',', '.');
-    // Harga satuan untuk ditampilkan di pesan WA
-    $harga_satuan = $is_cart ? '' : ('Rp ' . number_format($harga_num, 0, ',', '.'));
-    $subtotal_fmt = 'Rp ' . number_format($subtotal, 0, ',', '.');
+    $harga_num     = (int) preg_replace('/[^0-9]/', '', $product_price); // harga after-diskon
+    $ori_price_num = !empty($ori_price_raw)
+                     ? (int) preg_replace('/[^0-9]/', '', $ori_price_raw) // harga asli sebelum diskon
+                     : $harga_num;
+    $ongkir        = 5000;
+    $is_cart       = !empty($_POST['is_cart']) && $_POST['is_cart'] == '1';
+
+    // Subtotal after-diskon (dipakai untuk hitung total bayar)
+    $subtotal      = $is_cart ? $harga_num : ($harga_num * $qty);
+    // Subtotal harga asli sebelum diskon (untuk baris "Subtotal" di notifikasi)
+    $subtotal_ori  = $is_cart ? $ori_price_num : ($ori_price_num * $qty);
+    $total         = 'Rp ' . number_format($subtotal + $ongkir, 0, ',', '.');
+    $subtotal_ori_fmt = 'Rp ' . number_format($subtotal_ori, 0, ',', '.');
+    $subtotal_fmt  = 'Rp ' . number_format($subtotal_ori, 0, ',', '.'); // tampilkan harga asli di notif
 
     $errors = [];
     if (empty($nama))     $errors[] = 'Nama wajib diisi.';
@@ -342,6 +370,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order']) && !empty($_
                     'catatan'        => $catatan,
                     'payment_method' => $payment_method,
                     'is_cart'        => $is_cart,
+                    'disc_pct'       => $disc_pct,
+                    'disc_amt'       => $disc_amt,
                 ]);
             }
 
@@ -359,6 +389,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order']) && !empty($_
                     'catatan'        => $catatan,
                     'payment_method' => $payment_method,
                     'is_cart'        => $is_cart,
+                    'disc_pct'       => $disc_pct,
+                    'disc_amt'       => $disc_amt,
                 ]);
             }
 
@@ -567,6 +599,8 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
                 <span id="cart-selected-subtotal" style="font-family:'Poppins',sans-serif;font-size:13px;color:#8B6F5E;font-weight:700;"></span>
             </div>
         </div>
+        <!-- Promo Global Discount notice -->
+        <div id="cart-gd-promo" style="display:none;margin:0 14px 8px;padding:8px 12px;border-radius:10px;border:1.5px solid #f5dbb5;font-family:'Poppins',sans-serif;font-size:11.5px;line-height:1.5;"></div>
         <div class="cart-total-row">
             <span class="cart-total-label">Total Pembayaran</span>
             <span id="cart-total">Rp 0</span>
@@ -1247,6 +1281,29 @@ $catLabels = ['simple' => 'Simple', 'glam' => 'Glam', 'wedding' => 'Wedding'];
             <p><?= esc($sec['produk_subtitle']) ?> <i class="fa-solid fa-sparkles" style="color:#D6C1A3;font-size:0.9em;"></i></p>
         </div>
 
+        <?php if ($globalDisc['enabled'] && $globalDisc['discount_pct'] > 0): ?>
+        <div data-aos="fade-up" data-aos-delay="60" style="max-width:600px;margin:0 auto 28px;background:linear-gradient(135deg,#8B6F5E,#C4A882);border-radius:16px;padding:14px 20px;display:flex;align-items:center;gap:14px;box-shadow:0 6px 24px rgba(139,111,94,0.28);">
+            <div style="background:rgba(255,255,255,0.22);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i class="fas fa-tag" style="color:#fff;font-size:18px;"></i>
+            </div>
+            <div style="flex:1;min-width:0;">
+                <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:15px;color:#fff;line-height:1.3;">
+                    <?= esc($globalDisc['label'] ?: ('Diskon ' . $globalDisc['discount_pct'] . '%!')) ?>
+                </div>
+                <div style="font-family:'Poppins',sans-serif;font-size:12px;color:rgba(255,255,255,0.88);margin-top:2px;">
+                    Diskon <strong><?= $globalDisc['discount_pct'] ?>%</strong>
+                    <?php if ($globalDisc['min_purchase'] > 0): ?>
+                    · Min. belanja <strong>Rp <?= number_format($globalDisc['min_purchase'],0,',','.') ?></strong>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <div style="background:rgba(255,255,255,0.95);border-radius:12px;padding:6px 14px;flex-shrink:0;">
+                <span style="font-family:'Poppins',sans-serif;font-weight:800;font-size:18px;color:#8B6F5E;"><?= $globalDisc['discount_pct'] ?>%</span>
+                <span style="font-family:'Poppins',sans-serif;font-size:10px;font-weight:600;color:#8B6F5E;display:block;text-align:center;margin-top:-3px;">OFF</span>
+            </div>
+        </div>
+        <?php endif; ?>
+
         <!-- Tab Buttons -->
         <div class="prod-tab-wrap" data-aos="fade-up" data-aos-delay="80">
             <?php $first = true; foreach ($catLabels as $key => $label): ?>
@@ -1820,7 +1877,7 @@ $catLabels = ['simple' => 'Simple', 'glam' => 'Glam', 'wedding' => 'Wedding'];
 </style>
 
 <!-- ══ ORDER MODAL ══ -->
-<div id="orderModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.55);align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(3px);">
+<div id="orderModal" style="display:none;position:fixed;inset:0;z-index:10020;background:rgba(0,0,0,0.55);align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(3px);">
     <div style="background:#fff;border-radius:24px;width:100%;max-width:460px;max-height:92vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,0.28);">
         <!-- Header -->
         <div style="padding:18px 22px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #f0e8df;position:sticky;top:0;background:#fff;z-index:2;border-radius:24px 24px 0 0;">
@@ -1876,6 +1933,9 @@ $catLabels = ['simple' => 'Simple', 'glam' => 'Glam', 'wedding' => 'Wedding'];
                 <input type="hidden" name="product_image" id="inputProductImage">
                 <input type="hidden" name="payment_method" id="inputPaymentMethod" value="COD">
                 <input type="hidden" name="is_cart" id="inputIsCart" value="">
+                <input type="hidden" name="disc_pct" id="inputDiscPct" value="0">
+                <input type="hidden" name="disc_amt" id="inputDiscAmt" value="">
+                <input type="hidden" name="ori_price" id="inputOriPrice" value="">
 
                 <div id="orderError" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:10px 14px;font-size:13px;color:#dc2626;margin-bottom:14px;">
                     <i class="fas fa-exclamation-circle me-1"></i> <span id="orderErrorText"></span>
@@ -2014,7 +2074,7 @@ $catLabels = ['simple' => 'Simple', 'glam' => 'Glam', 'wedding' => 'Wedding'];
 </div>
 
 <!-- ══ SUCCESS ORDER COD ══ -->
-<div id="successOrder" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px);">
+<div id="successOrder" style="display:none;position:fixed;inset:0;z-index:10021;background:rgba(0,0,0,0.6);align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px);">
     <div style="background:#fff;border-radius:24px;width:90%;max-width:400px;padding:0;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,0.25);">
         <!-- Header success -->
         <div style="background:linear-gradient(135deg,#8B6F5E,#C4A882);padding:28px 24px 22px;text-align:center;">
@@ -2156,14 +2216,26 @@ function updateOrderSummary(){
         if(minBuyRow)minBuyRow.style.display='none';
     }
     document.getElementById('summaryTotal').textContent=fmtRp(total);
-    document.getElementById('inputProductPrice').value=fmtRp(total);
+    document.getElementById('inputProductPrice').value=fmtRp(subtotal-discAmt);
+    // ── Simpan data diskon ke hidden input supaya terkirim via POST ──
+    var discPctEl=document.getElementById('inputDiscPct');
+    var discAmtEl=document.getElementById('inputDiscAmt');
+    var oriPriceEl=document.getElementById('inputOriPrice');
+    if(discPctEl) discPctEl.value = discActive ? disc : 0;
+    if(discAmtEl) discAmtEl.value = discActive && discAmt>0 ? fmtRp(discAmt) : '';
+    if(oriPriceEl) oriPriceEl.value = fmtRp(subtotal);
 }
 
 function handleBeli(name,price,img,disc,minBuy){
+    // Pastikan qty picker tertutup dulu
+    var qpOverlay=document.getElementById('qtyPickerOverlay');
+    var qpSheet=document.getElementById('qtyPickerSheet');
+    if(qpOverlay){qpOverlay.style.display='none';qpOverlay.style.opacity='0';}
+    if(qpSheet){qpSheet.style.display='none';}
+    document.body.style.overflow='hidden';
     disc=disc||0;
     minBuy=minBuy||0;
     var oriNum=parseRp(price);
-    // Harga awal tampil tanpa diskon dulu (qty=1, cek apakah langsung memenuhi minimum)
     var meetsMin=(minBuy===0||(oriNum>=minBuy));
     var discAmt=meetsMin?Math.round(oriNum*disc/100):0;
     var finalNum=oriNum-discAmt;
@@ -2178,7 +2250,7 @@ function handleBeli(name,price,img,disc,minBuy){
     if(isCartEl)isCartEl.value='0';
     var qtyInputBox=document.querySelector('#qtyField input[type="number"]');
     var qtyCartInfo=document.getElementById('qtyCartInfo');
-    if(qtyInputBox){qtyInputBox.style.display='';qtyInputBox.value=1;}
+    if(qtyInputBox){qtyInputBox.style.display='';qtyInputBox.disabled=false;qtyInputBox.value=1;}
     if(qtyCartInfo){qtyCartInfo.style.display='none';}
 
     document.getElementById('modalProductName').textContent=name;
@@ -2210,10 +2282,17 @@ function handleBeli(name,price,img,disc,minBuy){
     updateOrderSummary();
 }
 function closeOrder(){document.getElementById('orderModal').style.display='none';}
-document.getElementById('orderModal').addEventListener('click',function(e){if(e.target===this)closeOrder();});
-document.querySelector('#orderForm [name="qty"]').addEventListener('input',updateOrderSummary);
+document.addEventListener('DOMContentLoaded', function() {
+    var orderModalEl = document.getElementById('orderModal');
+    if (orderModalEl) {
+        orderModalEl.addEventListener('click', function(e){ if(e.target===this) closeOrder(); });
+    }
+    var qtyInput = document.querySelector('#orderForm [name="qty"]');
+    if (qtyInput) qtyInput.addEventListener('input', updateOrderSummary);
 
-document.getElementById('orderForm').addEventListener('submit',function(e){
+    var orderFormEl = document.getElementById('orderForm');
+    if (!orderFormEl) return;
+    orderFormEl.addEventListener('submit',function(e){
     e.preventDefault();
     var errBox=document.getElementById('orderError');
     var errText=document.getElementById('orderErrorText');
@@ -2271,7 +2350,8 @@ document.getElementById('orderForm').addEventListener('submit',function(e){
         errText.innerHTML = 'Terjadi kesalahan koneksi: ' + err;
         errBox.style.display = 'block';
     });
-});
+    });
+}); // end DOMContentLoaded
 
 function selectPayment(method, el) {
     document.querySelectorAll('.cod-method-card').forEach(function(c){ c.classList.remove('selected'); });
@@ -2406,6 +2486,16 @@ function closeProductPreview(){document.getElementById('productPreviewModal').st
 })();
 </script>
 
+<!-- ══ GLOBAL DISCOUNT CONFIG ══ -->
+<script>
+var NISWAGD = {
+    enabled:      <?= $globalDisc['enabled'] ? 'true' : 'false' ?>,
+    discount_pct: <?= $globalDisc['discount_pct'] ?>,
+    min_purchase: <?= $globalDisc['min_purchase'] ?>,
+    label:        <?= str_replace(["\u{2028}", "\u{2029}", '</'], ['\u2028', '\u2029', '<\/'], json_encode($globalDisc['label'])) ?>
+};
+</script>
+
 <!-- ══ CART SCRIPT — Shopee Style ══ -->
 <script>
 var NiswaCart=(function(){
@@ -2415,8 +2505,28 @@ var NiswaCart=(function(){
     function save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(items));}catch(e){};}
     function totalQty(){return items.reduce(function(s,i){return s+i.qty;},0);}
     function selectedItems(){return items.filter(function(i){return i.selected;});}
-    function selectedTotal(){
+    // Hitung total harga asli (sebelum diskon apapun)
+    function selectedOriTotal(){
         return selectedItems().reduce(function(s,i){
+            var oriNum=i.oriNum||parsePrice(i.oriPrice||i.price);
+            return s+(oriNum*i.qty);
+        },0);
+    }
+    // Cek apakah diskon global aktif berdasarkan total cart
+    function globalDiscActive(oriTotal){
+        if(!NISWAGD||!NISWAGD.enabled||NISWAGD.discount_pct<=0) return false;
+        if(NISWAGD.min_purchase>0 && oriTotal<NISWAGD.min_purchase) return false;
+        return true;
+    }
+    function selectedTotal(){
+        var sel=selectedItems();
+        var oriTot=selectedOriTotal();
+        // Terapkan diskon global jika aktif (override per-produk)
+        if(globalDiscActive(oriTot)){
+            return oriTot - Math.round(oriTot * NISWAGD.discount_pct / 100);
+        }
+        // Fallback: diskon per-produk
+        return sel.reduce(function(s,i){
             var oriNum=i.oriNum||parsePrice(i.oriPrice||i.price);
             var minBuy=i.minBuy||0;
             var subtotalItem=oriNum*i.qty;
@@ -2527,7 +2637,9 @@ var NiswaCart=(function(){
         });
         var selAll=document.getElementById('cart-select-all');
         if(selAll)selAll.checked=items.length>0&&items.every(function(i){return i.selected;});
-        var sel=selectedItems();var selTot=selectedTotal();
+        var sel=selectedItems();
+        var oriTot=selectedOriTotal();
+        var selTot=selectedTotal();
         var selInfo=document.getElementById('cart-selected-info');
         var selSub=document.getElementById('cart-selected-subtotal');
         var totalEl=document.getElementById('cart-total');
@@ -2538,13 +2650,32 @@ var NiswaCart=(function(){
         if(totalEl)totalEl.textContent=fmt(selTot);
         if(chkCount)chkCount.textContent=sel.reduce(function(s,i){return s+i.qty;},0);
         if(chkBtn)chkBtn.disabled=sel.length===0;
+        // Tampilkan/hide promo global di cart footer
+        var gdBox=document.getElementById('cart-gd-promo');
+        if(gdBox){
+            if(NISWAGD&&NISWAGD.enabled&&NISWAGD.discount_pct>0&&sel.length>0){
+                var kurangGd=NISWAGD.min_purchase>0?Math.max(0,NISWAGD.min_purchase-oriTot):0;
+                if(globalDiscActive(oriTot)){
+                    gdBox.innerHTML='<i class="fas fa-tag" style="color:#c97000;margin-right:5px;"></i><span style="color:#7a5000;font-weight:700;font-size:11.5px;">Diskon '+NISWAGD.discount_pct+'% aktif! Hemat '+fmt(oriTot-selTot)+'</span>';
+                    gdBox.style.background='#fff8ee';gdBox.style.borderColor='#f5dbb5';
+                } else if(kurangGd>0){
+                    gdBox.innerHTML='<i class="fas fa-fire" style="color:#e05c00;margin-right:5px;"></i><span style="color:#7a5000;font-size:11px;font-weight:600;">Tambah <strong>Rp '+kurangGd.toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.')+'</strong> lagi untuk diskon '+NISWAGD.discount_pct+'%!</span>';
+                    gdBox.style.background='#fff3e0';gdBox.style.borderColor='#f5c27f';
+                } else {
+                    gdBox.innerHTML='';
+                }
+                gdBox.style.display='block';
+            } else {
+                gdBox.style.display='none';
+            }
+        }
     }
     function checkout(){
         var sel=selectedItems();if(sel.length===0)return;
         var names=sel.map(function(i){return i.name+' x'+i.qty;}).join(', ');
         var selTot=selectedTotal();
         // Hitung total sebelum diskon dan total diskon
-        var oriTot=sel.reduce(function(s,i){return s+parsePrice(i.oriPrice||i.price)*i.qty;},0);
+        var oriTot=selectedOriTotal();
         var totalDisc=oriTot-selTot;
         var total=fmt(selTot);var firstImg=sel[0].img||'';
         var pNameEl=document.getElementById('inputProductName');
@@ -2572,6 +2703,13 @@ var NiswaCart=(function(){
         if(modalImgEl&&firstImg)modalImgEl.src=firstImg;
         var form=document.getElementById('orderForm');if(form)form.reset();
         if(pNameEl)pNameEl.value=names;if(pPriceEl)pPriceEl.value=total;
+        // ── Simpan data diskon cart ke hidden input ──
+        var discPctEl=document.getElementById('inputDiscPct');
+        var discAmtEl=document.getElementById('inputDiscAmt');
+        var oriPriceEl=document.getElementById('inputOriPrice');
+        if(discPctEl) discPctEl.value = totalDisc>0 ? 'cart' : 0;
+        if(discAmtEl) discAmtEl.value = totalDisc>0 ? fmt(totalDisc) : '';
+        if(oriPriceEl) oriPriceEl.value = fmt(oriTot);
         var imgInputEl=document.getElementById('inputProductImage');
         if(imgInputEl){
             var allImgs=sel.map(function(i){return i.img||'';}).filter(function(x){return x!='';});
@@ -2585,7 +2723,7 @@ var NiswaCart=(function(){
         var qtyCartInfo=document.getElementById('qtyCartInfo');
         var qtyCartText=document.getElementById('qtyCartText');
         if(inputQtyEl){inputQtyEl.value=totalQtySelected;}
-        if(qtyInputBox){qtyInputBox.style.display='none';}
+        if(qtyInputBox){qtyInputBox.style.display='none';qtyInputBox.disabled=true;}
         if(qtyCartInfo){
             qtyCartInfo.style.display='flex';
             var itemLabel=sel.map(function(i){return i.name+(i.qty>1?' x'+i.qty:'');}).join(', ');
