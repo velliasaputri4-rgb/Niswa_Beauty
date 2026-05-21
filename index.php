@@ -971,7 +971,19 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
             <p class="text-muted mt-2"><?= esc($sec['harga_subtitle']) ?></p>
         </div>
 
-        <div class="price-cards-grid">
+        <!-- Search Bar Daftar Harga -->
+        <div class="price-search-wrap" data-aos="fade-up" data-aos-delay="40">
+            <div class="price-search-inner">
+                <i class="fa-solid fa-magnifying-glass price-search-icon"></i>
+                <input type="text" id="priceSearchInput" class="price-search-input" placeholder="Cari layanan, misal: smoothing, gel, henna...">
+                <button class="price-search-clear" id="priceSearchClear" onclick="clearPriceSearch()" style="display:none;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="priceSearchEmpty" class="price-search-empty" style="display:none;">
+                <i class="fa-solid fa-face-frown-open"></i> Layanan tidak ditemukan. Coba kata kunci lain.
+            </div>
+        </div>
+
+        <div class="price-cards-grid" id="priceCardsGrid">
         <?php
         // Urutkan: Treatment Spa atas, Nail Art paling bawah
         $catOrder = ["Brow & Lash","Treatment Spa","Henna Series","Nail Art & Services","Rambut"];
@@ -1063,7 +1075,43 @@ $pageTitle = esc($kontak['salon_name']) . ' — Premium Beauty Experience';
 </div>
 
 <style>
-/* ── Clickable rows ── */
+/* ── Search Bar Daftar Harga ── */
+.price-search-wrap { max-width: 500px; margin: 0 auto 28px; }
+.price-search-inner {
+    position: relative; display: flex; align-items: center;
+    background: #fff; border: 2px solid #e8d8cc;
+    border-radius: 50px; padding: 0 18px;
+    box-shadow: 0 4px 18px rgba(139,111,94,0.12);
+    transition: border-color .2s, box-shadow .2s;
+}
+.price-search-inner:focus-within {
+    border-color: #8B6F5E;
+    box-shadow: 0 4px 24px rgba(139,111,94,0.22);
+}
+.price-search-icon { color: #C4A882; font-size: 15px; flex-shrink: 0; margin-right: 10px; }
+.price-search-input {
+    flex: 1; border: none; outline: none; background: transparent;
+    font-family: 'Poppins', sans-serif; font-size: 14px; color: #3a2a22;
+    padding: 13px 0;
+}
+.price-search-input::placeholder { color: #bca898; }
+.price-search-clear {
+    background: #f0e4d8; border: none; border-radius: 50%;
+    width: 26px; height: 26px; cursor: pointer; color: #8B6F5E;
+    font-size: 12px; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-left: 8px; transition: background .15s;
+}
+.price-search-clear:hover { background: #e0cfc3; }
+.price-search-empty {
+    text-align: center; color: #bca898; font-family: 'Poppins', sans-serif;
+    font-size: 13.5px; margin-top: 14px;
+}
+/* row highlight */
+.price-row-match td:first-child em { background: #fde68a; border-radius: 3px; font-style: normal; padding: 0 2px; }
+.price-row-hidden { display: none !important; }
+.price-card-hidden { display: none !important; }
+
+
 .price-row-clickable { cursor: pointer; }
 .price-row-clickable:hover { background: #fdf0e8 !important; }
 .price-row-clickable:hover td:first-child { color: #8B6F5E; font-weight: 600; }
@@ -1236,6 +1284,80 @@ function closePriceModal(e) {
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') closePriceModal(null);
 });
+
+/* ── Search Daftar Harga ── */
+(function(){
+    var input   = document.getElementById('priceSearchInput');
+    var clearBtn= document.getElementById('priceSearchClear');
+    var emptyEl = document.getElementById('priceSearchEmpty');
+    var grid    = document.getElementById('priceCardsGrid');
+    if (!input || !grid) return;
+
+    function highlight(text, q) {
+        if (!q) return text;
+        var re = new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi');
+        return text.replace(re, '<em>$1</em>');
+    }
+
+    function doSearch() {
+        var q = input.value.trim().toLowerCase();
+        clearBtn.style.display = q ? 'flex' : 'none';
+
+        var cards    = grid.querySelectorAll('.price-card');
+        var anyMatch = false;
+
+        cards.forEach(function(card) {
+            var rows      = card.querySelectorAll('tr.price-row-clickable');
+            var cardMatch = false;
+
+            rows.forEach(function(row) {
+                var nameCell = row.querySelector('td:first-child');
+                var origName = row.dataset.name || '';
+                if (!q) {
+                    // Reset
+                    row.classList.remove('price-row-hidden');
+                    nameCell.querySelector('span') && (nameCell.firstChild.textContent = origName);
+                    // Restore original text node
+                    var hint = nameCell.querySelector('.price-row-hint');
+                    nameCell.innerHTML = '';
+                    nameCell.appendChild(document.createTextNode(origName + ' '));
+                    if (hint) nameCell.appendChild(hint);
+                } else {
+                    var match = origName.toLowerCase().indexOf(q) !== -1;
+                    if (match) {
+                        row.classList.remove('price-row-hidden');
+                        cardMatch = true;
+                        // Highlight
+                        var hint = nameCell.querySelector('.price-row-hint');
+                        nameCell.innerHTML = highlight(origName, q) + ' ';
+                        if (hint) nameCell.appendChild(hint);
+                    } else {
+                        row.classList.add('price-row-hidden');
+                    }
+                }
+            });
+
+            if (!q) {
+                card.classList.remove('price-card-hidden');
+            } else if (cardMatch) {
+                card.classList.remove('price-card-hidden');
+                anyMatch = true;
+            } else {
+                card.classList.add('price-card-hidden');
+            }
+        });
+
+        emptyEl.style.display = (q && !anyMatch) ? 'block' : 'none';
+    }
+
+    input.addEventListener('input', doSearch);
+
+    window.clearPriceSearch = function() {
+        input.value = '';
+        doSearch();
+        input.focus();
+    };
+})();
 </script>
 
 <style>
