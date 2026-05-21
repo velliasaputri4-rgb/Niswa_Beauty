@@ -2512,7 +2512,7 @@ function closeProductPreview(){document.getElementById('productPreviewModal').st
         autoTimer=setInterval(function(){
             var total=track.querySelectorAll('.testimoni-group').length;
             goTo((current+1)%total);
-        },4000);
+        },7000);
     }
     function stopAuto(){ clearInterval(autoTimer); }
 
