@@ -26,24 +26,18 @@ $profil = [
     'owner_name'    => getProfil($conn,'profil','owner_name',    'Niswa'),
     'owner_tagline' => getProfil($conn,'profil','owner_tagline', '"Kecantikan adalah kepercayaan diri yang paling murni."'),
     'owner_bio1'    => getProfil($conn,'profil','owner_bio1',
-        'Pendiri Niswa Beauty memulai perjalanan usahanya dari jasa henna keliling dengan nama Niswa Henna. Dengan penuh semangat dan ketekunan, layanan dilakukan dari rumah ke rumah untuk memenuhi kebutuhan pelanggan di sekitar Jepara.' . "\n\n" .
-        'Pada tahun 2018, dunia kecantikan khususnya nail art dan fake nails mulai berkembang pesat. Melihat peluang tersebut, pendiri mulai mempelajari dan mengembangkan layanan nail art menggunakan perlengkapan sederhana seperti nail polish. Berawal dari daerah Lebak Pakis Aji, hasil karya yang teliti dan pelayanan yang baik membuat nama Niswa mulai dikenal masyarakat.' . "\n\n" .
-        'Perjalanan usaha semakin berkembang ketika mendapat dukungan dan inspirasi dari salah satu teman di Dubai dalam pengembangan dunia kecantikan. Memasuki tahun 2019, usaha mulai berjalan lebih lancar setelah mendapatkan supplier lokal dan pelanggan dari luar daerah seperti Kudus dan Tanjung, Semarang.'
+        'Niswa memulai perjalanan dari jasa henna keliling door-to-door di sekitar Jepara dengan nama Niswa Henna. Nama Niswa perlahan dikenal bukan karena promosi besar, melainkan karena hasil karya yang rapi dan pelayanan yang tulus. Pada 2018, ia mulai mengembangkan layanan nail art secara otodidak dengan peralatan sederhana, didukung inspirasi dari seorang teman di Dubai. Memasuki 2019, usaha semakin berkembang dengan hadirnya supplier lokal dan pelanggan dari Kudus, Tanjung, hingga Semarang.'
     ),
     'owner_bio2'    => getProfil($conn,'profil','owner_bio2',
-        'Tahun 2020–2021 menjadi masa penuh perjuangan sekaligus perkembangan. Pendiri mulai dikenal oleh beberapa publik figur lokal di Jepara yang menggunakan jasa nail art Niswa. Bahkan pada masa awal, beberapa layanan diberikan secara gratis sebagai bentuk belajar dan membangun relasi. Dukungan teman-teman menjadi salah satu alasan usaha ini terus bertahan dan berkembang.' . "\n\n" .
-        'Pada tahun 2022, perjalanan usaha sempat mengalami ujian ketika pendiri mengalami keguguran sehingga mulai membatasi pekerjaan dengan lokasi yang terlalu jauh. Namun semangat untuk terus berkembang tidak berhenti. Di masa tersebut, usaha seserahan berkembang pesat dan menjadi salah satu layanan yang diminati pelanggan.' . "\n\n" .
-        'Saat merintis sendiri, jam kerja dimulai dari pukul 10 pagi hingga 9 malam dengan jumlah pelanggan yang bisa mencapai lebih dari 7 orang per hari. Hingga kini, pendiri Niswa Beauty terus belajar dan berkembang, terutama dalam bidang media sosial, pelayanan, dan branding, dengan tetap mempertahankan sikap rendah hati dalam membangun usaha sendiri.'
+        'Tahun 2020–2021 menjadi masa penuh kebanggaan — Niswa mulai dikenal publik figur lokal Jepara dan melayani lebih dari 7 pelanggan per hari. Meski menghadapi ujian berat di 2022, layanan seserahan dan wedding justru berkembang pesat. Dengan semangat yang tak pernah padam, pada 15 Juli 2023 Niswa Beauty resmi berdiri bersama dua tim pertama, tumbuh menjadi studio kecantikan profesional yang terus berkembang dalam pelayanan, branding, dan teknologi.'
     ),
     'store_name'    => getProfil($conn,'profil','store_name',    'NISWÀ BEAUTY'),
     'store_tagline' => getProfil($conn,'profil','store_tagline', '"Premium Beauty Experience di Jantung Jepara"'),
     'store_bio1'    => getProfil($conn,'profil','store_bio1',
-        'Niswa Beauty merupakan usaha di bidang kecantikan yang berawal dari layanan henna sederhana bernama Niswa Henna. Seiring berkembangnya tren kecantikan pada tahun 2018, usaha ini mulai merambah ke layanan nail art dan fake nails untuk memenuhi kebutuhan pelanggan, khususnya calon pengantin.' . "\n\n" .
-        'Dengan kualitas pelayanan dan hasil karya yang terus berkembang, Niswa mulai dikenal oleh masyarakat sekitar hingga mendapatkan pelanggan dari luar daerah pada tahun 2019. Perkembangan usaha semakin baik setelah memiliki supplier lokal dan jaringan pelanggan yang lebih luas.' . "\n\n" .
-        'Pada tahun 2020, Niswa Beauty membuka studio kecil pertama di rumah daerah Tengguli. Tidak hanya melayani nail art, usaha ini juga menyediakan layanan wedding, gift, dan seserahan. Seiring waktu, layanan nail art menjadi semakin diminati dan dikenal oleh berbagai kalangan di Jepara.'
+        'Berawal dari henna sederhana pada 2018, Niswa Beauty berkembang menjadi studio kecantikan lengkap yang melayani nail art, hair treatment, spa, lash, hingga seserahan. Dengan supplier lokal dan pelanggan dari berbagai daerah, Niswa Beauty membuka studio pertamanya di Tengguli pada 2020.'
     ),
     'store_bio2'    => getProfil($conn,'profil','store_bio2',
-        'Tanggal 15 Juli 2023 menjadi tonggak penting dengan resmi berdirinya Niswa Beauty bersama dua orang tim pertama. Sejak saat itu, usaha berkembang lebih profesional dengan pelayanan yang semakin lengkap dan terstruktur. Beberapa kerja sama dari luar kota hingga tawaran bergabung dengan brand kecantikan besar pernah datang, namun Niswa Beauty memilih untuk tetap berkembang secara mandiri.'
+        'Resmi berdiri 15 Juli 2023 bersama dua tim pertama, Niswa Beauty kini hadir lebih profesional dengan layanan lengkap, pembayaran digital QRIS, dan kehadiran aktif di Instagram & TikTok — tetap mandiri dan terus berkembang untuk pengalaman kecantikan terbaik.'
     ),
     'store_image'   => getProfil($conn,'profil','store_image',   'image/WhatsApp Image 2026-05-08 at 10.02.50.jpeg'),
     'value_item_1'  => getProfil($conn,'profil','value_item_1',  'Pelayanan Tulus'),
@@ -373,25 +367,6 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
             opacity: 1;
         }
 
-        /* Bio columns */
-        .owner-bio-block {
-            background: var(--warm-white);
-            border-top: 1px solid rgba(214,191,166,.25);
-            padding: 52px 56px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 48px;
-            align-items: start;
-        }
-        .owner-bio-text {
-            font-family: var(--sans);
-            font-size: 17px;
-            color: var(--espresso);
-            line-height: 2.0;
-            margin: 0;
-        }
-        .owner-bio-text + .owner-bio-text { color: var(--espresso); }
-
         /* ════════════════════════════════════
            STORE SECTION
         ════════════════════════════════════ */
@@ -565,7 +540,6 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
         @media (max-width: 991px) {
             .owner-hero { padding: 36px 32px; gap: 24px; flex-wrap: wrap; }
             .owner-stats-row { grid-template-columns: repeat(4, 1fr); width: 100%; }
-            .owner-bio-block { grid-template-columns: 1fr; padding: 36px 32px; gap: 24px; }
             .owner-timeline { grid-template-columns: repeat(3, 1fr); }
             .tl-node:nth-child(3) { border-right: none; }
             .tl-node:nth-child(4) { border-top: 1px solid rgba(214,191,166,.25); }
@@ -581,7 +555,6 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
             .tl-node:nth-child(2) { border-right: none; }
             .tl-node:nth-child(3) { border-top: 1px solid rgba(214,191,166,.25); border-right: 1px solid rgba(214,191,166,.25); }
             .tl-node:nth-child(5) { grid-column: 1 / -1; border-right: none; border-top: 1px solid rgba(214,191,166,.25); }
-            .owner-bio-block { padding: 28px 22px; }
             .store-val-chip { font-size: 13px; padding: 11px 12px; }
             .store-values { grid-template-columns: 1fr; }
             .owner-pull-quote { padding: 22px 22px; }
@@ -646,6 +619,16 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
                 <p>Dari henna keliling door-to-door, hingga memimpin salon kecantikan yang dikenal se-Jepara — inilah perjalanan Niswa yang penuh semangat dan ketekunan.</p>
             </div>
 
+            <!-- Bio Singkat Pemilik -->
+            <div style="padding: 28px 48px 32px; background: var(--warm-white);">
+                <p style="font-family: var(--sans); font-size: 15.5px; color: var(--espresso); line-height: 1.85; margin: 0 0 18px; opacity: .88;">
+                    <?= nl2br(esc($profil['owner_bio1'])) ?>
+                </p>
+                <p style="font-family: var(--sans); font-size: 15.5px; color: var(--espresso); line-height: 1.85; margin: 0; opacity: .88;">
+                    <?= nl2br(esc($profil['owner_bio2'])) ?>
+                </p>
+            </div>
+
             <!-- Timeline Strip -->
             <div class="owner-timeline">
                 <div class="tl-node">
@@ -673,12 +656,6 @@ $salonName = getContent($conn,'kontak','salon_name','NISWÀ BEAUTY');
                     <div class="tl-node-title">Bertumbuh</div>
                     <div class="tl-node-text">Layanan seserahan & wedding berkembang pesat.</div>
                 </div>
-            </div>
-
-            <!-- Bio Block -->
-            <div class="owner-bio-block">
-                <p class="owner-bio-text"><?= nl2br(esc($profil['owner_bio1'])) ?></p>
-                <p class="owner-bio-text"><?= nl2br(esc($profil['owner_bio2'])) ?></p>
             </div>
 
         </div>

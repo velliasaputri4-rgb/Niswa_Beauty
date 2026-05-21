@@ -663,8 +663,11 @@ if ($action === 'save_global_discount') {
     $disc_pct     = max(0, min(100, (int)($_POST['gd_discount_pct']  ?? 0)));
     $min_purchase = max(0, (int)($_POST['gd_min_purchase'] ?? 0));
     $label        = mysqli_real_escape_string($conn, trim($_POST['gd_label'] ?? ''));
-    mysqli_query($conn, "UPDATE cms_global_discount SET enabled=$enabled, discount_pct=$disc_pct, min_purchase=$min_purchase, label='$label' WHERE id=1");
-    header('Location: cms.php?tab=global_discount&saved=1'); exit;
+    $ok = mysqli_query($conn, "INSERT INTO cms_global_discount (id,enabled,discount_pct,min_purchase,label)
+        VALUES (1,$enabled,$disc_pct,$min_purchase,'$label')
+        ON DUPLICATE KEY UPDATE enabled=$enabled, discount_pct=$disc_pct, min_purchase=$min_purchase, label='$label'");
+    $status = $ok ? 'saved=1' : 'saved=0&err='.urlencode(mysqli_error($conn));
+    header('Location: cms.php?tab=global_discount&'.$status); exit;
 }
 
 /* ══════════════════════════════════════════════
@@ -700,18 +703,18 @@ $profil = [
     'owner_name'    => getProfil($conn,'profil','owner_name',   'Niswa'),
     'owner_tagline' => getProfil($conn,'profil','owner_tagline','"Kecantikan adalah kepercayaan diri yang paling murni."'),
     'owner_bio1'    => getProfil($conn,'profil','owner_bio1',
-        "Pendiri Niswa Beauty memulai perjalanan usahanya dari jasa henna keliling dengan nama Niswa Henna. Dengan penuh semangat dan ketekunan, layanan dilakukan dari rumah ke rumah untuk memenuhi kebutuhan pelanggan di sekitar Jepara.\n\nPada tahun 2018, dunia kecantikan khususnya nail art dan fake nails mulai berkembang pesat. Melihat peluang tersebut, pendiri mulai mempelajari dan mengembangkan layanan nail art menggunakan perlengkapan sederhana seperti nail polish. Berawal dari daerah Lebak Pakis Aji, hasil karya yang teliti dan pelayanan yang baik membuat nama Niswa mulai dikenal masyarakat.\n\nPerjalanan usaha semakin berkembang ketika mendapat dukungan dan inspirasi dari salah satu teman di Dubai dalam pengembangan dunia kecantikan. Memasuki tahun 2019, usaha mulai berjalan lebih lancar setelah mendapatkan supplier lokal dan pelanggan dari luar daerah seperti Kudus dan Tanjung, Semarang."
+        "Niswa memulai perjalanan dari jasa henna keliling door-to-door di sekitar Jepara dengan nama Niswa Henna. Nama Niswa perlahan dikenal bukan karena promosi besar, melainkan karena hasil karya yang rapi dan pelayanan yang tulus. Pada 2018, ia mulai mengembangkan layanan nail art secara otodidak dengan peralatan sederhana, didukung inspirasi dari seorang teman di Dubai. Memasuki 2019, usaha semakin berkembang dengan hadirnya supplier lokal dan pelanggan dari Kudus, Tanjung, hingga Semarang."
     ),
     'owner_bio2'    => getProfil($conn,'profil','owner_bio2',
-        "Tahun 2020–2021 menjadi masa penuh perjuangan sekaligus perkembangan. Pendiri mulai dikenal oleh beberapa publik figur lokal di Jepara yang menggunakan jasa nail art Niswa. Bahkan pada masa awal, beberapa layanan diberikan secara gratis sebagai bentuk belajar dan membangun relasi. Dukungan teman-teman menjadi salah satu alasan usaha ini terus bertahan dan berkembang.\n\nPada tahun 2022, perjalanan usaha sempat mengalami ujian ketika pendiri mengalami keguguran sehingga mulai membatasi pekerjaan dengan lokasi yang terlalu jauh. Namun semangat untuk terus berkembang tidak berhenti. Di masa tersebut, usaha seserahan berkembang pesat dan menjadi salah satu layanan yang diminati pelanggan.\n\nSaat merintis sendiri, jam kerja dimulai dari pukul 10 pagi hingga 9 malam dengan jumlah pelanggan yang bisa mencapai lebih dari 7 orang per hari. Hingga kini, pendiri Niswa Beauty terus belajar dan berkembang, terutama dalam bidang media sosial, pelayanan, dan branding, dengan tetap mempertahankan sikap rendah hati dalam membangun usaha sendiri."
+        "Tahun 2020–2021 menjadi masa penuh kebanggaan — Niswa mulai dikenal publik figur lokal Jepara dan melayani lebih dari 7 pelanggan per hari. Meski menghadapi ujian berat di 2022, layanan seserahan dan wedding justru berkembang pesat. Dengan semangat yang tak pernah padam, pada 15 Juli 2023 Niswa Beauty resmi berdiri bersama dua tim pertama, tumbuh menjadi studio kecantikan profesional yang terus berkembang dalam pelayanan, branding, dan teknologi."
     ),
     'store_name'    => getProfil($conn,'profil','store_name',   'NISWÀ BEAUTY'),
     'store_tagline' => getProfil($conn,'profil','store_tagline','"Premium Beauty Experience di Jantung Jepara"'),
     'store_bio1'    => getProfil($conn,'profil','store_bio1',
-        "Niswa Beauty merupakan usaha di bidang kecantikan yang berawal dari layanan henna sederhana bernama Niswa Henna. Seiring berkembangnya tren kecantikan pada tahun 2018, usaha ini mulai merambah ke layanan nail art dan fake nails untuk memenuhi kebutuhan pelanggan, khususnya calon pengantin.\n\nDengan kualitas pelayanan dan hasil karya yang terus berkembang, Niswa mulai dikenal oleh masyarakat sekitar hingga mendapatkan pelanggan dari luar daerah pada tahun 2019. Perkembangan usaha semakin baik setelah memiliki supplier lokal dan jaringan pelanggan yang lebih luas.\n\nPada tahun 2020, Niswa Beauty membuka studio kecil pertama di rumah daerah Tengguli. Tidak hanya melayani nail art, usaha ini juga menyediakan layanan wedding, gift, dan seserahan. Seiring waktu, layanan nail art menjadi semakin diminati dan dikenal oleh berbagai kalangan di Jepara."
+        'Berawal dari henna sederhana pada 2018, Niswa Beauty berkembang menjadi studio kecantikan lengkap yang melayani nail art, hair treatment, spa, lash, hingga seserahan. Dengan supplier lokal dan pelanggan dari berbagai daerah, Niswa Beauty membuka studio pertamanya di Tengguli pada 2020.'
     ),
     'store_bio2'    => getProfil($conn,'profil','store_bio2',
-        "Tanggal 15 Juli 2023 menjadi tonggak penting dengan resmi berdirinya Niswa Beauty bersama dua orang tim pertama. Sejak saat itu, usaha berkembang lebih profesional dengan pelayanan yang semakin lengkap dan terstruktur. Beberapa kerja sama dari luar kota hingga tawaran bergabung dengan brand kecantikan besar pernah datang, namun Niswa Beauty memilih untuk tetap berkembang secara mandiri."
+        'Resmi berdiri 15 Juli 2023 bersama dua tim pertama, Niswa Beauty kini hadir lebih profesional dengan layanan lengkap, pembayaran digital QRIS, dan kehadiran aktif di Instagram & TikTok — tetap mandiri dan terus berkembang untuk pengalaman kecantikan terbaik.'
     ),
     'store_image'   => getProfil($conn,'profil','store_image',  'image/WhatsApp Image 2026-05-08 at 10.02.50.jpeg'),
     'value_item_1'  => getProfil($conn,'profil','value_item_1', 'Pelayanan Tulus'),
@@ -2457,16 +2460,22 @@ input[type=file]{display:none;}
                             <input type="text" name="owner_tagline" value="<?= htmlspecialchars($profil['owner_tagline']) ?>" placeholder='"Kecantikan adalah..."'>
                         </div>
                     </div>
+                    <details style="margin-bottom:16px;border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+                        <summary style="padding:12px 16px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text-mid);background:#fdfaf7;list-style:none;display:flex;align-items:center;gap:8px;">
+                            <i class="fa-solid fa-chevron-right" style="font-size:10px;transition:transform .2s;" class="det-arrow"></i>
+                            Biografi Panjang Pemilik <span style="font-weight:400;color:var(--text-lt);">(opsional — tidak ditampilkan di halaman profil)</span>
+                        </summary>
+                        <div style="padding:16px;border-top:1px solid var(--border);">
                     <div class="form-group">
                         <label>Biografi Pemilik (Paragraf 1)</label>
-                        <textarea name="owner_bio1" rows="7" placeholder="Cerita awal mula perjalanan pemilik..."><?= htmlspecialchars($profil['owner_bio1']) ?></textarea>
-                        <small style="font-size:11px;color:var(--text-lt);">Pisahkan paragraf dengan baris kosong (Enter 2x). Akan ditampilkan di kolom kiri halaman profil.</small>
+                        <textarea name="owner_bio1" rows="5" placeholder="Cerita awal mula perjalanan pemilik..."><?= htmlspecialchars($profil['owner_bio1']) ?></textarea>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" style="margin-bottom:0;">
                         <label>Biografi Pemilik (Paragraf 2)</label>
-                        <textarea name="owner_bio2" rows="7" placeholder="Lanjutan perjalanan..."><?= htmlspecialchars($profil['owner_bio2']) ?></textarea>
-                        <small style="font-size:11px;color:var(--text-lt);">Pisahkan paragraf dengan baris kosong (Enter 2x). Akan ditampilkan di kolom kanan halaman profil.</small>
+                        <textarea name="owner_bio2" rows="5" placeholder="Lanjutan perjalanan..."><?= htmlspecialchars($profil['owner_bio2']) ?></textarea>
                     </div>
+                        </div>
+                    </details>
 
                     <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
                     <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mid);margin-bottom:16px;">
@@ -2539,14 +2548,22 @@ input[type=file]{display:none;}
                             <input type="text" name="store_tagline" value="<?= htmlspecialchars($profil['store_tagline']) ?>" placeholder='"Premium Beauty..."'>
                         </div>
                     </div>
+                    <details style="margin-bottom:16px;border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+                        <summary style="padding:12px 16px;cursor:pointer;font-size:12px;font-weight:600;color:var(--text-mid);background:#fdfaf7;list-style:none;display:flex;align-items:center;gap:8px;">
+                            <i class="fa-solid fa-chevron-right" style="font-size:10px;"></i>
+                            Biografi Panjang Toko <span style="font-weight:400;color:var(--text-lt);">(opsional — hanya paragraf ke-2 ditampilkan di halaman profil)</span>
+                        </summary>
+                        <div style="padding:16px;border-top:1px solid var(--border);">
                     <div class="form-group">
-                        <label>Biografi Toko (Paragraf 1)</label>
-                        <textarea name="store_bio1" rows="4"><?= htmlspecialchars($profil['store_bio1']) ?></textarea>
+                        <label>Biografi Toko (Paragraf 1) <small style="text-transform:none;font-weight:400;color:var(--text-lt);">— tidak ditampilkan</small></label>
+                        <textarea name="store_bio1" rows="3"><?= htmlspecialchars($profil['store_bio1']) ?></textarea>
                     </div>
-                    <div class="form-group">
-                        <label>Biografi Toko (Paragraf 2)</label>
-                        <textarea name="store_bio2" rows="4"><?= htmlspecialchars($profil['store_bio2']) ?></textarea>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label>Biografi Toko (Paragraf 2) <small style="text-transform:none;font-weight:400;color:var(--text-lt);">— tampil di halaman profil</small></label>
+                        <textarea name="store_bio2" rows="3"><?= htmlspecialchars($profil['store_bio2']) ?></textarea>
                     </div>
+                        </div>
+                    </details>
                     <div class="form-group">
                         <label>Foto Toko</label>
                         <label class="img-upload-box" for="storeImgInput">
@@ -4011,6 +4028,17 @@ $totalOrdersCount = $ordersRows ? mysqli_num_rows($ordersRows) : 0;
 <?php /* ════════ TAB: DISKON GLOBAL ════════ */ ?>
 <?php elseif ($activeTab === 'global_discount'): ?>
 
+<?php if (isset($_GET['saved'])): ?>
+<div style="margin-bottom:16px;padding:12px 18px;border-radius:10px;font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;
+    <?= $_GET['saved']==='1' ? 'background:#edfaf1;border:1.5px solid #6fcf97;color:#1a7a3e;' : 'background:#fff0f0;border:1.5px solid #f5b7b1;color:#c0392b;' ?>">
+    <?php if ($_GET['saved']==='1'): ?>
+        <i class="fa-solid fa-circle-check"></i> Pengaturan diskon berhasil disimpan!
+    <?php else: ?>
+        <i class="fa-solid fa-circle-xmark"></i> Gagal menyimpan: <?= htmlspecialchars($_GET['err'] ?? 'Unknown error') ?>
+    <?php endif; ?>
+</div>
+<?php endif; ?>
+
 <div class="cms-card">
     <div class="cms-card-header">
         <i class="fa-solid fa-percent"></i>
@@ -4325,4 +4353,3 @@ function filterProducts() {
 
 </body>
 </html>
-
