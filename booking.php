@@ -25,12 +25,41 @@ $fixColumns = [
     "jenis_layanan"  => "ALTER TABLE bookings ADD COLUMN jenis_layanan VARCHAR(20) DEFAULT 'datang'",
     "alamat_hs"      => "ALTER TABLE bookings ADD COLUMN alamat_hs TEXT",
     "status"         => "ALTER TABLE bookings ADD COLUMN status VARCHAR(20) DEFAULT 'booked'",
+    "price_id"       => "ALTER TABLE bookings ADD COLUMN price_id INT DEFAULT NULL",
+    "service_price"  => "ALTER TABLE bookings ADD COLUMN service_price VARCHAR(60) DEFAULT NULL",
 ];
 foreach ($fixColumns as $col => $sql) {
     $cek = mysqli_query($conn, "SHOW COLUMNS FROM bookings LIKE '$col'");
     if ($cek && mysqli_num_rows($cek) === 0) {
         mysqli_query($conn, $sql);
     }
+}
+// Auto-tambah FK bookings.price_id → cms_prices.id (jika belum ada)
+$cekFkPrice = mysqli_query($conn, "SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME   = 'bookings'
+      AND COLUMN_NAME  = 'price_id'
+      AND REFERENCED_TABLE_NAME = 'cms_prices'
+    LIMIT 1");
+if ($cekFkPrice && mysqli_num_rows($cekFkPrice) === 0) {
+    mysqli_query($conn, "ALTER TABLE bookings
+        ADD CONSTRAINT fk_bookings_price
+        FOREIGN KEY (price_id) REFERENCES cms_prices(id) ON DELETE SET NULL");
+}
+
+// ── Load daftar layanan dari cms_prices (dikelompokkan per category) ──
+$pricesFromDb = [];
+$rPrices = mysqli_query($conn, "SELECT id, category, name, price FROM cms_prices ORDER BY category, sort_order, name");
+if ($rPrices) {
+    while ($rowP = mysqli_fetch_assoc($rPrices)) {
+        $pricesFromDb[] = $rowP;
+    }
+}
+// Kelompokkan per category
+$layanansFromPrices = [];
+foreach ($pricesFromDb as $p) {
+    $cat = $p['category'] ?: 'Layanan';
+    $layanansFromPrices[$cat][] = $p;
 }
 
 $message    = '';
@@ -47,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nama         = trim($_POST['nama']          ?? '');
     $whatsapp     = trim($_POST['whatsapp']      ?? '');
     $email        = trim($_POST['email']         ?? '');
-    $layanan      = trim($_POST['layanan']       ?? '');
+    $price_id     = (int)($_POST['price_id']     ?? 0);
     $tanggal      = trim($_POST['tanggal']       ?? '');
     $jam          = trim($_POST['jam']           ?? '');
     $jumlah_orang = (int)($_POST['jumlah_orang'] ?? 1);
@@ -55,6 +84,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $jenis_layanan = trim($_POST['jenis_layanan']  ?? 'datang');
     $alamat_hs     = trim($_POST['alamat_hs']      ?? '');
     if (!in_array($jenis_layanan, ['datang', 'home_service'])) $jenis_layanan = 'datang';
+
+    // Resolve layanan & harga dari cms_prices berdasarkan price_id
+    $layanan       = '';
+    $service_price = '';
+    if ($price_id > 0) {
+        $rSvc = mysqli_query($conn, "SELECT name, price FROM cms_prices WHERE id = $price_id LIMIT 1");
+        if ($rSvc && $rowSvc = mysqli_fetch_assoc($rSvc)) {
+            $layanan       = $rowSvc['name'];
+            $service_price = $rowSvc['price'];
+        }
+    }
 
     $errors = [];
     if (empty($nama))     $errors[] = 'Nama lengkap wajib diisi.';
@@ -87,11 +127,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($errors)) {
         $stmt = mysqli_prepare($conn,
-            "INSERT INTO bookings (user_id, name, phone, email, service, date, time, jumlah_orang, catatan, jenis_layanan, alamat_hs, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())"
+            "INSERT INTO bookings (user_id, name, phone, email, service, price_id, service_price, date, time, jumlah_orang, catatan, jenis_layanan, alamat_hs, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())"
         );
-        mysqli_stmt_bind_param($stmt, "issssssisss",
-            $user_id, $nama, $whatsapp, $email, $layanan,
+        mysqli_stmt_bind_param($stmt, "issssisssisss",
+            $user_id, $nama, $whatsapp, $email, $layanan, $price_id, $service_price,
             $tanggal, $jam, $jumlah_orang, $catatan, $jenis_layanan, $alamat_hs
         );
 
@@ -152,7 +192,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pesan_cust .= "━━━━━━━━━━━━━━━━━━━━\n";
             $pesan_cust .= "📋 *DETAIL BOOKING #{$booking_id}*\n";
             $pesan_cust .= "━━━━━━━━━━━━━━━━━━━━\n";
-            $pesan_cust .= "💆 *Layanan:* {$layanan}\n";
+            $pesan_cust .= "💆 *Layanan:* {$layanan}" . (!empty($service_price) ? " ({$service_price})" : "") . "\n";
             $pesan_cust .= "📅 *Tanggal:* {$tgl_fmt}\n";
             $pesan_cust .= "⏰ *Jam:* {$jam} WIB\n";
             $label_jenis = ($jenis_layanan === 'home_service') ? '🏠 Home Service' : '🏪 Datang ke Tempat';
@@ -188,7 +228,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pesan_admin .= "👤 *Nama:* {$nama}\n";
             $pesan_admin .= "📱 *WA:* {$whatsapp}\n";
             $pesan_admin .= "📧 *Email:* {$email}\n";
-            $pesan_admin .= "💆 *Layanan:* {$layanan}\n";
+            $pesan_admin .= "💆 *Layanan:* {$layanan}" . (!empty($service_price) ? " ({$service_price})" : "") . "\n";
             $pesan_admin .= "📅 *Tanggal:* {$tgl_fmt}\n";
             $pesan_admin .= "⏰ *Jam:* {$jam} WIB\n";
             $pesan_admin .= "📍 *Jenis:* " . ($jenis_layanan === 'home_service' ? '🏠 Home Service' : '🏪 Datang ke Tempat') . "\n";
@@ -649,18 +689,30 @@ $pageTitle = "Booking Appointment — NISWÀ BEAUTY";
                             <!-- Layanan -->
                             <div class="col-md-6">
                                 <label class="form-label"><i class="fas fa-spa me-2 text-pink"></i>Pilih Layanan</label>
-                                <select class="form-select" name="layanan" required>
+                                <?php if (!empty($layanansFromPrices)): ?>
+                                <select class="form-select" name="price_id" id="layananSelect" required>
                                     <option value="">— Pilih Layanan —</option>
-                                    <?php foreach ($layanansGrouped as $grup => $items): ?>
+                                    <?php foreach ($layanansFromPrices as $grup => $items): ?>
                                     <optgroup label="<?= htmlspecialchars($grup) ?>">
-                                        <?php foreach ($items as $l): ?>
-                                        <option value="<?= htmlspecialchars($l) ?>" <?= ($_POST['layanan']??'')===$l ? 'selected' : '' ?>>
-                                            <?= htmlspecialchars($l) ?>
+                                        <?php foreach ($items as $p): ?>
+                                        <option value="<?= (int)$p['id'] ?>"
+                                                data-price="<?= htmlspecialchars($p['price']) ?>"
+                                                data-name="<?= htmlspecialchars($p['name']) ?>"
+                                                <?= (($_POST['price_id'] ?? 0) == $p['id']) ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($p['name']) ?>
                                         </option>
                                         <?php endforeach; ?>
                                     </optgroup>
                                     <?php endforeach; ?>
                                 </select>
+                                <?php else: ?>
+                                <!-- Fallback: cms_prices masih kosong, pakai input teks manual -->
+                                <select class="form-select" name="price_id" id="layananSelect" required>
+                                    <option value="">— Belum ada layanan di daftar harga —</option>
+                                </select>
+                                <small class="text-muted">Tambahkan layanan di <a href="cms.php#prices">Daftar Harga</a> terlebih dahulu.</small>
+                                <?php endif; ?>
+
                             </div>
 
                             <!-- Tanggal -->
@@ -860,6 +912,8 @@ $pageTitle = "Booking Appointment — NISWÀ BEAUTY";
 <script src="script.js"></script>
 
 <script>
+
+
 AOS.init({ duration: 800, once: true });
 
 flatpickr('#bookingDate', {

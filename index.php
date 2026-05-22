@@ -1404,8 +1404,45 @@ $catLabels = ['simple' => 'Simple', 'glam' => 'Glam', 'wedding' => 'Wedding'];
         </div>
 
         <?php if ($globalDisc['enabled'] && $globalDisc['discount_pct'] > 0): ?>
-        <div data-aos="fade-up" data-aos-delay="60" style="max-width:600px;margin:0 auto 28px;background:linear-gradient(135deg,#8B6F5E,#C4A882);border-radius:16px;padding:14px 20px;display:flex;align-items:center;gap:14px;box-shadow:0 6px 24px rgba(139,111,94,0.28);">
-            <div style="background:rgba(255,255,255,0.22);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <style>
+        .global-disc-banner {
+            max-width: 600px;
+            margin: 0 auto 28px;
+            background: linear-gradient(135deg, #8B6F5E, #C4A882);
+            border-radius: 16px;
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            box-shadow: 0 6px 24px rgba(139,111,94,0.28);
+        }
+        @keyframes kendut {
+            0%   { transform: scale(1); }
+            50%  { transform: scale(1.06); }
+            100% { transform: scale(1.03); }
+        }
+        .global-disc-banner:hover {
+            animation: kendut 0.3s ease-out forwards !important;
+        }
+        .global-disc-banner .disc-icon-wrap {
+            background: rgba(255,255,255,0.22);
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .global-disc-banner .disc-badge {
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            padding: 6px 14px;
+            flex-shrink: 0;
+        }
+        </style>
+        <div class="global-disc-banner">
+            <div class="disc-icon-wrap">
                 <i class="fas fa-tag" style="color:#fff;font-size:18px;"></i>
             </div>
             <div style="flex:1;min-width:0;">
@@ -1419,7 +1456,7 @@ $catLabels = ['simple' => 'Simple', 'glam' => 'Glam', 'wedding' => 'Wedding'];
                     <?php endif; ?>
                 </div>
             </div>
-            <div style="background:rgba(255,255,255,0.95);border-radius:12px;padding:6px 14px;flex-shrink:0;">
+            <div class="disc-badge">
                 <span style="font-family:'Poppins',sans-serif;font-weight:800;font-size:18px;color:#8B6F5E;"><?= $globalDisc['discount_pct'] ?>%</span>
                 <span style="font-family:'Poppins',sans-serif;font-size:10px;font-weight:600;color:#8B6F5E;display:block;text-align:center;margin-top:-3px;">OFF</span>
             </div>

@@ -34,7 +34,7 @@ if (!isset($conn) || !$conn) {
 
     // ── 3. Buat semua tabel (CREATE TABLE IF NOT EXISTS — aman diulang) ─────
 
-    // USERS
+    // USERS  [tabel induk utama — harus dibuat pertama]
     mysqli_query($conn, "CREATE TABLE IF NOT EXISTS users (
         id          INT AUTO_INCREMENT PRIMARY KEY,
         nama        VARCHAR(100)                        NOT NULL,
@@ -52,87 +52,7 @@ if (!isset($conn) || !$conn) {
     }
     mysqli_query($conn, "UPDATE users SET role='user' WHERE role IS NULL OR role=''");
 
-    // BOOKINGS
-    mysqli_query($conn, "CREATE TABLE IF NOT EXISTS bookings (
-        id              INT AUTO_INCREMENT PRIMARY KEY,
-        user_id         INT             DEFAULT NULL,
-        name            VARCHAR(100)    NOT NULL,
-        phone           VARCHAR(30),
-        email           VARCHAR(120),
-        service         VARCHAR(150),
-        date            DATE,
-        time            TIME,
-        jumlah_orang    INT             DEFAULT 1,
-        jenis_layanan   VARCHAR(20)     DEFAULT 'datang',
-        alamat_hs       TEXT,
-        catatan         TEXT,
-        status          VARCHAR(20)     DEFAULT 'booked',
-        created_at      DATETIME        DEFAULT NOW(),
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
-    // BOOKING BLOCKED SLOTS
-    mysqli_query($conn, "CREATE TABLE IF NOT EXISTS booking_blocked_slots (
-        id          INT AUTO_INCREMENT PRIMARY KEY,
-        tanggal     DATE            NOT NULL,
-        jam         VARCHAR(10)     NOT NULL,
-        alasan      VARCHAR(255)    DEFAULT NULL,
-        created_at  DATETIME        DEFAULT NOW(),
-        UNIQUE KEY uk_tanggal_jam (tanggal, jam)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
-    // ORDERS
-    mysqli_query($conn, "CREATE TABLE IF NOT EXISTS orders (
-        id              INT AUTO_INCREMENT PRIMARY KEY,
-        user_id         INT             DEFAULT NULL,
-        nama            VARCHAR(100)    NOT NULL,
-        whatsapp        VARCHAR(20)     NOT NULL,
-        alamat          TEXT            NOT NULL,
-        product_name    VARCHAR(100)    NOT NULL,
-        product_price   VARCHAR(20)     NOT NULL,
-        qty             INT             DEFAULT 1,
-        total           VARCHAR(20),
-        catatan         TEXT,
-        product_image   VARCHAR(500)    DEFAULT NULL,
-        payment_method  VARCHAR(30)     DEFAULT 'COD',
-        payment_status  VARCHAR(20)     DEFAULT 'pending',
-        order_status    VARCHAR(30)     DEFAULT 'menunggu_konfirmasi',
-        created_at      DATETIME        DEFAULT NOW(),
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
-    // CMS CONTENT
-    mysqli_query($conn, "CREATE TABLE IF NOT EXISTS cms_content (
-        id          INT AUTO_INCREMENT PRIMARY KEY,
-        section     VARCHAR(80)     NOT NULL,
-        `key`       VARCHAR(120)    NOT NULL,
-        value       LONGTEXT,
-        updated_at  DATETIME        DEFAULT NOW() ON UPDATE NOW(),
-        UNIQUE KEY uk_section_key (section, `key`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
-    // CMS SERVICES
-    mysqli_query($conn, "CREATE TABLE IF NOT EXISTS cms_services (
-        id          INT AUTO_INCREMENT PRIMARY KEY,
-        name        VARCHAR(120),
-        image       VARCHAR(255),
-        gallery     TEXT,
-        sort_order  INT             DEFAULT 0,
-        updated_at  DATETIME        DEFAULT NOW() ON UPDATE NOW()
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
-    // CMS PRICES
-    mysqli_query($conn, "CREATE TABLE IF NOT EXISTS cms_prices (
-        id          INT AUTO_INCREMENT PRIMARY KEY,
-        category    VARCHAR(120),
-        name        VARCHAR(200),
-        price       VARCHAR(60),
-        description TEXT            DEFAULT NULL,
-        image       VARCHAR(255)    DEFAULT NULL,
-        sort_order  INT             DEFAULT 0
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
-    // CMS PRODUCTS
+    // CMS PRODUCTS  [dibuat sebelum orders agar FK product_id bisa dibuat]
     mysqli_query($conn, "CREATE TABLE IF NOT EXISTS cms_products (
         id          INT AUTO_INCREMENT PRIMARY KEY,
         name        VARCHAR(150),
@@ -182,6 +102,193 @@ if (!isset($conn) || !$conn) {
         }
         mysqli_stmt_close($stmtP);
     }
+
+    // BOOKINGS
+    // Relasi: bookings.user_id → users.id (ON DELETE SET NULL)
+    //         bookings.price_id → cms_prices.id (ON DELETE SET NULL)
+    mysqli_query($conn, "CREATE TABLE IF NOT EXISTS bookings (
+        id              INT AUTO_INCREMENT PRIMARY KEY,
+        user_id         INT             DEFAULT NULL,
+        name            VARCHAR(100)    NOT NULL,
+        phone           VARCHAR(30),
+        email           VARCHAR(120),
+        service         VARCHAR(150),
+        price_id        INT             DEFAULT NULL,
+        service_price   VARCHAR(60)     DEFAULT NULL,
+        date            DATE,
+        time            TIME,
+        jumlah_orang    INT             DEFAULT 1,
+        jenis_layanan   VARCHAR(20)     DEFAULT 'datang',
+        alamat_hs       TEXT,
+        catatan         TEXT,
+        status          VARCHAR(20)     DEFAULT 'booked',
+        created_at      DATETIME        DEFAULT NOW(),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // Auto-fix: kolom price_id & service_price untuk database lama
+    $cBkPriceId = mysqli_query($conn, "SHOW COLUMNS FROM bookings LIKE 'price_id'");
+    if ($cBkPriceId && mysqli_num_rows($cBkPriceId) === 0) {
+        mysqli_query($conn, "ALTER TABLE bookings ADD COLUMN price_id INT DEFAULT NULL AFTER service");
+    }
+    $cBkSvcPrice = mysqli_query($conn, "SHOW COLUMNS FROM bookings LIKE 'service_price'");
+    if ($cBkSvcPrice && mysqli_num_rows($cBkSvcPrice) === 0) {
+        mysqli_query($conn, "ALTER TABLE bookings ADD COLUMN service_price VARCHAR(60) DEFAULT NULL AFTER price_id");
+    }
+    // Auto-fill: isi price_id dari bookings lama berdasarkan nama layanan
+    mysqli_query($conn, "UPDATE bookings b
+        JOIN cms_prices p ON p.name = b.service
+        SET b.price_id = p.id, b.service_price = p.price
+        WHERE b.price_id IS NULL AND b.service != '' AND b.service IS NOT NULL");
+
+
+    // ── Auto-fix: tambah FK bookings.user_id jika tabel lama belum punya ──
+    // (tabel lama dibuat ulang di dashboard.php tanpa FK — dipastikan di sini)
+    $cekFkBk = mysqli_query($conn, "SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE
+        WHERE TABLE_SCHEMA = '" . DB_NAME . "'
+          AND TABLE_NAME   = 'bookings'
+          AND COLUMN_NAME  = 'user_id'
+          AND REFERENCED_TABLE_NAME = 'users'
+        LIMIT 1");
+    if ($cekFkBk && mysqli_num_rows($cekFkBk) === 0) {
+        // Pastikan kolom ada dulu
+        $cBkUid = mysqli_query($conn, "SHOW COLUMNS FROM bookings LIKE 'user_id'");
+        if ($cBkUid && mysqli_num_rows($cBkUid) === 0) {
+            mysqli_query($conn, "ALTER TABLE bookings ADD COLUMN user_id INT DEFAULT NULL");
+        }
+        // Tambahkan FK
+        mysqli_query($conn, "ALTER TABLE bookings
+            ADD CONSTRAINT fk_bookings_user
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL");
+    }
+
+    // ── Auto-fix: tambah FK bookings.price_id → cms_prices.id ──────────────
+    $cekFkBkPrice = mysqli_query($conn, "SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE
+        WHERE TABLE_SCHEMA = '" . DB_NAME . "'
+          AND TABLE_NAME   = 'bookings'
+          AND COLUMN_NAME  = 'price_id'
+          AND REFERENCED_TABLE_NAME = 'cms_prices'
+        LIMIT 1");
+    if ($cekFkBkPrice && mysqli_num_rows($cekFkBkPrice) === 0) {
+        mysqli_query($conn, "ALTER TABLE bookings
+            ADD CONSTRAINT fk_bookings_price
+            FOREIGN KEY (price_id) REFERENCES cms_prices(id) ON DELETE SET NULL");
+    }
+
+    // BOOKING BLOCKED SLOTS
+    // Relasi baru: blocked_slots.blocked_by → users.id (catat admin yang memblokir)
+    mysqli_query($conn, "CREATE TABLE IF NOT EXISTS booking_blocked_slots (
+        id          INT AUTO_INCREMENT PRIMARY KEY,
+        tanggal     DATE            NOT NULL,
+        jam         VARCHAR(10)     NOT NULL,
+        alasan      VARCHAR(255)    DEFAULT NULL,
+        blocked_by  INT             DEFAULT NULL,
+        created_at  DATETIME        DEFAULT NOW(),
+        UNIQUE KEY uk_tanggal_jam (tanggal, jam),
+        FOREIGN KEY (blocked_by) REFERENCES users(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // ── Auto-fix: tambah kolom blocked_by + FK jika tabel lama belum punya ──
+    $cekBlkBy = mysqli_query($conn, "SHOW COLUMNS FROM booking_blocked_slots LIKE 'blocked_by'");
+    if ($cekBlkBy && mysqli_num_rows($cekBlkBy) === 0) {
+        mysqli_query($conn, "ALTER TABLE booking_blocked_slots
+            ADD COLUMN blocked_by INT DEFAULT NULL");
+        mysqli_query($conn, "ALTER TABLE booking_blocked_slots
+            ADD CONSTRAINT fk_blocked_slots_user
+            FOREIGN KEY (blocked_by) REFERENCES users(id) ON DELETE SET NULL");
+    }
+
+    // ORDERS
+    // Relasi: orders.user_id    → users.id       (ON DELETE SET NULL)
+    // Relasi: orders.product_id → cms_products.id (ON DELETE SET NULL) [BARU]
+    mysqli_query($conn, "CREATE TABLE IF NOT EXISTS orders (
+        id              INT AUTO_INCREMENT PRIMARY KEY,
+        user_id         INT             DEFAULT NULL,
+        product_id      INT             DEFAULT NULL,
+        nama            VARCHAR(100)    NOT NULL,
+        whatsapp        VARCHAR(20)     NOT NULL,
+        alamat          TEXT            NOT NULL,
+        product_name    VARCHAR(100)    NOT NULL,
+        product_price   VARCHAR(20)     NOT NULL,
+        qty             INT             DEFAULT 1,
+        total           VARCHAR(20),
+        catatan         TEXT,
+        product_image   VARCHAR(500)    DEFAULT NULL,
+        payment_method  VARCHAR(30)     DEFAULT 'COD',
+        payment_status  VARCHAR(20)     DEFAULT 'pending',
+        order_status    VARCHAR(30)     DEFAULT 'menunggu_konfirmasi',
+        created_at      DATETIME        DEFAULT NOW(),
+        FOREIGN KEY (user_id)    REFERENCES users(id)        ON DELETE SET NULL,
+        FOREIGN KEY (product_id) REFERENCES cms_products(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // ── Auto-fix: tambah kolom & FK orders yang mungkin belum ada ───────────
+    // (orders juga dibuat ulang di index.php & dashboard.php tanpa FK)
+
+    // FK orders.user_id
+    $cekFkOrd = mysqli_query($conn, "SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE
+        WHERE TABLE_SCHEMA = '" . DB_NAME . "'
+          AND TABLE_NAME   = 'orders'
+          AND COLUMN_NAME  = 'user_id'
+          AND REFERENCED_TABLE_NAME = 'users'
+        LIMIT 1");
+    if ($cekFkOrd && mysqli_num_rows($cekFkOrd) === 0) {
+        $cOrdUid = mysqli_query($conn, "SHOW COLUMNS FROM orders LIKE 'user_id'");
+        if ($cOrdUid && mysqli_num_rows($cOrdUid) === 0) {
+            mysqli_query($conn, "ALTER TABLE orders ADD COLUMN user_id INT DEFAULT NULL");
+        }
+        mysqli_query($conn, "ALTER TABLE orders
+            ADD CONSTRAINT fk_orders_user
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL");
+    }
+
+    // Kolom product_id (baru) + FK orders.product_id
+    $cekProdId = mysqli_query($conn, "SHOW COLUMNS FROM orders LIKE 'product_id'");
+    if ($cekProdId && mysqli_num_rows($cekProdId) === 0) {
+        mysqli_query($conn, "ALTER TABLE orders
+            ADD COLUMN product_id INT DEFAULT NULL AFTER user_id");
+        mysqli_query($conn, "ALTER TABLE orders
+            ADD CONSTRAINT fk_orders_product
+            FOREIGN KEY (product_id) REFERENCES cms_products(id) ON DELETE SET NULL");
+    }
+
+    // ── Auto-fill: isi product_id dari orders yang sudah ada ────────────────
+    // Cocokkan berdasarkan product_name + product_price ke cms_products
+    mysqli_query($conn, "UPDATE orders o
+        JOIN cms_products p ON p.name = o.product_name AND p.price = o.product_price
+        SET o.product_id = p.id
+        WHERE o.product_id IS NULL");
+
+    // CMS CONTENT
+    mysqli_query($conn, "CREATE TABLE IF NOT EXISTS cms_content (
+        id          INT AUTO_INCREMENT PRIMARY KEY,
+        section     VARCHAR(80)     NOT NULL,
+        `key`       VARCHAR(120)    NOT NULL,
+        value       LONGTEXT,
+        updated_at  DATETIME        DEFAULT NOW() ON UPDATE NOW(),
+        UNIQUE KEY uk_section_key (section, `key`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // CMS SERVICES
+    mysqli_query($conn, "CREATE TABLE IF NOT EXISTS cms_services (
+        id          INT AUTO_INCREMENT PRIMARY KEY,
+        name        VARCHAR(120),
+        image       VARCHAR(255),
+        gallery     TEXT,
+        sort_order  INT             DEFAULT 0,
+        updated_at  DATETIME        DEFAULT NOW() ON UPDATE NOW()
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // CMS PRICES
+    mysqli_query($conn, "CREATE TABLE IF NOT EXISTS cms_prices (
+        id          INT AUTO_INCREMENT PRIMARY KEY,
+        category    VARCHAR(120),
+        name        VARCHAR(200),
+        price       VARCHAR(60),
+        description TEXT            DEFAULT NULL,
+        image       VARCHAR(255)    DEFAULT NULL,
+        sort_order  INT             DEFAULT 0
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
     // CMS TESTIMONIALS
     mysqli_query($conn, "CREATE TABLE IF NOT EXISTS cms_testimonials (
@@ -240,6 +347,24 @@ if (!isset($conn) || !$conn) {
         updated_at  DATETIME        DEFAULT NOW() ON UPDATE NOW(),
         UNIQUE KEY uk_bkpg_sec_key (section, `key`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // CMS GLOBAL DISCOUNT
+    mysqli_query($conn, "CREATE TABLE IF NOT EXISTS cms_global_discount (
+        id           INT AUTO_INCREMENT PRIMARY KEY,
+        enabled      TINYINT(1)          DEFAULT 0,
+        discount_pct TINYINT(3) UNSIGNED DEFAULT 0,
+        min_purchase INT(10) UNSIGNED    DEFAULT 0,
+        label        VARCHAR(200)        DEFAULT '',
+        updated_at   DATETIME            DEFAULT NOW() ON UPDATE NOW()
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // Auto-seed: baris default diskon jika tabel kosong
+    $cekDisc = mysqli_query($conn, "SELECT COUNT(*) as n FROM cms_global_discount");
+    if ($cekDisc && (int)(mysqli_fetch_assoc($cekDisc)['n'] ?? 0) === 0) {
+        mysqli_query($conn, "INSERT INTO cms_global_discount
+            (enabled, discount_pct, min_purchase, label)
+            VALUES (0, 10, 100000, 'Beli min. Rp 100.000, hemat 10%!')");
+    }
 
     // ── 4. Auto-fix: ganti email admin lama yang pakai karakter à ───────────
     // (email dengan à tidak bisa diketik di form login biasa)
